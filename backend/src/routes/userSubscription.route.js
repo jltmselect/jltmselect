@@ -1,11 +1,13 @@
 import { Router } from "express";
-import { auth } from "../middlewares/auth.middleware.js";
+import { auth, authAdmin } from "../middlewares/auth.middleware.js";
 import {
   purchaseSubscription,
   getUserSubscriptions,
   getActiveSubscription,
   checkActiveSubscription,
   cancelSubscription,
+  setCurrentSubscription,
+  getAllUserSubscriptions,
 } from "../controllers/userSubscription.controller.js";
 
 const userSubscriptionRouter = Router();
@@ -27,5 +29,11 @@ userSubscriptionRouter.get("/check-active", checkActiveSubscription);
 
 // Cancel a specific subscription
 userSubscriptionRouter.patch("/:subscriptionId/cancel", cancelSubscription);
+
+// Set the subscription as currently active
+userSubscriptionRouter.patch('/:subscriptionId/set-current', setCurrentSubscription);
+
+// Get all subscription purchased for admin
+userSubscriptionRouter.get('/admin/all-user-subscriptions', authAdmin, getAllUserSubscriptions);
 
 export default userSubscriptionRouter;

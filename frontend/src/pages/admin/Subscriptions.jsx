@@ -21,10 +21,313 @@ import {
     GripVertical,
     Trash,
     Copy,
+    Users,
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast } from "react-hot-toast";
 import { AdminContainer, AdminHeader, AdminSidebar } from "../../components";
+
+const UserSubscriptionsTracker = () => {
+    const [userSubscriptions, setUserSubscriptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({
+        search: "",
+        status: "all",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+    });
+    const [selectedSubscription, setSelectedSubscription] = useState(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+    useEffect(() => {
+        fetchUserSubscriptions();
+    }, []);
+
+    const fetchUserSubscriptions = async () => {
+        try {
+            setLoading(true);
+            // You'll need to create this endpoint
+            const { data } = await axiosInstance.get('/api/v1/user-subscription/admin/all-user-subscriptions', {
+                params: { limit: 1000 }
+            });
+            if (data.success) {
+                setUserSubscriptions(data.data.subscriptions);
+            }
+        } catch (error) {
+            console.error('Fetch user subscriptions error:', error);
+            toast.error('Failed to load user subscriptions');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2
+        }).format(amount);
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const getStatusBadge = (status, expiresAt) => {
+        const isExpired = new Date(expiresAt) < new Date();
+
+        if (status === "active" && !isExpired) {
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>;
+        } else if (status === "cancelled") {
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>;
+        } else if (isExpired || status === "expired") {
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Expired</span>;
+        }
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Pending</span>;
+    };
+
+    const filteredSubscriptions = userSubscriptions.filter(sub => {
+        if (filters.search) {
+            const searchTerm = filters.search.toLowerCase();
+            const userName = `${sub.user?.firstName} ${sub.user?.lastName}`.toLowerCase();
+            const userEmail = sub.user?.email?.toLowerCase();
+            const planTitle = sub.title?.toLowerCase();
+
+            if (!userName.includes(searchTerm) && !userEmail?.includes(searchTerm) && !planTitle?.includes(searchTerm)) {
+                return false;
+            }
+        }
+
+        if (filters.status !== "all") {
+            const isExpired = new Date(sub.expiresAt) < new Date();
+            if (filters.status === "active" && (!sub.isCurrent || isExpired)) return false;
+            if (filters.status === "expired" && !isExpired) return false;
+            if (filters.status === "cancelled" && sub.status !== "cancelled") return false;
+        }
+
+        return true;
+    });
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="">
+            {/* Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by user name, email, or plan..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                value={filters.search}
+                                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            value={filters.status}
+                            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                        >
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            {/* <option value="cancelled">Cancelled</option> */}
+                        </select>
+                    </div>
+                </div>
+                <div className="text-sm text-gray-500 mt-4">
+                    Total: {filteredSubscriptions.length} subscription{filteredSubscriptions.length !== 1 ? 's' : ''}
+                </div>
+            </div>
+
+            {/* User Subscriptions Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {filteredSubscriptions.map((sub) => (
+                                <tr key={sub._id} className="hover:bg-gray-50">
+                                    <td className="py-4 px-6">
+                                        <div>
+                                            <div className="font-medium text-gray-900">
+                                                {sub.user?.firstName} {sub.user?.lastName}
+                                            </div>
+                                            <div className="text-xs text-gray-500">{sub.user?.email}</div>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div>
+                                            <div className="font-medium text-gray-900">{sub.title}</div>
+                                            {sub.isCurrent && (
+                                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full mt-1 inline-block">
+                                                    Currently Active
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div className="font-semibold text-gray-900">
+                                            {formatCurrency(sub.amountPaid)}
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div className="text-sm text-gray-600">
+                                            {sub.duration?.value} {sub.duration?.unit}{sub.duration?.value > 1 ? 's' : ''}
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6 text-sm text-gray-600">
+                                        {formatDate(sub.startDate)}
+                                    </td>
+                                    <td className="py-4 px-6 text-sm text-gray-600">
+                                        {formatDate(sub.expiresAt)}
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        {getStatusBadge(sub.status, sub.expiresAt)}
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedSubscription(sub);
+                                                setShowDetailsModal(true);
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                                            title="View Details"
+                                        >
+                                            <Eye size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {filteredSubscriptions.length === 0 && (
+                    <div className="text-center py-12">
+                        <DollarSign size={48} className="mx-auto text-gray-300 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">No subscriptions found</h3>
+                        <p className="text-gray-500">No user subscriptions match your filters</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Details Modal */}
+            {showDetailsModal && selectedSubscription && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-semibold text-gray-900">Subscription Details</h3>
+                                <button
+                                    onClick={() => setShowDetailsModal(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500">User</label>
+                                    <p className="font-medium">{selectedSubscription.user?.firstName} {selectedSubscription.user?.lastName}</p>
+                                    <p className="text-sm text-gray-600">{selectedSubscription.user?.email}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Plan</label>
+                                    <p className="font-medium">{selectedSubscription.title}</p>
+                                    {selectedSubscription.description && (
+                                        <p className="text-sm text-gray-600">{selectedSubscription.description}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Amount Paid</label>
+                                    <p className="font-semibold text-green-600">{formatCurrency(selectedSubscription.amountPaid)}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Payment ID</label>
+                                    <p className="text-sm font-mono">{selectedSubscription.paymentIntentId}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Duration</label>
+                                    <p>{selectedSubscription.duration?.value} {selectedSubscription.duration?.unit}{selectedSubscription.duration?.value > 1 ? 's' : ''}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Status</label>
+                                    <p>{getStatusBadge(selectedSubscription.status, selectedSubscription.expiresAt)}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Start Date</label>
+                                    <p>{formatDate(selectedSubscription.startDate)}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Expiry Date</label>
+                                    <p>{formatDate(selectedSubscription.expiresAt)}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Purchased On</label>
+                                    <p>{formatDate(selectedSubscription.createdAt)}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500">Is Current Active</label>
+                                    <p>{selectedSubscription.isCurrent ? "Yes" : "No"}</p>
+                                </div>
+                            </div>
+
+                            {selectedSubscription.features && selectedSubscription.features.length > 0 && (
+                                <div>
+                                    <label className="text-xs text-gray-500 block mb-2">Features Included</label>
+                                    <div className="bg-gray-50 rounded-lg p-4 space-y-1">
+                                        {selectedSubscription.features.map((feature, idx) => (
+                                            <div key={idx} className="flex items-center gap-2 text-sm">
+                                                {feature.included !== false ? (
+                                                    <CheckCircle size={14} className="text-green-500" />
+                                                ) : (
+                                                    <X size={14} className="text-gray-400" />
+                                                )}
+                                                <span className={feature.included !== false ? "text-gray-700" : "text-gray-400 line-through"}>
+                                                    {feature.text}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 function Subscriptions() {
     const [subscriptions, setSubscriptions] = useState([]);
@@ -34,6 +337,7 @@ function Subscriptions() {
     const [editingSubscription, setEditingSubscription] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [subscriptionToDelete, setSubscriptionToDelete] = useState(null);
+    const [activeTab, setActiveTab] = useState("plans");
 
     // Filters
     const [filters, setFilters] = useState({
@@ -389,244 +693,280 @@ function Subscriptions() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold my-5 text-gray-800">
-                                    Subscription Plans
+                                    Subscription Management
                                 </h2>
-                                <p className="text-gray-600 mb-4">
-                                    Create and manage subscription plans for your users
-                                </p>
                             </div>
+                            {activeTab === "plans" && (
+                                <button
+                                    onClick={() => setShowForm(true)}
+                                    className="mt-4 md:mt-0 flex items-center gap-2 bg-primary text-white hover:bg-primary/90 px-4 py-3 rounded-lg transition-colors"
+                                >
+                                    <Plus size={20} />
+                                    Add New Plan
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="border-b border-gray-200 mb-6">
+                        <div className="flex gap-4">
                             <button
-                                onClick={() => setShowForm(true)}
-                                className="mt-4 md:mt-0 flex items-center gap-2 bg-primary text-white hover:bg-primary/90 px-4 py-3 rounded-lg transition-colors"
+                                onClick={() => setActiveTab("plans")}
+                                className={`px-4 py-2 font-medium transition-colors ${activeTab === "plans"
+                                    ? "text-orange-600 border-b-2 border-orange-600"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
                             >
-                                <Plus size={20} />
-                                Add New Plan
+                                <div className="flex items-center gap-2">
+                                    <Tag size={16} />
+                                    Subscription Plans
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("userSubscriptions")}
+                                className={`px-4 py-2 font-medium transition-colors ${activeTab === "userSubscriptions"
+                                    ? "text-orange-600 border-b-2 border-orange-600"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Users size={16} />
+                                    User Subscriptions
+                                </div>
                             </button>
                         </div>
                     </div>
 
-                    {/* Filters */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Search */}
-                            <div className="lg:col-span-2">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search subscriptions..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                        value={filters.search}
-                                        onChange={(e) => handleFilterChange('search', e.target.value)}
-                                    />
+                    {activeTab === "plans" ? (
+                        <>
+                            {/* Filters */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Search */}
+                                    <div className="lg:col-span-2">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search subscriptions..."
+                                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                value={filters.search}
+                                                onChange={(e) => handleFilterChange('search', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Status Filter */}
+                                    <div>
+                                        <select
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            value={filters.status}
+                                            onChange={(e) => handleFilterChange('status', e.target.value)}
+                                        >
+                                            <option value="all">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Sort By */}
+                                    <div>
+                                        <select
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                            value={filters.sortBy}
+                                            onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                                        >
+                                            <option value="displayOrder">Sort by Order</option>
+                                            <option value="title">Sort by Title</option>
+                                            <option value="price.amount">Sort by Price</option>
+                                            <option value="createdAt">Sort by Date</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center mt-4">
+                                    <div className="text-sm text-gray-500">
+                                        Showing {filteredSubscriptions.length} subscription{filteredSubscriptions.length !== 1 ? 's' : ''}
+                                    </div>
+                                    <button
+                                        onClick={clearFilters}
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        Clear filters
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Status Filter */}
-                            <div>
-                                <select
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                    value={filters.status}
-                                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                                >
-                                    <option value="all">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-
-                            {/* Sort By */}
-                            <div>
-                                <select
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                    value={filters.sortBy}
-                                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                                >
-                                    <option value="displayOrder">Sort by Order</option>
-                                    <option value="title">Sort by Title</option>
-                                    <option value="price.amount">Sort by Price</option>
-                                    <option value="createdAt">Sort by Date</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center mt-4">
-                            <div className="text-sm text-gray-500">
-                                Showing {filteredSubscriptions.length} subscription{filteredSubscriptions.length !== 1 ? 's' : ''}
-                            </div>
-                            <button
-                                onClick={clearFilters}
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                                Clear filters
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Subscriptions List */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            <Tag size={16} />
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Title / Tag
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Duration
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Price
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Features
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {filteredSubscriptions.map((subscription) => (
-                                        <tr key={subscription._id} className="hover:bg-gray-50">
-                                            <td className="py-4 px-6">
-                                                {subscription.isPopular ? (
-                                                    <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                                                ) : (
-                                                    <Star className="h-5 w-5 text-gray-500" />
-                                                )}
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div>
-                                                    <div className="font-medium text-gray-900 flex items-center gap-2">
-                                                        {subscription.title}
-                                                        {subscription.tag && (
-                                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                                                                {subscription.tag}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {subscription.description && (
-                                                        <div className="text-xs text-gray-500 mt-1 max-w-md truncate">
-                                                            {subscription.description}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                    <Clock size={14} />
-                                                    {formatDuration(subscription.duration)}
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-gray-900">
-                                                    {formatPrice(subscription.price)}
-                                                </div>
-                                                <div className="text-xs text-gray-500">
-                                                    per {subscription.duration.unit}
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center gap-1">
-                                                    <List size={14} className="text-gray-400" />
-                                                    <span className="text-sm text-gray-600">
-                                                        {subscription.features?.length || 0} features
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${subscription.isActive
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                        {subscription.isActive ? (
-                                                            <>
-                                                                <CheckCircle size={12} />
-                                                                Active
-                                                            </>
+                            {/* Subscriptions List */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    <Tag size={16} />
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Title / Tag
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Duration
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Price
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Features
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Status
+                                                </th>
+                                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {filteredSubscriptions.map((subscription) => (
+                                                <tr key={subscription._id} className="hover:bg-gray-50">
+                                                    <td className="py-4 px-6">
+                                                        {subscription.isPopular ? (
+                                                            <Star className="h-5 w-5 text-yellow-500 fill-current" />
                                                         ) : (
-                                                            <>
-                                                                <EyeOff size={12} />
-                                                                Inactive
-                                                            </>
+                                                            <Star className="h-5 w-5 text-gray-500" />
                                                         )}
-                                                    </span>
-                                                    {subscription.isPopular && (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                            <Star size={12} />
-                                                            Popular
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => togglePopular(subscription)}
-                                                        className="p-2 text-gray-400 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors"
-                                                        title={subscription.isPopular ? 'Remove from popular' : 'Mark as popular'}
-                                                    >
-                                                        <Star size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEdit(subscription)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-                                                        title="Edit Plan"
-                                                    >
-                                                        <Edit size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => toggleStatus(subscription)}
-                                                        className="p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
-                                                        title={subscription.isActive ? 'Deactivate' : 'Activate'}
-                                                    >
-                                                        {subscription.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSubscriptionToDelete(subscription);
-                                                            setShowDeleteModal(true);
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                                                        title="Delete Plan"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                                </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div>
+                                                            <div className="font-medium text-gray-900 flex items-center gap-2">
+                                                                {subscription.title}
+                                                                {subscription.tag && (
+                                                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                                                        {subscription.tag}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {subscription.description && (
+                                                                <div className="text-xs text-gray-500 mt-1 max-w-md truncate">
+                                                                    {subscription.description}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                                                            <Clock size={14} />
+                                                            {formatDuration(subscription.duration)}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="font-semibold text-gray-900">
+                                                            {formatPrice(subscription.price)}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            per {subscription.duration.unit}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-1">
+                                                            <List size={14} className="text-gray-400" />
+                                                            <span className="text-sm text-gray-600">
+                                                                {subscription.features?.length || 0} features
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${subscription.isActive
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                {subscription.isActive ? (
+                                                                    <>
+                                                                        <CheckCircle size={12} />
+                                                                        Active
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <EyeOff size={12} />
+                                                                        Inactive
+                                                                    </>
+                                                                )}
+                                                            </span>
+                                                            {subscription.isPopular && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                                    <Star size={12} />
+                                                                    Popular
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => togglePopular(subscription)}
+                                                                className="p-2 text-gray-400 hover:text-yellow-600 rounded-lg hover:bg-yellow-50 transition-colors"
+                                                                title={subscription.isPopular ? 'Remove from popular' : 'Mark as popular'}
+                                                            >
+                                                                <Star size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEdit(subscription)}
+                                                                className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                                                                title="Edit Plan"
+                                                            >
+                                                                <Edit size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => toggleStatus(subscription)}
+                                                                className="p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50 transition-colors"
+                                                                title={subscription.isActive ? 'Deactivate' : 'Activate'}
+                                                            >
+                                                                {subscription.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSubscriptionToDelete(subscription);
+                                                                    setShowDeleteModal(true);
+                                                                }}
+                                                                className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                                                title="Delete Plan"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                        {filteredSubscriptions.length === 0 && (
-                            <div className="text-center py-12">
-                                <DollarSign size={48} className="mx-auto text-gray-300 mb-4" />
-                                <h3 className="text-lg font-semibold text-gray-700 mb-2">No subscriptions found</h3>
-                                <p className="text-gray-500 mb-6">
-                                    {filters.search || filters.status !== "all"
-                                        ? "No subscriptions match your current filters"
-                                        : "Get started by creating your first subscription plan"}
-                                </p>
-                                <button
-                                    onClick={() => setShowForm(true)}
-                                    className="inline-flex items-center gap-2 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    <Plus size={18} />
-                                    Create Subscription Plan
-                                </button>
+                                {filteredSubscriptions.length === 0 && (
+                                    <div className="text-center py-12">
+                                        <DollarSign size={48} className="mx-auto text-gray-300 mb-4" />
+                                        <h3 className="text-lg font-semibold text-gray-700 mb-2">No subscriptions found</h3>
+                                        <p className="text-gray-500 mb-6">
+                                            {filters.search || filters.status !== "all"
+                                                ? "No subscriptions match your current filters"
+                                                : "Get started by creating your first subscription plan"}
+                                        </p>
+                                        <button
+                                            onClick={() => setShowForm(true)}
+                                            className="inline-flex items-center gap-2 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-lg transition-colors"
+                                        >
+                                            <Plus size={18} />
+                                            Create Subscription Plan
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    ) : (
+                        <UserSubscriptionsTracker />
+                    )}
+
                 </AdminContainer>
             </div>
 

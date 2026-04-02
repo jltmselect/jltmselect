@@ -12,6 +12,8 @@ import {
   uploadDocumentToCloudinary,
   uploadImageToCloudinary,
 } from "../utils/cloudinary.js";
+import Subscription from "../models/subscription.model.js";
+import UserSubscription from "../models/userSubscription.model.js";
 
 // Helper function to generate tokens and set cookies
 const generateTokensAndRespond = async (user, req, res, message) => {
@@ -60,6 +62,8 @@ const generateTokensAndRespond = async (user, req, res, message) => {
 
 // user.controller.js - Updated registerUser function
 export const registerUser = async (req, res) => {
+  let createdUser = null; // Track for potential rollback
+  
   try {
     const {
       firstName,
@@ -72,7 +76,8 @@ export const registerUser = async (req, res) => {
       countryName,
       phone = "",
       image = "",
-      paymentMethodId, // Only for bidders
+      paymentMethodId,
+      subscriptionPlanId, // NEW: Plan ID from frontend
       street = "",
       city = "",
       county = "",
@@ -82,7 +87,7 @@ export const registerUser = async (req, res) => {
     } = req.body;
 
     // Get uploaded file from multer
-    const identificationDocumentFile = req.file; // Make sure field name matches
+    const identificationDocumentFile = req.file;
 
     // Normalize email to lowercase
     const normalizedEmail = email.toLowerCase().trim();
@@ -101,7 +106,6 @@ export const registerUser = async (req, res) => {
     }
 
     const existingPhone = await User.findOne({ phone: phone });
-
     if (existingPhone) {
       return res.status(409).json({
         success: false,
@@ -109,18 +113,52 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Validate subscription plan exists
+    const subscription = await Subscription.findOne({
+      _id: subscriptionPlanId,
+      isActive: true,
+    });
+
+    if (!subscription) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or inactive subscription plan",
+      });
+    }
+
+    // Calculate subscription end date
+    const startDate = new Date();
+    let endDate = new Date(startDate);
+    const durationValue = subscription.duration.value;
+    const durationUnit = subscription.duration.unit;
+
+    switch (durationUnit) {
+      case "day":
+        endDate.setDate(endDate.getDate() + durationValue);
+        break;
+      case "week":
+        endDate.setDate(endDate.getDate() + durationValue * 7);
+        break;
+      case "month":
+        endDate.setMonth(endDate.getMonth() + durationValue);
+        break;
+      case "year":
+        endDate.setFullYear(endDate.getFullYear() + durationValue);
+        break;
+      default:
+        endDate.setMonth(endDate.getMonth() + 1);
+    }
+
     let stripeCustomerId = null;
     let paymentMethodDetails = null;
+    let paymentIntent = null;
     let identificationDocumentUrl = null;
     let identificationDocumentPublicId = null;
 
-    // Handle ID document upload if provided
+    // Handle ID document upload if provided (optional)
     if (identificationDocumentFile) {
       try {
-        // Determine if it's an image or document
-        const isImage =
-          identificationDocumentFile.mimetype.startsWith("image/");
-
+        const isImage = identificationDocumentFile.mimetype.startsWith("image/");
         let uploadResult;
         if (isImage) {
           uploadResult = await uploadImageToCloudinary(
@@ -134,7 +172,6 @@ export const registerUser = async (req, res) => {
             "identification-documents",
           );
         }
-
         identificationDocumentUrl = uploadResult.secure_url;
         identificationDocumentPublicId = uploadResult.public_id;
       } catch (uploadError) {
@@ -146,121 +183,185 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    // Handle bidder-specific payment verification
-    if (userType === "bidder") {
-      if (!paymentMethodId) {
-        return res.status(400).json({
-          success: false,
-          message: "Payment method ID is required for bidders",
-        });
+    // ============ STEP 1: Create Stripe Customer & Verify Card ============
+    try {
+      // Create Stripe customer
+      const customer = await StripeService.createCustomer(
+        email,
+        `${firstName} ${lastName}`,
+      );
+      stripeCustomerId = customer.id;
+
+      // Attach and verify payment method
+      const verificationResult = await StripeService.verifyAndSaveCard(
+        stripeCustomerId,
+        paymentMethodId,
+      );
+
+      if (!verificationResult.success) {
+        throw new Error("Card verification failed");
       }
 
-      try {
-        // Create Stripe customer
-        const customer = await StripeService.createCustomer(
-          email,
-          `${firstName} ${lastName}`,
-        );
-        stripeCustomerId = customer.id;
+      paymentMethodDetails = verificationResult.paymentMethod;
 
-        // Verify and save card
-        const verificationResult = await StripeService.verifyAndSaveCard(
-          stripeCustomerId,
-          paymentMethodId,
-        );
-
-        if (!verificationResult.success) {
-          throw new Error("Card verification failed");
-        }
-
-        paymentMethodDetails = verificationResult.paymentMethod;
-      } catch (stripeError) {
-        console.error("Stripe verification error:", stripeError);
-        return res.status(400).json({
-          success: false,
-          message: `Card verification failed: ${stripeError.message}`,
-        });
-      }
-    }
-
-    // Create user in database
-    const userData = {
-      firstName,
-      lastName,
-      username: normalizedUsername,
-      email: normalizedEmail,
-      password,
-      userType,
-      countryCode,
-      countryName,
-      phone,
-      image,
-      stripeCustomerId,
-      isVerified: true,
-      // Add ID verification fields
-      identificationDocument: identificationDocumentUrl,
-      identificationDocumentPublicId: identificationDocumentPublicId,
-      identificationStatus: identificationDocumentUrl ? "pending" : undefined,
-      address: {
-        street,
-        city,
-        county,
-        state,
-        postCode,
-        country
-      },
-    };
-
-    // Add payment details for bidders
-    if (userType === "bidder" && paymentMethodDetails) {
-      userData.paymentMethodId = paymentMethodDetails.id;
-      userData.cardLast4 = paymentMethodDetails.last4;
-      userData.cardBrand = paymentMethodDetails.brand;
-      userData.cardExpMonth = paymentMethodDetails.expMonth;
-      userData.cardExpYear = paymentMethodDetails.expYear;
-      userData.isPaymentVerified = true;
-    }
-
-    const user = await User.create(userData);
-
-    if (!user) {
-      return res.status(500).json({
+    } catch (stripeError) {
+      console.error("Stripe verification error:", stripeError);
+      return res.status(400).json({
         success: false,
-        message: "User registration failed",
+        message: `Card verification failed: ${stripeError.message}`,
       });
     }
 
-    // Generate email verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    user.emailVerificationToken = crypto
-      .createHash("sha256")
-      .update(verificationToken)
-      .digest("hex");
-    user.emailVerificationExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    // ============ STEP 2: Process Subscription Payment ============
+    const amountInDollars = subscription.price.amount; // $50
+    
+    try {
+      paymentIntent = await StripeService.createImmediateCharge(
+        stripeCustomerId,
+        paymentMethodId,
+        amountInDollars,
+        `${subscription.title} Subscription - ${durationValue} ${durationUnit}${durationValue > 1 ? 's' : ''}`
+      );
 
-    // Generate tokens and respond
-    await generateTokensAndRespond(user, req, res, "Registration successful");
+      if (paymentIntent.status !== "succeeded") {
+        throw new Error(`Payment failed with status: ${paymentIntent.status}`);
+      }
 
-    // Send emails in background
-    welcomeEmail(user, verificationToken).catch((error) =>
-      console.error(error),
-    );
+    } catch (paymentError) {
+      console.error("Payment processing error:", paymentError);
+      return res.status(400).json({
+        success: false,
+        message: `Payment failed: ${paymentError.message}`,
+      });
+    }
 
-    // Send emails asynchronously
+    // ============ STEP 3: Create User in Database ============
+    try {
+      const userData = {
+        firstName,
+        lastName,
+        username: normalizedUsername,
+        email: normalizedEmail,
+        password,
+        userType: userType || "bidder",
+        countryCode,
+        countryName,
+        phone,
+        image,
+        stripeCustomerId,
+        isVerified: true,
+        identificationDocument: identificationDocumentUrl,
+        identificationDocumentPublicId: identificationDocumentPublicId,
+        identificationStatus: identificationDocumentUrl ? "pending" : undefined,
+        address: {
+          street,
+          city,
+          county,
+          state,
+          postCode,
+          country
+        },
+        // Payment details
+        paymentMethodId: paymentMethodDetails.id,
+        cardLast4: paymentMethodDetails.last4,
+        cardBrand: paymentMethodDetails.brand,
+        cardExpMonth: paymentMethodDetails.expMonth,
+        cardExpYear: paymentMethodDetails.expYear,
+        isPaymentVerified: true,
+      };
+
+      createdUser = await User.create(userData);
+
+      if (!createdUser) {
+        throw new Error("User creation failed");
+      }
+
+    } catch (userError) {
+      console.error("User creation error:", userError);
+      // If user creation fails, we should refund the payment
+      if (paymentIntent && paymentIntent.id) {
+        try {
+          await StripeService.refundPayment(paymentIntent.id);
+          console.log(`Payment refunded: ${paymentIntent.id}`);
+        } catch (refundError) {
+          console.error("Failed to refund payment:", refundError);
+        }
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create user account. Payment has been refunded.",
+      });
+    }
+
+    // ============ STEP 4: Create User Subscription Record ============
+    try {
+      const userSubscription = await UserSubscription.create({
+        user: createdUser._id,
+        subscription: subscriptionPlanId,
+        title: subscription.title,
+        description: subscription.description,
+        features: subscription.features,
+        duration: subscription.duration,
+        price: subscription.price,
+        startDate,
+        endDate,
+        expiresAt: endDate,
+        paymentIntentId: paymentIntent.id,
+        paymentStatus: "succeeded",
+        amountPaid: subscription.price.amount,
+        currency: subscription.price.currency,
+        status: "active",
+        isCurrent: true,
+      });
+
+      // Update subscription subscriber count
+      await Subscription.findByIdAndUpdate(subscriptionPlanId, {
+        $inc: { subscriberCount: 1 },
+      });
+
+    } catch (subscriptionError) {
+      console.error("Subscription creation error:", subscriptionError);
+      // If subscription record creation fails, we should delete the user and refund payment
+      if (createdUser) {
+        await User.findByIdAndDelete(createdUser._id);
+        console.log(`User deleted due to subscription creation failure: ${createdUser._id}`);
+      }
+      if (paymentIntent && paymentIntent.id) {
+        try {
+          await StripeService.refundPayment(paymentIntent.id);
+          console.log(`Payment refunded: ${paymentIntent.id}`);
+        } catch (refundError) {
+          console.error("Failed to refund payment:", refundError);
+        }
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create subscription record. Please contact support.",
+      });
+    }
+
+    // ============ STEP 5: Generate Tokens and Respond ============
+    await generateTokensAndRespond(createdUser, req, res, "Registration successful");
+
+    // Send emails in background (don't await)
+    welcomeEmail(createdUser, null).catch(error => console.error("Welcome email error:", error));
+    
     try {
       const adminUsers = await User.find({ userType: "admin" });
       for (const admin of adminUsers) {
-        await newUserRegistrationEmail(admin.email, user);
+        await newUserRegistrationEmail(admin.email, createdUser);
       }
     } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-      // Don't fail registration if emails fail
+      console.error("Admin notification email failed:", emailError);
     }
+
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Final catch-all error handling
     res.status(500).json({
       success: false,
-      message: "Internal server error during registration",
+      message: error.message || "Internal server error during registration",
     });
   }
 };

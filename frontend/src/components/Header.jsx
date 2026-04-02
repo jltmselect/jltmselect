@@ -24,6 +24,10 @@ const navLinks = [
         name: 'Contact',
         href: '/contact'
     },
+    {
+        name: 'Auctions',
+        href: '/auctions'
+    },
 ];
 
 function Header() {

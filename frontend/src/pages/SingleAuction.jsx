@@ -9,6 +9,8 @@ import { useComments } from "../hooks/useComments";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { useAuth } from "../contexts/AuthContext";
 import useAuctionDeposit from "../hooks/useDeposit";
+import { useSubscriptionGuard } from "../hooks/useSubscriptionGuard";
+import SubscriptionModal from "../components/SubscriptionModal";
 
 const YouTubeEmbed = lazy(() => import('../components/YouTubeEmbed'));
 const ImageLightBox = lazy(() => import('../components/ImageLightBox'));
@@ -43,6 +45,17 @@ function SingleAuction() {
     const [categoryFields, setCategoryFields] = useState([]);
     const [loadingFields, setLoadingFields] = useState(false);
     const { checkAndProcessDeposit, processingDeposit } = useAuctionDeposit();
+
+    const {
+        hasActiveSubscription,
+        checking: checkingSubscription,
+        showSubscriptionModal,
+        setShowSubscriptionModal,
+        guardAction,
+        checkSubscription
+    } = useSubscriptionGuard();
+
+    const [hasCheckedAccess, setHasCheckedAccess] = useState(false);
 
     const updateAuctionState = (updatedAuction) => {
         setAuction(updatedAuction);
@@ -111,6 +124,15 @@ function SingleAuction() {
             maximumFractionDigits: 0
         }).format(amount);
     };
+
+    useEffect(() => {
+        if (!checkingSubscription && !hasCheckedAccess && auction) {
+            if (!hasActiveSubscription) {
+                guardAction();
+            }
+            setHasCheckedAccess(true);
+        }
+    }, [checkingSubscription, hasActiveSubscription, guardAction, hasCheckedAccess, auction]);
 
     useEffect(() => {
         const fetchAuction = async () => {
@@ -398,6 +420,52 @@ function SingleAuction() {
             <Container className="py-32 min-h-[70vh] flex items-center justify-center">
                 <LoadingSpinner size="large" />
             </Container>
+        );
+    }
+
+    if (checkingSubscription) {
+        return (
+            <Container className="py-32 min-h-[70vh] flex items-center justify-center">
+                <LoadingSpinner size="large" />
+            </Container>
+        );
+    }
+
+    if (!hasActiveSubscription && !checkingSubscription && hasCheckedAccess) {
+        return (
+            <>
+                <Container className="py-32 min-h-[70vh] flex flex-col items-center justify-center">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-6 mb-4">
+                        <Gavel size={48} className="text-gray-400" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                        Subscription Required
+                    </h2>
+                    <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center max-w-md">
+                        You need an active subscription to view and bid on this auction.
+                    </p>
+                    <button
+                        onClick={() => setShowSubscriptionModal(true)}
+                        className="bg-primary text-white hover:bg-primary/90 px-6 py-2 rounded-lg transition-colors"
+                    >
+                        View Plans
+                    </button>
+                    <Link to="/auctions" className="mt-4 text-primary hover:underline">
+                        ← Back to Auctions
+                    </Link>
+                </Container>
+                <SubscriptionModal
+                    isOpen={showSubscriptionModal}
+                    onClose={() => {
+                        setShowSubscriptionModal(false);
+                        navigate("/auctions");
+                    }}
+                    onSuccess={() => {
+                        checkSubscription();
+                        setHasCheckedAccess(false);
+                    }}
+                />
+            </>
         );
     }
 
@@ -1005,6 +1073,15 @@ function SingleAuction() {
                     )}
                 </div>
             </section>
+
+            <SubscriptionModal
+                isOpen={showSubscriptionModal}
+                onClose={() => setShowSubscriptionModal(false)}
+                onSuccess={() => {
+                    checkSubscription();
+                    setHasCheckedAccess(false);
+                }}
+            />
         </Container>
     );
 }

@@ -3,8 +3,10 @@ import { Filter, ChevronDown, Search, SlidersHorizontal, X, Loader, Grid, List }
 import { AuctionListItem, Container } from "../components";
 import AuctionCard from "../components/AuctionCard";
 import { useAuctions } from "../hooks/useAuctions";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
+import { useSubscriptionGuard } from "../hooks/useSubscriptionGuard";
+import SubscriptionModal from "../components/SubscriptionModal";
 
 // Car filters that apply to ALL categories
 const carFilters = {
@@ -388,6 +390,27 @@ function Auctions() {
     const [subCategories, setSubCategories] = useState([]);
     const [selectedParent, setSelectedParent] = useState('');
     const [loadingCategories, setLoadingCategories] = useState(false);
+    const navigate = useNavigate();
+
+    const {
+        hasActiveSubscription,
+        checking: checkingSubscription,
+        showSubscriptionModal,
+        setShowSubscriptionModal,
+        guardAction,
+        checkSubscription
+    } = useSubscriptionGuard();
+
+    const [hasCheckedAccess, setHasCheckedAccess] = useState(false);
+
+    useEffect(() => {
+        if (!checkingSubscription && !hasCheckedAccess) {
+            if (!hasActiveSubscription) {
+                guardAction();
+            }
+            setHasCheckedAccess(true);
+        }
+    }, [checkingSubscription, hasActiveSubscription]);
 
     // Read URL parameters on page load
     useEffect(() => {
@@ -643,232 +666,255 @@ function Auctions() {
     };
 
     return (
-        <Container className="bg-bg-secondary dark:bg-bg-primary">
-            <div className="min-h-screen pt-16 md:pt-32 pb-16 bg-bg-secondary dark:bg-bg-primary">
-                {/* Header */}
-                <div className=" py-8">
-                    <div className="container mx-auto">
-                        <h1 className="text-3xl font-bold text-pure-black dark:text-pure-white">All Auctions</h1>
-                        <p className="text-bg-primary-light dark:text-bg-secondary-dark mt-2">Your next find is just a click away. Explore thousands of fashion listings.</p>
-                    </div>
+        <>
+            {checkingSubscription ? (
+                // Loading state while checking subscription
+                <div className="flex justify-center items-center min-h-96">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
-
-                {/* Main Content */}
-                <div className="container mx-auto py-8">
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        {/* Filters Sidebar */}
-                        <div className="hidden lg:block lg:w-1/4 xl:w-1/5">
-                            <FiltersSection
-                                uiFilters={uiFilters}
-                                setUiFilters={setUiFilters}  // Add this line
-                                categories={categories}
-                                loadingCategories={loadingCategories}
-                                handleFilterChange={handleFilterChange}
-                                handleRangeChange={handleRangeChange}
-                                resetFilters={resetFilters}
-                                toggleFilterSection={toggleFilterSection}
-                                activeFilterSections={activeFilterSections}
-                                setShowMobileFilters={setShowMobileFilters}
-                                parentCategories={parentCategories}
-                                subCategories={subCategories}
-                                selectedParent={selectedParent}
-                                setSelectedParent={setSelectedParent}
-                                updateFilters={updateFilters}  // Add this line
-                                location={location}  // Add this line
-                            />
+            ) : hasActiveSubscription ? (
+                <Container className="bg-bg-secondary dark:bg-bg-primary">
+                    <div className="min-h-screen pt-16 md:pt-32 pb-16 bg-bg-secondary dark:bg-bg-primary">
+                        {/* Header */}
+                        <div className=" py-8">
+                            <div className="container mx-auto">
+                                <h1 className="text-3xl font-bold text-pure-black dark:text-pure-white">All Auctions</h1>
+                                <p className="text-bg-primary-light dark:text-bg-secondary-dark mt-2">Your next find is just a click away. Explore thousands of fashion listings.</p>
+                            </div>
                         </div>
 
-                        {/* Content Area */}
-                        <div className="w-full lg:w-3/4 xl:w-4/5">
-                            {/* Mobile Filter Toggle */}
-                            <div className="flex flex-col md:flex-row gap-4 mb-8 lg:hidden">
-                                <div className="relative flex-grow">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark" size={20} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search auctions..."
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent"
-                                        value={uiFilters.search}
-                                        onChange={handleFilterChange}
-                                        name="search"
+                        {/* Main Content */}
+                        <div className="container mx-auto py-8">
+                            <div className="flex flex-col lg:flex-row gap-8">
+                                {/* Filters Sidebar */}
+                                <div className="hidden lg:block lg:w-1/4 xl:w-1/5">
+                                    <FiltersSection
+                                        uiFilters={uiFilters}
+                                        setUiFilters={setUiFilters}  // Add this line
+                                        categories={categories}
+                                        loadingCategories={loadingCategories}
+                                        handleFilterChange={handleFilterChange}
+                                        handleRangeChange={handleRangeChange}
+                                        resetFilters={resetFilters}
+                                        toggleFilterSection={toggleFilterSection}
+                                        activeFilterSections={activeFilterSections}
+                                        setShowMobileFilters={setShowMobileFilters}
+                                        parentCategories={parentCategories}
+                                        subCategories={subCategories}
+                                        selectedParent={selectedParent}
+                                        setSelectedParent={setSelectedParent}
+                                        updateFilters={updateFilters}  // Add this line
+                                        location={location}  // Add this line
                                     />
                                 </div>
-                                <button
-                                    onClick={() => setShowMobileFilters(true)}
-                                    className="flex items-center justify-center gap-2 px-4 py-3 bg-bg-secondary dark:bg-bg-primary border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 md:w-auto font-medium text-text-primary dark:text-text-primary-dark"
-                                >
-                                    <SlidersHorizontal size={20} />
-                                    <span>Filters</span>
-                                </button>
-                            </div>
 
-                            {/* Results Count and Sort */}
-                            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
-                                <p className="text-text-secondary dark:text-text-secondary-dark">
-                                    {loading ? "Loading auctions..." : `Showing ${auctions.length} of ${pagination?.totalAuctions || 0} auctions`}
-                                </p>
-
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-text-secondary dark:text-text-secondary-dark text-sm">Sort by:</span>
-                                        <select
-                                            className="border border-gray-200 dark:border-gray-700 bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent"
-                                            value={`${uiFilters.sortBy}-${uiFilters.sortOrder}`}
-                                            onChange={handleSortChange}
+                                {/* Content Area */}
+                                <div className="w-full lg:w-3/4 xl:w-4/5">
+                                    {/* Mobile Filter Toggle */}
+                                    <div className="flex flex-col md:flex-row gap-4 mb-8 lg:hidden">
+                                        <div className="relative flex-grow">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark" size={20} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search auctions..."
+                                                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent"
+                                                value={uiFilters.search}
+                                                onChange={handleFilterChange}
+                                                name="search"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => setShowMobileFilters(true)}
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-bg-secondary dark:bg-bg-primary border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 md:w-auto font-medium text-text-primary dark:text-text-primary-dark"
                                         >
-                                            {sortOptions.map(option => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            <SlidersHorizontal size={20} />
+                                            <span>Filters</span>
+                                        </button>
                                     </div>
+
+                                    {/* Results Count and Sort */}
+                                    <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
+                                        <p className="text-text-secondary dark:text-text-secondary-dark">
+                                            {loading ? "Loading auctions..." : `Showing ${auctions.length} of ${pagination?.totalAuctions || 0} auctions`}
+                                        </p>
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-text-secondary dark:text-text-secondary-dark text-sm">Sort by:</span>
+                                                <select
+                                                    className="border border-gray-200 dark:border-gray-700 bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent"
+                                                    value={`${uiFilters.sortBy}-${uiFilters.sortOrder}`}
+                                                    onChange={handleSortChange}
+                                                >
+                                                    {sortOptions.map(option => (
+                                                        <option key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Auction Grid */}
+                                    {loading && auctions.length === 0 ? (
+                                        // Loading Skeleton based on view mode
+                                        viewMode === "grid" ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
+                                                {[...Array(6)].map((_, i) => (
+                                                    <div key={i} className="border border-gray-200 dark:border-gray-700 p-4 bg-bg-secondary dark:bg-bg-primary rounded-xl shadow-sm h-96 animate-pulse">
+                                                        <div className="bg-gray-200 dark:bg-gray-700 h-56 rounded-tr-3xl rounded-bl-3xl"></div>
+                                                        <div className="my-3 h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                                                        <div className="my-2 h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                                                        <div className="my-2 h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                                                        <div className="flex gap-3 items-center mt-4">
+                                                            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex-grow"></div>
+                                                            <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            // List View Loading Skeleton
+                                            <div className="space-y-2">
+                                                {Array.from({ length: 3 }).map((_, index) => (
+                                                    <div key={index} className="bg-bg-secondary dark:bg-bg-primary rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse">
+                                                        <div className="flex flex-col lg:flex-row gap-5">
+                                                            <div className="lg:w-64">
+                                                                <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                                                    {Array.from({ length: 4 }).map((_, i) => (
+                                                                        <div key={i} className="space-y-2">
+                                                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                                                                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="flex gap-4">
+                                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    ) : auctions.length > 0 ? (
+                                        <>
+                                            {viewMode === "grid" ? (
+                                                // Grid View
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
+                                                    {auctions.map(auction => (
+                                                        <AuctionCard
+                                                            key={auction._id}
+                                                            auction={auction}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                // List View
+                                                <div className="space-y-2">
+                                                    {auctions.map((auction) => (
+                                                        <AuctionListItem
+                                                            key={auction._id}
+                                                            auction={auction}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Load More Button */}
+                                            {pagination?.currentPage < pagination?.totalPages && (
+                                                <div className="flex justify-center mt-12">
+                                                    <button
+                                                        onClick={handleLoadMore}
+                                                        disabled={loadingMore}
+                                                        className="px-8 py-3 bg-bg-primary dark:bg-bg-secondary text-text-primary-dark dark:text-text-primary rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                                    >
+                                                        {loadingMore ? (
+                                                            <>
+                                                                <Loader size={16} className="animate-spin" />
+                                                                Loading...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                Load More Auctions
+                                                                <span className="text-xs bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
+                                                                    {pagination.totalAuctions - auctions.length} more
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* End of Auctions Message */}
+                                            {pagination?.currentPage >= pagination?.totalPages && auctions.length > 0 && (
+                                                <div className="text-center py-8 text-text-secondary dark:text-text-secondary-dark">
+                                                    <p>You've seen all {pagination.totalAuctions} auctions</p>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <Filter size={48} className="mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
+                                            <h3 className="text-xl font-medium text-text-primary dark:text-text-primary-dark mb-2">No auctions found</h3>
+                                            <p className="text-text-secondary dark:text-text-secondary-dark">Try adjusting your filters to find what you're looking for.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Auction Grid */}
-                            {loading && auctions.length === 0 ? (
-                                // Loading Skeleton based on view mode
-                                viewMode === "grid" ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
-                                        {[...Array(6)].map((_, i) => (
-                                            <div key={i} className="border border-gray-200 dark:border-gray-700 p-4 bg-bg-secondary dark:bg-bg-primary rounded-xl shadow-sm h-96 animate-pulse">
-                                                <div className="bg-gray-200 dark:bg-gray-700 h-56 rounded-tr-3xl rounded-bl-3xl"></div>
-                                                <div className="my-3 h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                                                <div className="my-2 h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                                                <div className="my-2 h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-                                                <div className="flex gap-3 items-center mt-4">
-                                                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex-grow"></div>
-                                                    <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    // List View Loading Skeleton
-                                    <div className="space-y-2">
-                                        {Array.from({ length: 3 }).map((_, index) => (
-                                            <div key={index} className="bg-bg-secondary dark:bg-bg-primary rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse">
-                                                <div className="flex flex-col lg:flex-row gap-5">
-                                                    <div className="lg:w-64">
-                                                        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                                            {Array.from({ length: 4 }).map((_, i) => (
-                                                                <div key={i} className="space-y-2">
-                                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                                                                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="flex gap-4">
-                                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            ) : auctions.length > 0 ? (
-                                <>
-                                    {viewMode === "grid" ? (
-                                        // Grid View
-                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
-                                            {auctions.map(auction => (
-                                                <AuctionCard
-                                                    key={auction._id}
-                                                    auction={auction}
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        // List View
-                                        <div className="space-y-2">
-                                            {auctions.map((auction) => (
-                                                <AuctionListItem
-                                                    key={auction._id}
-                                                    auction={auction}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Load More Button */}
-                                    {pagination?.currentPage < pagination?.totalPages && (
-                                        <div className="flex justify-center mt-12">
-                                            <button
-                                                onClick={handleLoadMore}
-                                                disabled={loadingMore}
-                                                className="px-8 py-3 bg-bg-primary dark:bg-bg-secondary text-text-primary-dark dark:text-text-primary rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                                            >
-                                                {loadingMore ? (
-                                                    <>
-                                                        <Loader size={16} className="animate-spin" />
-                                                        Loading...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Load More Auctions
-                                                        <span className="text-xs bg-white/20 dark:bg-black/20 px-2 py-1 rounded-full">
-                                                            {pagination.totalAuctions - auctions.length} more
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* End of Auctions Message */}
-                                    {pagination?.currentPage >= pagination?.totalPages && auctions.length > 0 && (
-                                        <div className="text-center py-8 text-text-secondary dark:text-text-secondary-dark">
-                                            <p>You've seen all {pagination.totalAuctions} auctions</p>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <Filter size={48} className="mx-auto text-text-secondary dark:text-text-secondary-dark mb-4" />
-                                    <h3 className="text-xl font-medium text-text-primary dark:text-text-primary-dark mb-2">No auctions found</h3>
-                                    <p className="text-text-secondary dark:text-text-secondary-dark">Try adjusting your filters to find what you're looking for.</p>
+                        {/* Mobile Filters Overlay */}
+                        {showMobileFilters && (
+                            <div className="fixed inset-0 z-50 lg:hidden">
+                                <div className="absolute inset-0 bg-pure-black/50 dark:bg-pure-black/70" onClick={() => setShowMobileFilters(false)}></div>
+                                <div className="absolute left-0 top-0 h-full w-4/5 max-w-sm bg-bg-secondary dark:bg-bg-primary overflow-y-auto p-6">
+                                    <FiltersSection
+                                        uiFilters={uiFilters}
+                                        setUiFilters={setUiFilters}  // Add this line
+                                        categories={categories}
+                                        loadingCategories={loadingCategories}
+                                        handleFilterChange={handleFilterChange}
+                                        handleRangeChange={handleRangeChange}
+                                        resetFilters={resetFilters}
+                                        toggleFilterSection={toggleFilterSection}
+                                        activeFilterSections={activeFilterSections}
+                                        setShowMobileFilters={setShowMobileFilters}
+                                        parentCategories={parentCategories}
+                                        subCategories={subCategories}
+                                        selectedParent={selectedParent}
+                                        setSelectedParent={setSelectedParent}
+                                        updateFilters={updateFilters}  // Add this line
+                                        location={location}  // Add this line
+                                    />
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
-                </div>
+                </Container>
+            ) : <div className="min-h-[70vh]"></div>}
 
-                {/* Mobile Filters Overlay */}
-                {showMobileFilters && (
-                    <div className="fixed inset-0 z-50 lg:hidden">
-                        <div className="absolute inset-0 bg-pure-black/50 dark:bg-pure-black/70" onClick={() => setShowMobileFilters(false)}></div>
-                        <div className="absolute left-0 top-0 h-full w-4/5 max-w-sm bg-bg-secondary dark:bg-bg-primary overflow-y-auto p-6">
-                            <FiltersSection
-                                uiFilters={uiFilters}
-                                setUiFilters={setUiFilters}  // Add this line
-                                categories={categories}
-                                loadingCategories={loadingCategories}
-                                handleFilterChange={handleFilterChange}
-                                handleRangeChange={handleRangeChange}
-                                resetFilters={resetFilters}
-                                toggleFilterSection={toggleFilterSection}
-                                activeFilterSections={activeFilterSections}
-                                setShowMobileFilters={setShowMobileFilters}
-                                parentCategories={parentCategories}
-                                subCategories={subCategories}
-                                selectedParent={selectedParent}
-                                setSelectedParent={setSelectedParent}
-                                updateFilters={updateFilters}  // Add this line
-                                location={location}  // Add this line
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
-        </Container>
+            {/* Subscription Modal */}
+            <SubscriptionModal
+                isOpen={showSubscriptionModal}
+                onClose={() => {
+                    setShowSubscriptionModal(false);
+                    navigate("/");
+                }}
+                onSuccess={() => {
+                    checkSubscription();
+                    setHasCheckedAccess(false);
+                }}
+            />
+        </>
+
     );
 }
 

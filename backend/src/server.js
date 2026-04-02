@@ -26,6 +26,7 @@ import buyNowPaymentRouter from "./routes/buyNowPayment.route.js";
 import shippingRouter from "./routes/shipping.route.js";
 import checkoutRouter from "./routes/checkout.route.js";
 import subscriptionRouter from "./routes/subscription.route.js";
+import userSubscriptionRouter from "./routes/userSubscription.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,6 +86,7 @@ app.use("/api/v1/payouts", payoutRouter);
 app.use("/api/v1/buy-now-payment", buyNowPaymentRouter);
 app.use("/api/v1/shipping", shippingRouter);
 app.use("/api/v1/checkout", checkoutRouter);
+app.use("/api/v1/user-subscription", userSubscriptionRouter);
 
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {

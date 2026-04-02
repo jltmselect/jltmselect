@@ -1023,7 +1023,7 @@ const CategoryFormModal = ({
                                     value={formData.name}
                                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                    placeholder="e.g., tshirt, pant"
+                                    placeholder="e.g., sofa, table, chair..."
                                     required
                                 />
                             </div>
@@ -1509,7 +1509,7 @@ const FieldForm = ({
                             }));
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="e.g., Engine Power"
+                        placeholder="e.g., Brand, Color, Material..."
                         required
                     />
                     <p className="text-xs text-gray-500 mt-1">

@@ -171,6 +171,38 @@ export class StripeService {
     }
   }
 
+  // Attach payment method to customer
+  static async attachPaymentMethod(customerId, paymentMethodId) {
+    try {
+      const paymentMethod = await stripe.paymentMethods.attach(
+        paymentMethodId,
+        { customer: customerId }
+      );
+
+      // Set as default payment method
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+
+      return paymentMethod;
+    } catch (error) {
+      throw new Error(`Failed to attach payment method: ${error.message}`);
+    }
+  }
+
+  static async refundPayment(paymentIntentId) {
+    try {
+      const refund = await stripe.refunds.create({
+        payment_intent: paymentIntentId,
+      });
+      return refund;
+    } catch (error) {
+      throw new Error(`Refund failed: ${error.message}`);
+    }
+  }
+
   // Cancel a payment intent (to release authorization holds)
   static async cancelPaymentIntent(paymentIntentId) {
     try {

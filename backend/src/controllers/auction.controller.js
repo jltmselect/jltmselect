@@ -29,6 +29,7 @@ export const createAuction = async (req, res) => {
       subTitle,
       features,
       description,
+      specifications,
       location,
       videoLink,
       startPrice,
@@ -41,44 +42,23 @@ export const createAuction = async (req, res) => {
       endDate,
     } = req.body;
 
-    // only active sellers can create auctions
-    if (!seller.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Only active sellers can create auctions",
-      });
-    }
-
-    // only active sellers can create auctions
-    if (!seller.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Only verified sellers can create auctions",
-      });
-    }
-
-    // only active sellers can create auctions
-    if (seller.identificationStatus !== "verified") {
-      return res.status(403).json({
-        success: false,
-        message: "Only sellers with verified ID can create auctions",
-      });
-    }
-
-    // Parse categories
     let categoriesArray = [];
     if (req.body.categories) {
       try {
+        // Try to parse it as JSON first (since you're sending JSON.stringify from frontend)
         const parsed = JSON.parse(req.body.categories);
+        // If parsed is an array, use it directly
         if (Array.isArray(parsed)) {
           categoriesArray = parsed;
         } else {
           categoriesArray = [parsed];
         }
       } catch (e) {
+        // If it's not JSON, handle as regular string or array
         if (Array.isArray(req.body.categories)) {
           categoriesArray = req.body.categories;
         } else if (typeof req.body.categories === "string") {
+          // Split by comma if it's a comma-separated string, otherwise single item
           categoriesArray = req.body.categories.includes(",")
             ? req.body.categories.split(",").map((c) => c.trim())
             : [req.body.categories];
@@ -94,50 +74,11 @@ export const createAuction = async (req, res) => {
       });
     }
 
+    // Basic validation
     if (!title || !description || !auctionType || !startDate || !endDate) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
-      });
-    }
-
-    // Parse bundle items
-    let bundleItems = [];
-    if (req.body.bundleItems) {
-      try {
-        bundleItems = JSON.parse(req.body.bundleItems);
-
-        // Validate at least one item
-        if (!bundleItems || bundleItems.length === 0) {
-          return res.status(400).json({
-            success: false,
-            message: "At least one bundle item is required",
-          });
-        }
-
-        // Validate each item has specifications
-        for (const [index, item] of bundleItems.entries()) {
-          if (
-            !item.specifications ||
-            Object.keys(item.specifications).length === 0
-          ) {
-            return res.status(400).json({
-              success: false,
-              message: `Item #${index + 1} has no specifications`,
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing bundleItems:", e);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid bundle items format",
-        });
-      }
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Bundle items are required",
       });
     }
 
@@ -158,6 +99,20 @@ export const createAuction = async (req, res) => {
         success: false,
         message: "Bid increment is required for standard and reserve auctions",
       });
+    }
+
+    // Parse specifications from JSON string to object
+    let parsedSpecifications = {};
+    if (specifications) {
+      try {
+        parsedSpecifications = JSON.parse(specifications);
+      } catch (parseError) {
+        console.error("Error parsing specifications:", parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid specifications format",
+        });
+      }
     }
 
     // Validate reserve price for reserve auctions
@@ -193,6 +148,12 @@ export const createAuction = async (req, res) => {
         ? req.files.photos
         : [req.files.photos];
 
+      // Get captions from request body
+      // const photoCaptions = req.body.photoCaptions || [];
+      const photoCaptions = Array.isArray(req.body.photoCaptions)
+        ? req.body.photoCaptions
+        : [];
+
       for (const [index, photo] of photos.entries()) {
         try {
           const result = await uploadImageToCloudinary(
@@ -204,7 +165,7 @@ export const createAuction = async (req, res) => {
             publicId: result.public_id,
             filename: photo.originalname,
             order: index,
-            caption: "",
+            caption: photoCaptions[index] || "", // ADD THIS LINE
           });
         } catch (uploadError) {
           console.error("Photo upload error:", uploadError);
@@ -216,11 +177,17 @@ export const createAuction = async (req, res) => {
       }
     }
 
-    // Upload documents
+    // For documents:
     if (req.files && req.files.documents) {
       const documents = Array.isArray(req.files.documents)
         ? req.files.documents
         : [req.files.documents];
+
+      // Get document captions
+      // const documentCaptions = req.body.documentCaptions || [];
+      const newDocumentCaptions = Array.isArray(req.body.newDocumentCaptions)
+        ? req.body.newDocumentCaptions
+        : [];
 
       for (const [index, doc] of documents.entries()) {
         try {
@@ -235,7 +202,7 @@ export const createAuction = async (req, res) => {
             filename: doc.originalname,
             originalName: doc.originalname,
             resourceType: "raw",
-            caption: "",
+            caption: documentCaptions[index] || "", // ADD THIS
           });
         } catch (uploadError) {
           console.error("Document upload error:", uploadError);
@@ -243,11 +210,19 @@ export const createAuction = async (req, res) => {
       }
     }
 
-    // Upload service records
+    // For service records:
     if (req.files && req.files.serviceRecords) {
       const serviceRecords = Array.isArray(req.files.serviceRecords)
         ? req.files.serviceRecords
         : [req.files.serviceRecords];
+
+      // Get service record captions
+      // const serviceRecordCaptions = req.body.serviceRecordCaptions || [];
+      const serviceRecordCaptions = Array.isArray(
+        req.body.serviceRecordCaptions,
+      )
+        ? req.body.serviceRecordCaptions
+        : [];
 
       for (const [index, record] of serviceRecords.entries()) {
         try {
@@ -261,14 +236,13 @@ export const createAuction = async (req, res) => {
             filename: record.originalname,
             originalName: record.originalname,
             order: index,
-            caption: "",
+            caption: serviceRecordCaptions[index] || "", // ADD THIS
           });
         } catch (uploadError) {
           console.error("Service record upload error:", uploadError);
         }
       }
     }
-
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -281,97 +255,14 @@ export const createAuction = async (req, res) => {
       });
     }
 
-    // ========== GENERATE AGGREGATED SPECIFICATIONS FROM BUNDLE ITEMS ==========
-    const aggregatedSpecs = {};
-
-    if (bundleItems && bundleItems.length > 0) {
-      // Collect all unique values for common fields
-      const brands = new Set();
-      const sizes = new Set();
-      const colors = new Set();
-      const conditions = new Set();
-      const materials = new Set();
-
-      let totalQuantity = 0;
-      let totalUniqueItems = bundleItems.length;
-      let minPrice = Infinity;
-      let maxPrice = -Infinity;
-
-      bundleItems.forEach((item) => {
-        const quantity = item.quantity || 1;
-        totalQuantity += quantity;
-
-        // Extract common fields if they exist
-        const specs = item.specifications;
-        if (specs.brand) brands.add(specs.brand);
-        if (specs.size) sizes.add(specs.size);
-        if (specs.color) colors.add(specs.color);
-        if (specs.condition) conditions.add(specs.condition);
-        if (specs.material) materials.add(specs.material);
-
-        // Track price range if items have individual values
-        if (specs.retailValue) {
-          const price = parseFloat(specs.retailValue);
-          if (price < minPrice) minPrice = price;
-          if (price > maxPrice) maxPrice = price;
-        }
-      });
-
-      aggregatedSpecs.totalItems = totalQuantity;
-      aggregatedSpecs.uniqueItems = totalUniqueItems;
-      aggregatedSpecs.brands = Array.from(brands);
-      aggregatedSpecs.sizes = Array.from(sizes);
-      aggregatedSpecs.colors = Array.from(colors);
-      aggregatedSpecs.conditions = Array.from(conditions);
-      aggregatedSpecs.materials = Array.from(materials);
-
-      if (minPrice !== Infinity) {
-        aggregatedSpecs.minRetailValue = minPrice;
-        aggregatedSpecs.maxRetailValue = maxPrice;
-      }
-
-      // Store category info for filtering
-      if (categoriesArray.length > 0) {
-        aggregatedSpecs.categories = categoriesArray;
-      }
-    }
-    // ========================================================================
-
-    // Parse parcel data if provided
-    let parcelData = {};
-    if (req.body.parcel) {
-      try {
-        parcelData =
-          typeof req.body.parcel === "string"
-            ? JSON.parse(req.body.parcel)
-            : req.body.parcel;
-      } catch (e) {
-        console.error("Error parsing parcel data:", e);
-      }
-    }
-
     // Create auction data object
     const auctionData = {
       title,
       subTitle: subTitle || "",
       categories: categoriesArray,
       features: features || "",
-      parcel: {
-        weight: parcelData.weight ? parseFloat(parcelData.weight) : undefined,
-        length: parcelData.length ? parseFloat(parcelData.length) : undefined,
-        width: parcelData.width ? parseFloat(parcelData.width) : undefined,
-        height: parcelData.height ? parseFloat(parcelData.height) : undefined,
-        distanceUnit: parcelData.distanceUnit || "in",
-        massUnit: parcelData.massUnit || "lb",
-      },
       description,
-      specifications: new Map(Object.entries(aggregatedSpecs)), // Store aggregated data only
-      bundleItems: bundleItems.map((item, index) => ({
-        itemNumber: index + 1,
-        quantity: item.quantity || 1,
-        specifications: new Map(Object.entries(item.specifications)),
-        notes: item.notes || "",
-      })),
+      specifications: new Map(Object.entries(parsedSpecifications)),
       location: location || "",
       videoLink: videoLink || "",
       startPrice: parseFloat(startPrice),
@@ -384,7 +275,10 @@ export const createAuction = async (req, res) => {
       photos: uploadedPhotos,
       documents: uploadedDocuments,
       serviceRecords: uploadedServiceRecords,
-      status: "draft",
+      status:
+        auctionType === "buy_now" || auctionType === "giveaway" || seller?.userType === "admin"
+          ? "active"
+          : "draft",
     };
 
     // Add bid increment for standard and reserve auctions
@@ -413,13 +307,13 @@ export const createAuction = async (req, res) => {
 
     const auction = await Auction.create(auctionData);
 
-    // Schedule activation job
+    // Schedule activation job (always needed for all types)
     await agendaService.scheduleAuctionActivation(
       auction._id,
       auction.startDate,
     );
 
-    // Only schedule end job for timed auctions
+    // Only schedule end job for timed auctions (standard/reserve)
     if (
       auction.auctionType === "standard" ||
       auction.auctionType === "reserve"
@@ -432,7 +326,7 @@ export const createAuction = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Bundle auction created successfully",
+      message: "Auction created successfully",
       data: {
         auction,
       },
@@ -2002,37 +1896,37 @@ export const getWonAuctions = async (req, res) => {
       // Add shipping tracking information - Complete schema structure
       shipping: auction.shipping
         ? {
-            rate: {
-              provider: auction.shipping.rate?.provider,
-              serviceLevel: {
-                name: auction.shipping.rate?.serviceLevel?.name,
-                token: auction.shipping.rate?.serviceLevel?.token,
-                terms: auction.shipping.rate?.serviceLevel?.terms,
-              },
-              amount: auction.shipping.rate?.amount,
-              currency: auction.shipping.rate?.currency,
-              estimatedDays: auction.shipping.rate?.estimatedDays,
+          rate: {
+            provider: auction.shipping.rate?.provider,
+            serviceLevel: {
+              name: auction.shipping.rate?.serviceLevel?.name,
+              token: auction.shipping.rate?.serviceLevel?.token,
+              terms: auction.shipping.rate?.serviceLevel?.terms,
             },
-            transaction: {
-              objectId: auction.shipping.transaction?.objectId,
-              status: auction.shipping.transaction?.status,
-              labelUrl: auction.shipping.transaction?.labelUrl,
-              trackingNumber: auction.shipping.transaction?.trackingNumber,
-              trackingUrl: auction.shipping.transaction?.trackingUrl,
-              commercialInvoiceUrl:
-                auction.shipping.transaction?.commercialInvoiceUrl,
-              purchasedAt: auction.shipping.transaction?.purchasedAt,
-              messages: auction.shipping.transaction?.messages,
-            },
-            tracking: {
-              status: auction.shipping.tracking?.status,
-              statusDetails: auction.shipping.tracking?.statusDetails,
-              estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
-              actualDelivery: auction.shipping.tracking?.actualDelivery,
-              trackingHistory: auction.shipping.tracking?.trackingHistory,
-              lastUpdated: auction.shipping.tracking?.lastUpdated,
-            },
-          }
+            amount: auction.shipping.rate?.amount,
+            currency: auction.shipping.rate?.currency,
+            estimatedDays: auction.shipping.rate?.estimatedDays,
+          },
+          transaction: {
+            objectId: auction.shipping.transaction?.objectId,
+            status: auction.shipping.transaction?.status,
+            labelUrl: auction.shipping.transaction?.labelUrl,
+            trackingNumber: auction.shipping.transaction?.trackingNumber,
+            trackingUrl: auction.shipping.transaction?.trackingUrl,
+            commercialInvoiceUrl:
+              auction.shipping.transaction?.commercialInvoiceUrl,
+            purchasedAt: auction.shipping.transaction?.purchasedAt,
+            messages: auction.shipping.transaction?.messages,
+          },
+          tracking: {
+            status: auction.shipping.tracking?.status,
+            statusDetails: auction.shipping.tracking?.statusDetails,
+            estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
+            actualDelivery: auction.shipping.tracking?.actualDelivery,
+            trackingHistory: auction.shipping.tracking?.trackingHistory,
+            lastUpdated: auction.shipping.tracking?.lastUpdated,
+          },
+        }
         : null,
 
       // Also include payment info for reference
@@ -2047,19 +1941,19 @@ export const getWonAuctions = async (req, res) => {
       hasInvoice: !!(auction.invoice && auction.invoice.url),
       invoice: auction.invoice
         ? {
-            url: auction.invoice.url,
-            filename: auction.invoice.filename,
-            uploadedAt: auction.invoice.uploadedAt,
-            uploadedBy: auction.invoice.uploadedBy
-              ? {
-                  _id: auction.invoice.uploadedBy._id.toString(),
-                  name:
-                    auction.invoice.uploadedBy.name ||
-                    auction.invoice.uploadedBy.username,
-                  email: auction.invoice.uploadedBy.email,
-                }
-              : null,
-          }
+          url: auction.invoice.url,
+          filename: auction.invoice.filename,
+          uploadedAt: auction.invoice.uploadedAt,
+          uploadedBy: auction.invoice.uploadedBy
+            ? {
+              _id: auction.invoice.uploadedBy._id.toString(),
+              name:
+                auction.invoice.uploadedBy.name ||
+                auction.invoice.uploadedBy.username,
+              email: auction.invoice.uploadedBy.email,
+            }
+            : null,
+        }
         : null,
 
       // Status & Timing
@@ -2093,14 +1987,14 @@ export const getWonAuctions = async (req, res) => {
       // Winner Info (if sold)
       winner: auction.winner
         ? {
-            _id: auction.winner._id.toString(),
-            name:
-              auction.winner.firstName && auction.winner.lastName
-                ? `${auction.winner.firstName} ${auction.winner.lastName}`
-                : auction.winner.username,
-            username: auction.winner.username,
-            email: auction.winner.email,
-          }
+          _id: auction.winner._id.toString(),
+          name:
+            auction.winner.firstName && auction.winner.lastName
+              ? `${auction.winner.firstName} ${auction.winner.lastName}`
+              : auction.winner.username,
+          username: auction.winner.username,
+          email: auction.winner.email,
+        }
         : null,
 
       // Messages
@@ -2116,9 +2010,9 @@ export const getWonAuctions = async (req, res) => {
       // Current bidder info
       currentBidder: auction.currentBidder
         ? {
-            _id: auction.currentBidder._id.toString(),
-            name: auction.currentBidder.name || auction.currentBidder.username,
-          }
+          _id: auction.currentBidder._id.toString(),
+          name: auction.currentBidder.name || auction.currentBidder.username,
+        }
         : null,
     }));
 
@@ -2131,11 +2025,11 @@ export const getWonAuctions = async (req, res) => {
     const averageSavings =
       auctions.length > 0
         ? auctions.reduce(
-            (sum, auction) =>
-              sum +
-              auction.startPrice / (auction.finalPrice || auction.currentPrice),
-            0,
-          ) / auctions.length
+          (sum, auction) =>
+            sum +
+            auction.startPrice / (auction.finalPrice || auction.currentPrice),
+          0,
+        ) / auctions.length
         : 0;
 
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -2294,40 +2188,40 @@ export const getSoldAuctions = async (req, res) => {
         winningBid: auction.finalPrice || auction.currentPrice,
         startTime: auction.startDate,
         endTime: auction.endDate,
-        
+
         // ✅ Add shipping tracking information - Complete schema structure
         shipping: auction.shipping
           ? {
-              rate: {
-                provider: auction.shipping.rate?.provider,
-                serviceLevel: {
-                  name: auction.shipping.rate?.serviceLevel?.name,
-                  token: auction.shipping.rate?.serviceLevel?.token,
-                  terms: auction.shipping.rate?.serviceLevel?.terms,
-                },
-                amount: auction.shipping.rate?.amount,
-                currency: auction.shipping.rate?.currency,
-                estimatedDays: auction.shipping.rate?.estimatedDays,
+            rate: {
+              provider: auction.shipping.rate?.provider,
+              serviceLevel: {
+                name: auction.shipping.rate?.serviceLevel?.name,
+                token: auction.shipping.rate?.serviceLevel?.token,
+                terms: auction.shipping.rate?.serviceLevel?.terms,
               },
-              transaction: {
-                objectId: auction.shipping.transaction?.objectId,
-                status: auction.shipping.transaction?.status,
-                labelUrl: auction.shipping.transaction?.labelUrl,
-                trackingNumber: auction.shipping.transaction?.trackingNumber,
-                trackingUrl: auction.shipping.transaction?.trackingUrl,
-                commercialInvoiceUrl: auction.shipping.transaction?.commercialInvoiceUrl,
-                purchasedAt: auction.shipping.transaction?.purchasedAt,
-                messages: auction.shipping.transaction?.messages,
-              },
-              tracking: {
-                status: auction.shipping.tracking?.status,
-                statusDetails: auction.shipping.tracking?.statusDetails,
-                estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
-                actualDelivery: auction.shipping.tracking?.actualDelivery,
-                trackingHistory: auction.shipping.tracking?.trackingHistory,
-                lastUpdated: auction.shipping.tracking?.lastUpdated,
-              },
-            }
+              amount: auction.shipping.rate?.amount,
+              currency: auction.shipping.rate?.currency,
+              estimatedDays: auction.shipping.rate?.estimatedDays,
+            },
+            transaction: {
+              objectId: auction.shipping.transaction?.objectId,
+              status: auction.shipping.transaction?.status,
+              labelUrl: auction.shipping.transaction?.labelUrl,
+              trackingNumber: auction.shipping.transaction?.trackingNumber,
+              trackingUrl: auction.shipping.transaction?.trackingUrl,
+              commercialInvoiceUrl: auction.shipping.transaction?.commercialInvoiceUrl,
+              purchasedAt: auction.shipping.transaction?.purchasedAt,
+              messages: auction.shipping.transaction?.messages,
+            },
+            tracking: {
+              status: auction.shipping.tracking?.status,
+              statusDetails: auction.shipping.tracking?.statusDetails,
+              estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
+              actualDelivery: auction.shipping.tracking?.actualDelivery,
+              trackingHistory: auction.shipping.tracking?.trackingHistory,
+              lastUpdated: auction.shipping.tracking?.lastUpdated,
+            },
+          }
           : null,
 
         // ✅ Add payment info
@@ -2338,47 +2232,47 @@ export const getSoldAuctions = async (req, res) => {
         hasInvoice: !!(auction.invoice && auction.invoice.url),
         invoice: auction.invoice
           ? {
-              url: auction.invoice.url,
-              filename: auction.invoice.filename,
-              uploadedAt: auction.invoice.uploadedAt,
-              uploadedBy: auction.invoice.uploadedBy
-                ? {
-                    _id: auction.invoice.uploadedBy._id.toString(),
-                    name:
-                      auction.invoice.uploadedBy.name ||
-                      auction.invoice.uploadedBy.username,
-                    email: auction.invoice.uploadedBy.email,
-                  }
-                : null,
-            }
+            url: auction.invoice.url,
+            filename: auction.invoice.filename,
+            uploadedAt: auction.invoice.uploadedAt,
+            uploadedBy: auction.invoice.uploadedBy
+              ? {
+                _id: auction.invoice.uploadedBy._id.toString(),
+                name:
+                  auction.invoice.uploadedBy.name ||
+                  auction.invoice.uploadedBy.username,
+                email: auction.invoice.uploadedBy.email,
+              }
+              : null,
+          }
           : null,
 
         winner: auction.winner
           ? {
-              id: auction.winner._id.toString(),
-              name:
-                auction.winner.firstName && auction.winner.lastName
-                  ? `${auction.winner.firstName} ${auction.winner.lastName}`
-                  : auction.winner.username,
-              username: auction.winner.username,
-              email: auction.winner.email,
-              image: auction.winner.image,
-              phone: auction.winner.phone,
-              company: auction.winner.company,
-              address: auction.winner.address,
-              ip: "Not Available",
-              bidHistory: auction.bids
-                .filter(
-                  (bid) =>
-                    bid.bidder?._id?.toString() ===
-                    auction.winner?._id?.toString(),
-                )
-                .map((bid) => ({
-                  amount: bid.amount,
-                  time: bid.timestamp,
-                }))
-                .sort((a, b) => new Date(a.time) - new Date(b.time)),
-            }
+            id: auction.winner._id.toString(),
+            name:
+              auction.winner.firstName && auction.winner.lastName
+                ? `${auction.winner.firstName} ${auction.winner.lastName}`
+                : auction.winner.username,
+            username: auction.winner.username,
+            email: auction.winner.email,
+            image: auction.winner.image,
+            phone: auction.winner.phone,
+            company: auction.winner.company,
+            address: auction.winner.address,
+            ip: "Not Available",
+            bidHistory: auction.bids
+              .filter(
+                (bid) =>
+                  bid.bidder?._id?.toString() ===
+                  auction.winner?._id?.toString(),
+              )
+              .map((bid) => ({
+                amount: bid.amount,
+                time: bid.timestamp,
+              }))
+              .sort((a, b) => new Date(a.time) - new Date(b.time)),
+          }
           : null,
         bidders: sortedBidders.filter(
           (bidder) =>

@@ -1,7 +1,8 @@
+// Register.jsx - Updated version
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Gavel, Store, Phone, ChevronDown, Upload, AlertCircle, FileText, X, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Gavel, Store, Phone, ChevronDown, Upload, AlertCircle, FileText, X, ArrowLeft, CreditCard, Calendar, Clock, Check } from 'lucide-react';
 import { darkLogo, otherData } from '../assets';
 import { loadStripe } from '@stripe/stripe-js';
 import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
@@ -98,17 +99,150 @@ const countryCodes = [
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-// CardSection component (same as before)
-const CardSection = () => {
+// Plan Selection Component
+const PlanSelectionStep = ({ selectedPlan, onPlanSelect, isLoading }) => {
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        fetchPlans();
+    }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const { data } = await axios.get(`${import.meta.env.VITE_DOMAIN_URL}/api/v1/subscriptions/public/active`);
+            if (data.success) {
+                setPlans(data.data);
+            }
+        } catch (err) {
+            setError('Failed to load subscription plans');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading plans...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-12">
+                <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+                <p className="text-red-500">{error}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="text-center">
+                <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Choose Your Plan</h3>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                    Select a subscription plan to access auctions
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {plans.map((plan) => (
+                    <div
+                        key={plan._id}
+                        className={`relative border rounded-lg p-6 cursor-pointer transition-all ${selectedPlan?._id === plan._id
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                            : 'border-gray-200 dark:border-bg-primary-light hover:border-primary/50'
+                            }`}
+                        onClick={() => onPlanSelect(plan)}
+                    >
+                        {plan.isPopular && (
+                            <div className="absolute -top-3 right-4">
+                                <span className="bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                    Popular
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="text-center">
+                            <h4 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+                                {plan.title}
+                            </h4>
+                            {plan.tag && (
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
+                                    {plan.tag}
+                                </p>
+                            )}
+                            <div className="mt-4">
+                                <span className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+                                    ${plan.price.amount}
+                                </span>
+                                <span className="text-text-secondary dark:text-text-secondary-dark">
+                                    /{plan.duration.value} {plan.duration.unit}{plan.duration.value > 1 ? 's' : ''}
+                                </span>
+                            </div>
+                        </div>
+
+                        <ul className="mt-6 space-y-3">
+                            {plan.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                    <Check size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
+                                    <span className="text-text-secondary dark:text-text-secondary-dark">
+                                        {feature.text}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {selectedPlan?._id === plan._id && (
+                            <div className="absolute bottom-4 right-4">
+                                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                    <Check size={14} className="text-white" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Updated Card Section with Plan Details
+const CardSectionWithPlan = ({ selectedPlan }) => {
     const stripe = useStripe();
     const elements = useElements();
 
+    if (!selectedPlan) return null;
+
     return (
         <div className="space-y-4 border-t border-gray-200 dark:border-bg-primary-light pt-6 mt-6">
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Payment Information <span className='text-red-600'>*</span></h3>
+            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">
+                Payment Information <span className='text-red-600'>*</span>
+            </h3>
+
+            <div className="bg-gray-50 dark:bg-bg-primary-light p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="font-semibold text-text-primary dark:text-text-primary-dark">
+                            {selectedPlan.title}
+                        </p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                            {selectedPlan.duration.value} {selectedPlan.duration.unit}{selectedPlan.duration.value > 1 ? 's' : ''} access
+                        </p>
+                    </div>
+                    <p className="text-xl font-bold text-primary">
+                        ${selectedPlan.price.amount}
+                    </p>
+                </div>
+            </div>
+
             <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                {otherData?.brandName} requires a credit card to bid. There is no charge to register.
-                We will only authorize that your card is valid.
+                {otherData?.brandName} requires a credit card to register. Your card will be charged immediately for the selected plan.
             </p>
 
             <div className="space-y-4">
@@ -142,9 +276,9 @@ const CardSection = () => {
     );
 };
 
-// Phone Verification Step Component
+// Phone Verification Step Component (unchanged)
 const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
-    const [step, setStep] = useState('phone'); // 'phone' or 'otp'
+    const [step, setStep] = useState('phone');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [selectedCountry, setSelectedCountry] = useState(countryCodes.find(c => c.code === 'US') || countryCodes[0]);
     const [isLoading, setIsLoading] = useState(false);
@@ -152,7 +286,6 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -174,14 +307,12 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
             return;
         }
 
-        // Basic validation - remove any non-digits from phone number
         const cleanedPhone = phoneNumber.replace(/\D/g, '');
         if (cleanedPhone.length < 4) {
             toast.error('Please enter a valid phone number');
             return;
         }
 
-        // Combine dial code with cleaned phone number
         const fullPhoneNumber = `${selectedCountry.dialCode}${cleanedPhone}`;
 
         setIsLoading(true);
@@ -204,7 +335,7 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
         try {
             await axios.post(`${import.meta.env.VITE_DOMAIN_URL}/api/v1/otp/verify`, { phone: fullPhoneNumber, otp });
             toast.success('Phone verified successfully');
-            onVerified(fullPhoneNumber); // Pass the full phone number with code
+            onVerified(fullPhoneNumber);
         } catch (error) {
             toast.error(error?.response?.data?.error || 'Invalid OTP');
         } finally {
@@ -227,21 +358,18 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
                         Phone Number
                     </label>
                     <div className="flex gap-2">
-                        {/* Country Code Dropdown */}
                         <div className="relative w-32" ref={dropdownRef}>
                             <button
                                 type="button"
                                 onClick={() => setShowCountryDropdown(!showCountryDropdown)}
                                 className="w-full p-3 border border-gray-300 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-secondary-dark focus:border-transparent flex items-center justify-between"
                             >
-                                {/* <span>{selectedCountry.dialCode}</span> */}
                                 <span>{selectedCountry.flag} {selectedCountry.dialCode}</span>
                                 <ChevronDown size={20} className="text-bg-secondary-dark dark:text-gray-600" />
                             </button>
 
                             {showCountryDropdown && (
                                 <div className="absolute z-50 w-64 mt-1 bg-bg-secondary dark:bg-bg-primary border border-gray-300 dark:border-bg-primary-light rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                                    {/* Search input */}
                                     <div className="p-2 sticky top-0 bg-bg-secondary dark:bg-bg-primary border-b border-gray-300 dark:border-bg-primary-light">
                                         <input
                                             type="text"
@@ -251,8 +379,6 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
                                             className="w-full p-2 border border-gray-300 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded focus:ring-1 focus:ring-secondary-dark"
                                         />
                                     </div>
-
-                                    {/* Country list */}
                                     {filteredCountries.map((country) => (
                                         <button
                                             key={country.code}
@@ -264,13 +390,11 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
                                             }}
                                             className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-bg-primary-light flex items-center gap-2 text-text-primary dark:text-text-primary-dark"
                                         >
-                                            {/* <span className="text-lg">{country.flag}</span> */}
                                             <span className="text-lg">{country.flag || country.code}</span>
                                             <span className="flex-1">{country.name}</span>
                                             <span className="text-text-secondary dark:text-text-secondary-dark text-sm">{country.dialCode}</span>
                                         </button>
                                     ))}
-
                                     {filteredCountries.length === 0 && (
                                         <div className="p-4 text-center text-text-secondary dark:text-text-secondary-dark">
                                             No countries found
@@ -280,13 +404,11 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
                             )}
                         </div>
 
-                        {/* Phone Number Input */}
                         <div className="flex-1">
                             <input
                                 type="tel"
                                 value={phoneNumber}
                                 onChange={(e) => {
-                                    // Only allow digits and limit to 15 characters
                                     const cleaned = e.target.value.replace(/\D/g, '').slice(0, 15);
                                     setPhoneNumber(cleaned);
                                 }}
@@ -333,12 +455,12 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
 
 // Main Register component
 const Register = () => {
-    const [currentStep, setCurrentStep] = useState(1); // Step 1: Phone, Step 2: Form, Step 3: Submit
+    const [currentStep, setCurrentStep] = useState(1);
     const [verifiedPhone, setVerifiedPhone] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [userType, setUserType] = useState('bidder');
+    const [selectedPlan, setSelectedPlan] = useState(null);
     const navigate = useNavigate();
     const { setUser, user } = useAuth();
     const { useCountries, useStatesByCountry } = useCountryStates();
@@ -367,12 +489,10 @@ const Register = () => {
     const stripe = useStripe();
     const elements = useElements();
 
-    const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
+    const { register, handleSubmit, watch, trigger, formState: { errors }, setValue } = useForm({
         defaultValues: {
             email: '',
-            // phone: '',
             password: '',
-            // confirmPassword: '',
             username: '',
             firstName: '',
             lastName: '',
@@ -395,16 +515,16 @@ const Register = () => {
 
     const handlePhoneVerified = (phone) => {
         setVerifiedPhone(phone);
-        setValue('phone', phone); // Set phone in form
-        setCurrentStep(2); // Move to registration form
+        setValue('phone', phone);
+        setCurrentStep(2);
     };
 
     const handleCountryChange = async (e) => {
         const countryCode = e.target.value;
         setSelectedCountry(countryCode);
         setValue('country', countryCode);
-        setValue('state', ''); // Reset state when country changes
-        setStates([]); // Clear states
+        setValue('state', '');
+        setStates([]);
 
         if (countryCode) {
             try {
@@ -451,32 +571,86 @@ const Register = () => {
         document.getElementById('identificationDocument').value = '';
     };
 
+    const validateStep2 = async () => {
+        const isValid = await trigger([
+            'email',
+            'password',
+            'firstName',
+            'lastName',
+            'username',
+            'country',
+            'street',
+            'city',
+            'state',
+            'postCode',
+            'termsConditions'
+        ]);
+
+        if (isValid) {
+            setCurrentStep(3);
+        } else {
+            toast.error('Please fill all required fields correctly');
+        }
+    };
+
+    const handleNextStep = () => {
+        if (currentStep === 2) {
+            validateStep2();
+        }
+    };
+
     const onSubmit = async (registrationData) => {
-        // Ensure phone is verified
         if (!verifiedPhone) {
             toast.error('Please verify your phone number first');
             setCurrentStep(1);
             return;
         }
 
-        // Validate ID document for both user types (since it's required)
-        // if (!identificationDocument) {
-        //     setIdVerificationError('Please upload an identification document');
-        //     // Scroll to the ID verification section
-        //     const idSection = document.getElementById('id-verification-section');
-        //     if (idSection) {
-        //         idSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        //     }
-        //     toast.error('Identification document is required');
-        //     return;
-        // }
+        if (!selectedPlan) {
+            toast.error('Please select a subscription plan');
+            return;
+        }
 
-        // Clear any previous error
         setIdVerificationError('');
-
         setIsLoading(true);
+
         try {
             let paymentMethodId = null;
+
+            // Create payment method with Stripe
+            if (!stripe || !elements) {
+                toast.error('Stripe not initialized properly');
+                setIsLoading(false);
+                return;
+            }
+
+            const cardElement = elements.getElement(CardElement);
+            if (!cardElement) {
+                toast.error('Please enter your card details');
+                setIsLoading(false);
+                return;
+            }
+
+            const { error, paymentMethod } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: {
+                    name: `${registrationData.firstName} ${registrationData.lastName}`,
+                    email: registrationData.email,
+                    phone: verifiedPhone,
+                    address: {
+                        country: registrationData.country,
+                    }
+                }
+            });
+
+            if (error) {
+                toast.error(`Payment error: ${error.message}`);
+                setIsLoading(false);
+                return;
+            }
+
+            paymentMethodId = paymentMethod.id;
 
             const formData = new FormData();
 
@@ -484,7 +658,7 @@ const Register = () => {
             formData.append('firstName', registrationData.firstName);
             formData.append('lastName', registrationData.lastName);
             formData.append('email', registrationData.email);
-            formData.append('phone', verifiedPhone); // Use verified phone
+            formData.append('phone', verifiedPhone);
             formData.append('password', registrationData.password);
             formData.append('username', registrationData.username);
             formData.append('countryCode', registrationData.country);
@@ -495,44 +669,8 @@ const Register = () => {
             formData.append('postCode', registrationData.postCode);
             formData.append('state', registrationData.state);
             formData.append('country', countries.find(c => c.code === registrationData.country)?.name || registrationData.country);
-
-            // Handle bidder card verification
-            if (registrationData.userType === 'bidder') {
-                if (!stripe || !elements) {
-                    toast.error('Stripe not initialized properly');
-                    setIsLoading(false);
-                    return;
-                }
-
-                const cardElement = elements.getElement(CardElement);
-                if (!cardElement) {
-                    toast.error('Please enter your card details');
-                    setIsLoading(false);
-                    return;
-                }
-
-                const { error, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement,
-                    billing_details: {
-                        name: `${registrationData.firstName} ${registrationData.lastName}`,
-                        email: registrationData.email,
-                        phone: verifiedPhone,
-                        address: {
-                            country: registrationData.country,
-                        }
-                    }
-                });
-
-                if (error) {
-                    toast.error(`Payment error: ${error.message}`);
-                    setIsLoading(false);
-                    return;
-                }
-
-                paymentMethodId = paymentMethod.id;
-                formData.append('paymentMethodId', paymentMethodId);
-            }
+            formData.append('paymentMethodId', paymentMethodId);
+            formData.append('subscriptionPlanId', selectedPlan._id);
 
             if (identificationDocument) {
                 formData.append('identificationDocument', identificationDocument);
@@ -579,7 +717,6 @@ const Register = () => {
         }
     };
 
-    // Render step indicator
     const renderStepIndicator = () => {
         return (
             <div className="flex items-center justify-center my-5">
@@ -627,7 +764,7 @@ const Register = () => {
                     )}
 
                     {currentStep === 2 && (
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <form className="space-y-6">
                             {/* Account Information */}
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Account Information</h3>
@@ -835,7 +972,7 @@ const Register = () => {
                                         </div>
                                     </div>
 
-                                    {/* Street field - spans full width on mobile, half on desktop */}
+                                    {/* Street field */}
                                     <div className="md:col-span-1">
                                         <div className={`${errors.street && 'mb-3'}`}>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -893,7 +1030,7 @@ const Register = () => {
                                 </div>
                             </div>
 
-                            {/* User Type Selection */}
+                            {/* User Type Selection - Commented */}
                             {/* <div className="border-t border-gray-200 dark:border-bg-primary-light pt-6">
                                 <label className="text-sm font-medium leading-none text-text-secondary dark:text-text-secondary-dark flex items-center gap-2 mb-4">
                                     <User size={20} />
@@ -945,7 +1082,7 @@ const Register = () => {
                                 )}
                             </div> */}
 
-                            {/* ID Verification Section */}
+                            {/* ID Verification Section - Commented */}
                             {/* <div id="id-verification-section" className="border-t border-gray-200 dark:border-bg-primary-light pt-6">
                                 <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Identity Verification <span className='text-red-600'>*</span></h3>
                                 <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-4">
@@ -1020,9 +1157,6 @@ const Register = () => {
                                 </div>
                             </div> */}
 
-                            {/* Stripe Card Section for Bidders */}
-                            {userType === 'bidder' && <CardSection />}
-
                             <div>
                                 <label className='flex items-center gap-2'>
                                     <input
@@ -1040,15 +1174,39 @@ const Register = () => {
                                 )}
                             </div>
 
-                            {/* Submit Button */}
+                            {/* Next Step Button */}
                             <button
-                                type="submit"
-                                disabled={isLoading || (userType === 'bidder' && !stripe)}
-                                className="w-full bg-bg-primary dark:bg-bg-secondary text-text-primary-dark dark:text-text-primary hover:opacity-90 py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                                type="button"
+                                onClick={handleNextStep}
+                                className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-dark transition-colors"
                             >
-                                {isLoading ? 'Creating account...' : 'Create Account'}
+                                Next: Choose Plan
                             </button>
                         </form>
+                    )}
+
+                    {currentStep === 3 && (
+                        <div className="space-y-6">
+                            <PlanSelectionStep
+                                selectedPlan={selectedPlan}
+                                onPlanSelect={setSelectedPlan}
+                                isLoading={isLoading}
+                            />
+
+                            {selectedPlan && (
+                                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                                    <CardSectionWithPlan selectedPlan={selectedPlan} />
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading || !stripe}
+                                        className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? 'Processing Payment...' : `Pay $${selectedPlan.price.amount} & Register`}
+                                    </button>
+                                </form>
+                            )}
+                        </div>
                     )}
 
                     {/* Already have account */}

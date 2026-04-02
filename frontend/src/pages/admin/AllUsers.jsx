@@ -386,8 +386,8 @@ function AllUsers() {
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Status</th>
-                                            {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th> */}
+                                            {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Status</th> */}
+                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -422,8 +422,7 @@ function AllUsers() {
                                                 <td className="py-4 px-6">
                                                     {getStatusBadge(user.isActive)}
                                                 </td>
-                                                {/* Add this after the Status column */}
-                                                <td className="py-4 px-6">
+                                                {/* <td className="py-4 px-6">
                                                     {user.identificationDocument ? (
                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.identificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
                                                             user.identificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -440,10 +439,10 @@ function AllUsers() {
                                                             No ID
                                                         </span>
                                                     )}
-                                                </td>
-                                                {/* <td className="py-4 px-6 text-sm text-gray-900">
-                                                    {formatDate(user.createdAt)}
                                                 </td> */}
+                                                <td className="py-4 px-6 text-sm text-gray-900">
+                                                    {formatDate(user.createdAt)}
+                                                </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center justify-center gap-2">
                                                         <button
@@ -466,7 +465,7 @@ function AllUsers() {
                                                             {activeDropdown === user._id && (
                                                                 <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10 py-1">
                                                                     {/* Show Verify ID button only if user has uploaded a document and status is pending */}
-                                                                    {user.identificationDocument && user.identificationStatus === 'pending' && (
+                                                                    {/* {user.identificationDocument && user.identificationStatus === 'pending' && (
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 openIdVerificationModal(user, e);
@@ -477,7 +476,7 @@ function AllUsers() {
                                                                             <Shield size={16} />
                                                                             <span>Verify ID</span>
                                                                         </button>
-                                                                    )}
+                                                                    )} */}
 
                                                                     <button
                                                                         onClick={() => {

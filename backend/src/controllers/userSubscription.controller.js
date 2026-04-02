@@ -59,7 +59,7 @@ export const purchaseSubscription = async (req, res) => {
         }
 
         // Calculate amount in cents for Stripe
-        const amountInCents = Math.round(subscription.price.amount * 100);
+        const amountInDollars = subscription.price.amount;
 
         let paymentIntent = null;
         let paymentMethodToUse = paymentMethodId;
@@ -95,7 +95,7 @@ export const purchaseSubscription = async (req, res) => {
             paymentIntent = await StripeService.createImmediateCharge(
                 user.stripeCustomerId,
                 paymentMethodToUse,
-                amountInCents,
+                amountInDollars,
                 `${subscription.title} Subscription - ${durationValue} ${durationUnit}${durationValue > 1 ? 's' : ''}`
             );
 
@@ -226,30 +226,40 @@ export const getUserSubscriptions = async (req, res) => {
  * @route   GET /api/v1/subscriptions/active
  * @access  Private
  */
+
 export const getActiveSubscription = async (req, res) => {
     try {
         const userId = req.user._id;
-        const now = new Date();
 
-        const activeSubscription = await UserSubscription.findOne({
+        // First try to get the subscription marked as current
+        let activeSubscription = await UserSubscription.findOne({
             user: userId,
-            status: "active",
-            expiresAt: { $gt: now },
-        })
-            .populate("subscription", "title slug tag")
-            .sort({ expiresAt: 1 });
+            isCurrent: true,
+            status: "active"
+        }).populate("subscription", "title slug tag");
+
+        // If no subscription marked as current, fall back to any active subscription
+        if (!activeSubscription) {
+            const now = new Date();
+            activeSubscription = await UserSubscription.findOne({
+                user: userId,
+                status: "active",
+                expiresAt: { $gt: now }
+            })
+                .populate("subscription", "title slug tag")
+                .sort({ expiresAt: 1 });
+        }
 
         if (!activeSubscription) {
             return res.status(200).json({
                 success: true,
                 data: null,
-                hasActiveSubscription: false,
+                hasActiveSubscription: false
             });
         }
 
-        // Calculate days remaining
         const daysRemaining = Math.ceil(
-            (new Date(activeSubscription.expiresAt) - now) / (1000 * 60 * 60 * 24)
+            (new Date(activeSubscription.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)
         );
 
         res.status(200).json({
@@ -257,15 +267,15 @@ export const getActiveSubscription = async (req, res) => {
             data: {
                 ...activeSubscription.toObject(),
                 daysRemaining,
-                isActive: true,
+                isActive: true
             },
-            hasActiveSubscription: true,
+            hasActiveSubscription: true
         });
     } catch (error) {
         console.error("Get active subscription error:", error);
         res.status(500).json({
             success: false,
-            message: "Failed to fetch active subscription",
+            message: "Failed to fetch active subscription"
         });
     }
 };
@@ -335,6 +345,81 @@ export const cancelSubscription = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Failed to cancel subscription",
+        });
+    }
+};
+
+/**
+ * @desc    Set a specific subscription as current active
+ * @route   PATCH /api/v1/subscriptions/:subscriptionId/set-current
+ * @access  Private
+ */
+export const setCurrentSubscription = async (req, res) => {
+    try {
+        const { subscriptionId } = req.params;
+        const userId = req.user._id;
+
+        // Find the subscription to activate
+        const subscriptionToActivate = await UserSubscription.findOne({
+            _id: subscriptionId,
+            user: userId
+        });
+
+        if (!subscriptionToActivate) {
+            return res.status(404).json({
+                success: false,
+                message: "Subscription not found"
+            });
+        }
+
+        // Check if subscription is expired
+        if (subscriptionToActivate.status === "expired") {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot activate expired subscription. Please purchase a new plan."
+            });
+        }
+
+        // Set all user's subscriptions to isCurrent: false
+        await UserSubscription.updateMany(
+            { user: userId },
+            { isCurrent: false }
+        );
+
+        // Set the selected subscription to isCurrent: true
+        subscriptionToActivate.isCurrent = true;
+        await subscriptionToActivate.save();
+
+        res.status(200).json({
+            success: true,
+            message: `${subscriptionToActivate.title} is now your active plan`,
+            data: {
+                subscription: subscriptionToActivate
+            }
+        });
+    } catch (error) {
+        console.error("Set current subscription error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to set active subscription"
+        });
+    }
+};
+
+export const getAllUserSubscriptions = async (req, res) => {
+    try {
+        const subscriptions = await UserSubscription.find({})
+            .populate("user", "firstName lastName email")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: { subscriptions }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };

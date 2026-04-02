@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BidderContainer, BidderHeader, BidderSidebar, AuctionCard, AuctionListItem, AccountInactiveBanner } from "../../components";
 import { Clock, Gavel, Award, BarChart3, Search, Filter, SortAsc, Users, Loader, Grid, List } from "lucide-react";
 import { useAuctions } from "../../hooks/useAuctions";
 import { useStats } from "../../hooks/useStats";
+import { useSubscriptionGuard } from "../../hooks/useSubscriptionGuard";
+import SubscriptionModal from "../../components/SubscriptionModal";
+import { useNavigate } from "react-router-dom";
 
 function ActiveAuctions() {
     const {
@@ -18,6 +21,28 @@ function ActiveAuctions() {
     const [sortBy, setSortBy] = useState("newest");
     const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
     const { stats } = useStats();
+    const navigate = useNavigate();
+
+    const {
+        hasActiveSubscription,
+        checking: checkingSubscription,
+        showSubscriptionModal,
+        setShowSubscriptionModal,
+        guardAction,
+        checkSubscription
+    } = useSubscriptionGuard();
+
+    const [hasCheckedAccess, setHasCheckedAccess] = useState(false);
+
+    // Check access on page load
+    useEffect(() => {
+        if (!checkingSubscription && !hasCheckedAccess) {
+            if (!hasActiveSubscription) {
+                guardAction();
+            }
+            setHasCheckedAccess(true);
+        }
+    }, [checkingSubscription, hasActiveSubscription, guardAction, hasCheckedAccess]);
 
     const handleLoadMore = () => {
         loadMoreAuctions();
@@ -46,17 +71,10 @@ function ActiveAuctions() {
             trend: "down",
             highlight: true
         },
-        // {
-        //     title: "Total Bidders",
-        //     value: stats.totalBidders.toString(),
-        //     change: "All Time",
-        //     icon: <Users size={24} />,
-        //     trend: "up"
-        // }
     ];
 
     const categories = ["all", ...new Set(auctions.map(auction => auction.category))];
-
+    
     const filteredAuctions = auctions
         .filter(auction => {
             const matchesSearch = searchTerm === "" ||
@@ -68,7 +86,6 @@ function ActiveAuctions() {
         .filter(auction => {
             switch (filter) {
                 case "ending_soon":
-                    // For ending soon, we still need time calculation
                     const now = new Date();
                     const end = new Date(auction.endDate);
                     const diffHours = (end - now) / (1000 * 60 * 60);
@@ -81,7 +98,6 @@ function ActiveAuctions() {
                     return auction.status === 'approved';
 
                 case "upcoming":
-                    // Show both approved and draft auctions as "upcoming"
                     return auction.status === 'approved' || auction.status === 'draft' || auction.status === 'pending';
 
                 case "ended":
@@ -99,8 +115,8 @@ function ActiveAuctions() {
                 case "reserve_not_met":
                     return auction.status === 'reserve_not_met';
 
-                default: // "all"
-                    return true; // Show all auctions
+                default:
+                    return true;
             }
         })
         .sort((a, b) => {
@@ -120,6 +136,68 @@ function ActiveAuctions() {
             }
         });
 
+    // Show loading while checking subscription
+    if (checkingSubscription) {
+        return (
+            <section className="flex min-h-screen">
+                <BidderSidebar />
+                <div className="w-full relative">
+                    <BidderHeader />
+                    <BidderContainer>
+                        <div className="flex justify-center items-center min-h-96">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        </div>
+                    </BidderContainer>
+                </div>
+            </section>
+        );
+    }
+
+    // If no active subscription, show nothing (modal handles the UI)
+    if (!hasActiveSubscription) {
+        return (
+            <>
+                <section className="flex min-h-screen">
+                    <BidderSidebar />
+                    <div className="w-full relative">
+                        <BidderHeader />
+                        <BidderContainer>
+                            <div className="flex flex-col items-center justify-center min-h-96 text-center">
+                                <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-6 mb-4">
+                                    <Gavel size={48} className="text-gray-400" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Subscription Required
+                                </h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                    You need an active subscription to view auctions
+                                </p>
+                                <button
+                                    onClick={() => setShowSubscriptionModal(true)}
+                                    className="bg-primary text-white hover:bg-primary/90 px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    View Plans
+                                </button>
+                            </div>
+                        </BidderContainer>
+                    </div>
+                </section>
+                
+                <SubscriptionModal
+                    isOpen={showSubscriptionModal}
+                    onClose={() => {
+                        setShowSubscriptionModal(false);
+                        navigate("/");
+                    }}
+                    onSuccess={() => {
+                        checkSubscription();
+                        setHasCheckedAccess(false);
+                    }}
+                />
+            </>
+        );
+    }
+
     return (
         <section className="flex min-h-screen">
             <BidderSidebar />
@@ -133,7 +211,6 @@ function ActiveAuctions() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold my-5">Active Auctions</h2>
-                                {/* <p className="text-secondary">Discover and bid on exclusive vehicles and cars.</p> */}
                             </div>
                             <div className="mt-4 md:mt-0">
                                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -142,28 +219,6 @@ function ActiveAuctions() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Stats Overview */}
-                    {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {auctionStats.map(stat => (
-                            <div key={stat.title} className={`bg-white rounded-xl p-5 shadow-sm border ${stat.highlight ? 'border-amber-200 bg-amber-50' : 'border-gray-100'}`}>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm text-gray-500">{stat.title}</p>
-                                        <h3 className="text-2xl font-bold mt-1">
-                                            {stat.value}
-                                        </h3>
-                                        <p className={`text-sm mt-1 ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {stat.change}
-                                        </p>
-                                    </div>
-                                    <div className={`p-3 rounded-lg ${stat.highlight ? 'bg-amber-100 text-amber-600' : stat.trend === 'up' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {stat.icon}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div> */}
 
                     {/* Enhanced Search and Filters */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -182,21 +237,6 @@ function ActiveAuctions() {
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3">
-                                {/* <div className="flex items-center gap-2">
-                                    <Filter size={18} className="text-gray-500" />
-                                    <select
-                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        value={categoryFilter}
-                                        onChange={(e) => setCategoryFilter(e.target.value)}
-                                    >
-                                        {categories.map(category => (
-                                            <option key={category} value={category}>
-                                                {category === "all" ? "All Categories" : category}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div> */}
-
                                 <div className="flex items-center gap-2">
                                     <SortAsc size={18} className="text-gray-500" />
                                     <select
@@ -204,7 +244,6 @@ function ActiveAuctions() {
                                         value={sortBy}
                                         onChange={(e) => setSortBy(e.target.value)}
                                     >
-                                        {/* <option value="ending_soon">Ending Soon</option> */}
                                         <option value="most_bids">Most Bids</option>
                                         <option value="highest_bid">Highest Bid</option>
                                         <option value="lowest_bid">Lowest Bid</option>
@@ -256,7 +295,6 @@ function ActiveAuctions() {
 
                     {/* Auction Cards Grid or List */}
                     {loading ? (
-                        // Loading Skeleton based on view mode
                         viewMode === "grid" ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {Array.from({ length: 8 }).map((_, index) => (
@@ -272,7 +310,6 @@ function ActiveAuctions() {
                                 ))}
                             </div>
                         ) : (
-                            // List View Loading Skeleton
                             <div className="space-y-6">
                                 {Array.from({ length: 4 }).map((_, index) => (
                                     <div key={index} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
@@ -303,7 +340,6 @@ function ActiveAuctions() {
                         )
                     ) : filteredAuctions.length > 0 ? (
                         viewMode === "grid" ? (
-                            // Grid View
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
                                 {filteredAuctions.map((auction) => (
                                     <AuctionCard
@@ -313,7 +349,6 @@ function ActiveAuctions() {
                                 ))}
                             </div>
                         ) : (
-                            // List View
                             <div className="space-y-2 mb-16">
                                 {filteredAuctions.map((auction) => (
                                     <AuctionListItem
@@ -340,31 +375,6 @@ function ActiveAuctions() {
                             </button>
                         </div>
                     )}
-
-                    {/* Load More Button */}
-                    {/* {pagination?.currentPage < pagination?.totalPages && (
-                        <div className="flex justify-center mt-12">
-                            <button
-                                onClick={handleLoadMore}
-                                disabled={loadingMore}
-                                className="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                            >
-                                {loadingMore ? (
-                                    <>
-                                        <Loader size={16} className="animate-spin" />
-                                        Loading...
-                                    </>
-                                ) : (
-                                    <>
-                                        Load More Auctions
-                                        <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                                            {pagination.totalAuctions - auctions.length} more
-                                        </span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    )} */}
                 </BidderContainer>
             </div>
         </section>

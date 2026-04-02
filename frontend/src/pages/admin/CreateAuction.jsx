@@ -29,13 +29,9 @@ import {
     ChevronRight,
     AlertCircle,
     Banknote,
-    Zap,
-    Package,
-    Plus,
-    Edit,
-    Trash2
+    Zap
 } from "lucide-react";
-import { RTE, AdminContainer, AdminHeader, AdminSidebar, BundleItemModal, BundleTableRow } from '../../components';
+import { RTE, AdminContainer, AdminHeader, AdminSidebar } from '../../components';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../utils/axiosInstance.js';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +39,6 @@ import { useNavigate } from 'react-router-dom';
 // Drag and Drop item types
 const ItemTypes = {
     PHOTO: 'photo',
-    BUNDLE_ITEM: 'bundleItem',
 };
 
 // Draggable Photo Component (keep your existing implementation)
@@ -91,7 +86,7 @@ const DraggablePhoto = ({ photo, index, movePhoto, removePhoto }) => {
 const PhotoGallery = ({ photos, movePhoto, removePhoto }) => {
     return (
         <div className="mt-4">
-            <p className="text-sm text-secondary mb-3">
+            <p className="text-sm text-primary mb-3">
                 Drag and drop to reorder photos. The first image will be the main thumbnail.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -141,6 +136,203 @@ const UploadProgressModal = ({ isOpen, fileCount }) => {
     );
 };
 
+// Dynamic Field Renderer Component
+const DynamicField = ({ field, register, errors, watch, setValue }) => {
+    const fieldName = `specifications.${field.name}`;
+    const error = errors.specifications?.[field.name];
+
+    // Ensure we have a label
+    const fieldLabel = field.label || field.name || 'Field';
+
+    // Generate a sensible placeholder if not provided
+    const fieldPlaceholder = field.placeholder || `Enter ${fieldLabel.toLowerCase()}`;
+
+    // Common input classes
+    const inputClasses = `w-full p-3 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-transparent`;
+
+    // Helper text for units
+    const unitText = field.unit ? ` (${field.unit})` : '';
+
+    // Add inheritance badge if needed
+    const InheritanceBadge = field.source === 'inherited' ? (
+        <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            Inherited from {field.sourceCategory?.name}
+        </span>
+    ) : null;
+
+    switch (field.fieldType) {
+        case 'textarea':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                            {unitText}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    <textarea
+                        {...register(fieldName, {
+                            required: field.required ? `${fieldLabel} is required` : false,
+                            minLength: field.validation?.minLength ? {
+                                value: field.validation.minLength,
+                                message: `Minimum ${field.validation.minLength} characters`
+                            } : undefined,
+                            maxLength: field.validation?.maxLength ? {
+                                value: field.validation.maxLength,
+                                message: `Maximum ${field.validation.maxLength} characters`
+                            } : undefined,
+                            pattern: field.validation?.pattern ? {
+                                value: new RegExp(field.validation.pattern),
+                                message: field.validation.message || `Invalid format for ${fieldLabel}`
+                            } : undefined
+                        })}
+                        id={field.name}
+                        rows={3}
+                        placeholder={fieldPlaceholder}
+                        className={inputClasses}
+                    />
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+
+        case 'select':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                            {unitText}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    <select
+                        {...register(fieldName, {
+                            required: field.required ? `${fieldLabel} is required` : false
+                        })}
+                        id={field.name}
+                        className={inputClasses}
+                    >
+                        <option value="">Select {fieldLabel}</option>
+                        {field.options?.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+
+        case 'number':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                            {unitText}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    <input
+                        {...register(fieldName, {
+                            required: field.required ? `${fieldLabel} is required` : false,
+                            min: field.validation?.min ? {
+                                value: parseFloat(field.validation.min),
+                                message: `Minimum value is ${field.validation.min}${field.unit ? ` ${field.unit}` : ''}`
+                            } : undefined,
+                            max: field.validation?.max ? {
+                                value: parseFloat(field.validation.max),
+                                message: `Maximum value is ${field.validation.max}${field.unit ? ` ${field.unit}` : ''}`
+                            } : undefined
+                        })}
+                        id={field.name}
+                        type="number"
+                        step="any"
+                        placeholder={fieldPlaceholder}
+                        className={inputClasses}
+                    />
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+
+        case 'date':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    <input
+                        {...register(fieldName, {
+                            required: field.required ? `${fieldLabel} is required` : false
+                        })}
+                        id={field.name}
+                        type="date"
+                        className={inputClasses}
+                    />
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+
+        case 'boolean':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <input
+                            {...register(fieldName)}
+                            id={field.name}
+                            type="checkbox"
+                            className="h-4 w-4 text-black rounded focus:ring-black border-gray-300"
+                        />
+                        <label htmlFor={field.name} className="ml-2 block text-sm text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+
+        default: // text
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                            {fieldLabel} {field.required && <span className="text-red-500">*</span>}
+                            {unitText}
+                        </label>
+                        {InheritanceBadge}
+                    </div>
+                    <input
+                        {...register(fieldName, {
+                            required: field.required ? `${fieldLabel} is required` : false,
+                            minLength: field.validation?.minLength ? {
+                                value: field.validation.minLength,
+                                message: `Minimum ${field.validation.minLength} characters`
+                            } : undefined,
+                            maxLength: field.validation?.maxLength ? {
+                                value: field.validation.maxLength,
+                                message: `Maximum ${field.validation.maxLength} characters`
+                            } : undefined,
+                            pattern: field.validation?.pattern ? {
+                                value: new RegExp(field.validation.pattern),
+                                message: field.validation.message || `Invalid format for ${fieldLabel}`
+                            } : undefined
+                        })}
+                        id={field.name}
+                        type={field.fieldType === 'text' ? 'text' : field.fieldType}
+                        placeholder={fieldPlaceholder}
+                        className={inputClasses}
+                    />
+                    {error && <p className="text-red-500 text-sm">{error.message}</p>}
+                </div>
+            );
+    }
+};
+
 const CreateAuction = () => {
     const [step, setStep] = useState(1);
     const [uploadedPhotos, setUploadedPhotos] = useState([]);
@@ -155,11 +347,6 @@ const CreateAuction = () => {
     const [categoryFields, setCategoryFields] = useState([]);
     const [loadingFields, setLoadingFields] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(true);
-
-    // Bundle items state
-    const [bundleItems, setBundleItems] = useState([]);
-    const [showItemModal, setShowItemModal] = useState(false);
-    const [editingItemIndex, setEditingItemIndex] = useState(null);
 
     const {
         register,
@@ -177,25 +364,15 @@ const CreateAuction = () => {
         mode: 'onChange',
         defaultValues: {
             auctionType: 'standard',
-            categories: [],
-            parcel: {
-                weight: '',
-                length: '',
-                width: '',
-                height: '',
-                distanceUnit: 'in',
-                massUnit: 'lb'
-            }
+            categories: []
         }
     });
 
     const auctionType = watch('auctionType');
     const startDate = watch('startDate');
     const endDate = watch('endDate');
-    const selectedCategory = watch('category');
+    const selectedCategory = watch('category'); // This will be the subcategory slug
     const selectedParentSlug = watch('parentCategory');
-    const massUnit = watch('parcel.massUnit');
-    const distanceUnit = watch('parcel.distanceUnit');
 
     // Fetch parent categories on mount
     useEffect(() => {
@@ -206,9 +383,9 @@ const CreateAuction = () => {
     useEffect(() => {
         if (selectedParentSlug) {
             fetchSubCategories(selectedParentSlug);
+            // Clear previously selected subcategory
             setValue('category', '');
             setCategoryFields([]);
-            setBundleItems([]); // Clear bundle items when category changes
         }
     }, [selectedParentSlug]);
 
@@ -216,13 +393,13 @@ const CreateAuction = () => {
     useEffect(() => {
         if (selectedCategory) {
             fetchCategoryFields(selectedCategory);
-            setBundleItems([]); // Clear bundle items when subcategory changes
         } else {
+            // Clear fields when no category is selected
             setCategoryFields([]);
         }
     }, [selectedCategory]);
 
-    // Fetch parent categories
+    // Fetch parent categories (level 0)
     const fetchParentCategories = async () => {
         try {
             setLoadingCategories(true);
@@ -273,12 +450,151 @@ const CreateAuction = () => {
         }
     };
 
-    // Photo handlers
+    // Move photo function for drag and drop
     const movePhoto = (fromIndex, toIndex) => {
         const updatedPhotos = [...uploadedPhotos];
         const [movedPhoto] = updatedPhotos.splice(fromIndex, 1);
         updatedPhotos.splice(toIndex, 0, movedPhoto);
         setUploadedPhotos(updatedPhotos);
+    };
+
+    // Group fields by their group property
+    const groupedFields = categoryFields.reduce((acc, field) => {
+        const group = field.group || 'General';
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(field);
+        return acc;
+    }, {});
+
+    // Render category-specific fields
+    const renderCategoryFields = () => {
+        if (loadingFields) {
+            return (
+                <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+                    <span className="ml-3 text-gray-600">Loading fields...</span>
+                </div>
+            );
+        }
+
+        if (categoryFields.length === 0) {
+            return (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                    <AlertCircle size={40} className="mx-auto text-gray-400 mb-3" />
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">No Custom Fields</h3>
+                    <p className="text-gray-500">
+                        This category doesn't have any specific fields configured.
+                    </p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-8">
+                {Object.entries(groupedFields).map(([groupName, fields]) => (
+                    <div key={groupName} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                            <h3 className="font-medium text-gray-700">{groupName}</h3>
+                        </div>
+                        <div className="p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {fields
+                                    .sort((a, b) => a.order - b.order)
+                                    .map((field) => {
+                                        // Create a truly unique key
+                                        const uniqueKey = `${field.source || 'own'}-${field._id || field.name}-${selectedCategory}`;
+
+                                        return (
+                                            <DynamicField
+                                                key={uniqueKey}
+                                                field={field}
+                                                register={register}
+                                                errors={errors}
+                                                watch={watch}
+                                                setValue={setValue}
+                                            />
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const nextStep = async () => {
+        let isValid = true;
+
+        scrollTo({top: 0, behavior: 'smooth'});
+
+        if (step === 1) {
+            const fieldsToValidate = [
+                'title',
+                'description',
+                'startDate',
+                'endDate',
+                'parentCategory',
+                'category'
+            ];
+
+            // Add all required specification fields to validation
+            categoryFields.forEach(field => {
+                if (field.required) {
+                    fieldsToValidate.push(`specifications.${field.name}`);
+                }
+            });
+
+            const overallValidationPassed = await trigger(fieldsToValidate);
+
+            if (!overallValidationPassed) {
+                isValid = false;
+            }
+
+            // Check photos are uploaded
+            if (uploadedPhotos.length === 0) {
+                setError('photos', {
+                    type: 'manual',
+                    message: 'At least one photo is required'
+                });
+                isValid = false;
+            } else {
+                clearErrors('photos');
+            }
+        }
+
+        if (step === 2) {
+            const fieldsToValidate = ['auctionType'];
+
+            if (auctionType === 'standard' || auctionType === 'reserve') {
+                fieldsToValidate.push('startPrice', 'bidIncrement');
+            }
+
+            if (auctionType === 'reserve') {
+                fieldsToValidate.push('reservePrice');
+            }
+
+            if (auctionType === 'buy_now') {
+                fieldsToValidate.push('buyNowPrice', 'startPrice');
+            }
+
+            const overallValidationPassed = await trigger(fieldsToValidate);
+
+            if (!overallValidationPassed) {
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            return;
+        }
+
+        setStep(step + 1);
+    };
+
+    const prevStep = () => {
+        setStep(step - 1);
+        scrollTo({top: 0, behavior: 'smooth'});
     };
 
     const handlePhotoUpload = (e) => {
@@ -287,9 +603,15 @@ const CreateAuction = () => {
         clearErrors('photos');
     };
 
+    const handleDocumentUpload = (e) => {
+        const files = Array.from(e.target.files);
+        setUploadedDocuments([...uploadedDocuments, ...files]);
+    };
+
     const removePhoto = (index) => {
         const newPhotos = uploadedPhotos.filter((_, i) => i !== index);
         setUploadedPhotos(newPhotos);
+
         if (newPhotos.length === 0) {
             setError('photos', {
                 type: 'manual',
@@ -300,124 +622,14 @@ const CreateAuction = () => {
         }
     };
 
-    // Document handlers
-    const handleDocumentUpload = (e) => {
-        const files = Array.from(e.target.files);
-        setUploadedDocuments([...uploadedDocuments, ...files]);
-    };
-
     const removeDocument = (index) => {
         setUploadedDocuments(uploadedDocuments.filter((_, i) => i !== index));
     };
 
-    // Bundle item handlers
-    const addBundleItem = (itemData) => {
-        setBundleItems([...bundleItems, itemData]);
-        setShowItemModal(false);
-        setEditingItemIndex(null);
-    };
-
-    const updateBundleItem = (index, itemData) => {
-        const updated = [...bundleItems];
-        updated[index] = itemData;
-        setBundleItems(updated);
-        setShowItemModal(false);
-        setEditingItemIndex(null);
-    };
-
-    const removeBundleItem = (index) => {
-        setBundleItems(bundleItems.filter((_, i) => i !== index));
-    };
-
-    const moveBundleItem = (fromIndex, toIndex) => {
-        const updated = [...bundleItems];
-        const [moved] = updated.splice(fromIndex, 1);
-        updated.splice(toIndex, 0, moved);
-        setBundleItems(updated);
-    };
-
-    const handleEditItem = (index) => {
-        setEditingItemIndex(index);
-        setShowItemModal(true);
-    };
-
-    // Validation for step 1
-    const validateStep1 = async () => {
-        const fieldsToValidate = [
-            'title',
-            'description',
-            'startDate',
-            'endDate',
-            'parentCategory',
-            'category'
-        ];
-
-        const overallValidationPassed = await trigger(fieldsToValidate);
-
-        if (!overallValidationPassed) {
-            return false;
-        }
-
-        if (uploadedPhotos.length === 0) {
-            setError('photos', {
-                type: 'manual',
-                message: 'At least one photo is required'
-            });
-            return false;
-        }
-
-        if (bundleItems.length === 0) {
-            toast.error('Please add at least one item to the bundle');
-            return false;
-        }
-
-        return true;
-    };
-
-    // Validation for step 2
-    const validateStep2 = async () => {
-        const fieldsToValidate = ['auctionType'];
-
-        if (auctionType === 'standard' || auctionType === 'reserve') {
-            fieldsToValidate.push('startPrice', 'bidIncrement');
-        }
-
-        if (auctionType === 'reserve') {
-            fieldsToValidate.push('reservePrice');
-        }
-
-        if (auctionType === 'buy_now') {
-            fieldsToValidate.push('buyNowPrice', 'startPrice');
-        }
-
-        return await trigger(fieldsToValidate);
-    };
-
-    const nextStep = async () => {
-        let isValid = true;
-
-        scrollTo({ top: 0, behavior: 'smooth' });
-
-        if (step === 1) {
-            isValid = await validateStep1();
-        } else if (step === 2) {
-            isValid = await validateStep2();
-        }
-
-        if (isValid) {
-            setStep(step + 1);
-        }
-    };
-
-    const prevStep = () => {
-        setStep(step - 1);
-        scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // Create auction handler
     const createAuctionHandler = async (auctionData) => {
         try {
             setIsLoading(true);
+            const accessToken = localStorage.getItem('accessToken');
 
             const formData = new FormData();
 
@@ -427,14 +639,21 @@ const CreateAuction = () => {
             formData.append('location', auctionData.location || '');
             formData.append('videoLink', auctionData.video || '');
 
-            // Categories
+            // Categories - Store BOTH parent and subcategory for better filtering
+            // Your auction model expects an array of strings
             const categoriesToStore = [];
+
+            // Add parent category slug
             if (auctionData.parentCategory) {
                 categoriesToStore.push(auctionData.parentCategory);
             }
+
+            // Add subcategory slug (this is the main category for the auction)
             if (auctionData.category) {
                 categoriesToStore.push(auctionData.category);
             }
+
+            // Append as JSON string or array - your controller handles both
             formData.append('categories', JSON.stringify(categoriesToStore));
 
             // Auction settings
@@ -444,58 +663,47 @@ const CreateAuction = () => {
             formData.append('startDate', new Date(auctionData.startDate).toISOString());
             formData.append('endDate', new Date(auctionData.endDate).toISOString());
 
-            // Bundle Items - This is the key part
-            formData.append('bundleItems', JSON.stringify(bundleItems.map(item => ({
-                quantity: item.quantity,
-                specifications: item.specifications,
-                notes: item.notes || ''
-            }))));
-
-            if (auctionData.parcel) {
-                formData.append('parcel', JSON.stringify({
-                    weight: auctionData.parcel.weight,
-                    length: auctionData.parcel.length,
-                    width: auctionData.parcel.width,
-                    height: auctionData.parcel.height,
-                    distanceUnit: auctionData.parcel.distanceUnit,
-                    massUnit: auctionData.parcel.massUnit
-                }));
+            // Specifications - Convert to JSON string
+            if (auctionData.specifications) {
+                formData.append('specifications', JSON.stringify(auctionData.specifications));
             }
 
-            // Pricing
+            // Pricing - only add if not giveaway or buy now (both are always available)
             if (auctionData.auctionType === 'giveaway' || auctionData.auctionType === 'buy_now') {
+                // For giveaways and buy now, set startPrice to 0
                 formData.append('startPrice', 0);
-                if (auctionData.reservePrice) {
-                    formData.append('reservePrice', null);
-                }
+
+                // For buy now, still need to send buyNowPrice
                 if (auctionData.auctionType === 'buy_now' && auctionData.buyNowPrice) {
                     formData.append('buyNowPrice', auctionData.buyNowPrice);
                 }
+
+                // Optional bid increment for buy now auctions (if you want to allow both)
                 if (auctionData.auctionType === 'buy_now' && auctionData.bidIncrement) {
                     formData.append('bidIncrement', auctionData.bidIncrement);
                 }
             } else {
+                // Regular auctions (standard/reserve)
                 if (auctionData.startPrice) {
                     formData.append('startPrice', auctionData.startPrice);
                 }
+
                 if (auctionData.auctionType === 'standard' || auctionData.auctionType === 'reserve') {
                     formData.append('bidIncrement', auctionData.bidIncrement);
-                    if (auctionData.buyNowPrice) {
-                        formData.append('buyNowPrice', null);
-                    }
                 }
+
                 if (auctionData.auctionType === 'reserve' && auctionData.reservePrice) {
                     formData.append('reservePrice', auctionData.reservePrice);
                 }
             }
 
             // Append photos
-            uploadedPhotos.forEach((photo) => {
+            uploadedPhotos.forEach((photo, index) => {
                 formData.append('photos', photo);
             });
 
             // Append documents
-            uploadedDocuments.forEach((doc) => {
+            uploadedDocuments.forEach((doc, index) => {
                 formData.append('documents', doc);
             });
 
@@ -515,7 +723,6 @@ const CreateAuction = () => {
                 setStep(1);
                 setUploadedPhotos([]);
                 setUploadedDocuments([]);
-                setBundleItems([]);
                 setCategoryFields([]);
                 setSubCategories([]);
                 setSelectedParent(null);
@@ -574,321 +781,109 @@ const CreateAuction = () => {
                                 {step === 1 && (
                                     <div>
                                         <h2 className="text-xl font-semibold mb-6 flex items-center">
-                                            <Package size={20} className="mr-2" />
-                                            Bundle Details
+                                            <Car size={20} className="mr-2" />
+                                            Item Details
                                         </h2>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
-                                                <label htmlFor="title" className="block text-sm font-medium text-secondary mb-1">
-                                                    Bundle Name *
+                                                <label htmlFor="title" className="block text-sm font-medium text-primary mb-1">
+                                                    Item Name *
                                                 </label>
                                                 <input
-                                                    {...register('title', { required: 'Bundle name is required' })}
+                                                    {...register('title', { required: 'Item name is required' })}
                                                     id="title"
                                                     type="text"
                                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    placeholder="e.g., Summer T-shirt Bundle (10 pcs)"
+                                                    placeholder="e.g., Zinus MoDRN Rectangular Dining Table"
                                                 />
                                                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
                                             </div>
 
-                                            {/* Category Selection */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                                <div>
-                                                    <label htmlFor="parentCategory" className="block text-sm font-medium text-secondary mb-1">
-                                                        Category *
-                                                    </label>
-                                                    <select
-                                                        {...register('parentCategory', {
-                                                            required: 'Please select a category'
-                                                        })}
-                                                        id="parentCategory"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        disabled={loadingCategories}
-                                                    >
-                                                        <option value="">Select a category</option>
-                                                        {parentCategories.map(cat => (
-                                                            <option key={cat._id} value={cat.slug}>
-                                                                {cat.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    {errors.parentCategory && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.parentCategory.message}</p>
-                                                    )}
-                                                </div>
+                                            {/* Category Selection - Two Level Dropdown */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label htmlFor="parentCategory" className="block text-sm font-medium text-primary mb-1">
+                                                    Category *
+                                                </label>
+                                                <select
+                                                    {...register('parentCategory', {
+                                                        required: 'Please select a category'
+                                                    })}
+                                                    id="parentCategory"
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                    disabled={loadingCategories}
+                                                >
+                                                    <option value="">Select a category</option>
+                                                    {parentCategories.map(cat => (
+                                                        <option key={cat._id} value={cat.slug}>
+                                                            {cat.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.parentCategory && (
+                                                    <p className="text-red-500 text-sm mt-1">{errors.parentCategory.message}</p>
+                                                )}
+                                            </div>
 
-                                                <div>
-                                                    <label htmlFor="category" className="block text-sm font-medium text-secondary mb-1">
-                                                        Subcategory *
-                                                    </label>
-                                                    <select
-                                                        {...register('category', {
-                                                            required: 'Please select a subcategory'
-                                                        })}
-                                                        id="category"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        disabled={!selectedParentSlug || loadingCategories}
-                                                    >
-                                                        <option value="">Select a subcategory</option>
-                                                        {subCategories.map(sub => (
-                                                            <option key={sub._id} value={sub.slug}>
-                                                                {sub.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    {errors.category && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
-                                                    )}
-                                                </div>
+                                            <div>
+                                                <label htmlFor="category" className="block text-sm font-medium text-primary mb-1">
+                                                    Subcategory *
+                                                </label>
+                                                <select
+                                                    {...register('category', {
+                                                        required: 'Please select a subcategory'
+                                                    })}
+                                                    id="category"
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                    disabled={!selectedParentSlug || loadingCategories}
+                                                >
+                                                    <option value="">Select a subcategory</option>
+                                                    {subCategories.map(sub => (
+                                                        <option key={sub._id} value={sub.slug}>
+                                                            {sub.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.category && (
+                                                    <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
+                                                )}
                                             </div>
                                         </div>
+                                        </div>
 
-                                        {/* Bundle Items Builder */}
-                                        {selectedCategory && categoryFields.length > 0 && (
-                                            <div className="mb-8 border rounded-lg overflow-hidden">
-                                                <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
-                                                    <div>
-                                                        <h3 className="font-semibold flex items-center gap-2">
-                                                            <Package size={18} />
-                                                            Bundle Contents ({bundleItems.length} items)
-                                                        </h3>
-                                                        <p className="text-sm text-gray-500">
-                                                            Add all items included in this bundle
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setEditingItemIndex(null);
-                                                            setShowItemModal(true);
-                                                        }}
-                                                        className="flex items-center gap-1 px-3 py-1 bg-black text-white rounded-lg text-sm hover:bg-gray-800"
-                                                    >
-                                                        <Plus size={16} />
-                                                        Add Item
-                                                    </button>
+                                        {/* Dynamic Fields for Selected Subcategory */}
+                                        {selectedCategory && (
+                                            <div className="mb-6">
+                                                <div className="mb-4 pb-2 border-b border-gray-200">
+                                                    <h3 className="text-lg font-medium text-gray-800">
+                                                        {selectedParent?.name} - {subCategories.find(s => s.slug === selectedCategory)?.name || 'Category'} Specifications
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500 mt-1">
+                                                        Please provide the following details about your item
+                                                    </p>
                                                 </div>
-
-                                                {bundleItems.length > 0 ? (
-                                                    <div className="overflow-x-auto">
-                                                        <table className="w-full text-sm">
-                                                            <thead className="bg-gray-50 border-b">
-                                                                <tr>
-                                                                    <th className="px-4 py-2 text-left w-10"></th>
-                                                                    <th className="px-4 py-2 text-left">#</th>
-                                                                    <th className="px-4 py-2 text-left">Qty</th>
-                                                                    {categoryFields.sort((a, b) => a.order - b.order).map(field => (
-                                                                        <th key={field.name} className="px-4 py-2 text-left">
-                                                                            {field.label}
-                                                                        </th>
-                                                                    ))}
-                                                                    <th className="px-4 py-2 text-left">Actions</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {bundleItems.map((item, index) => (
-                                                                    <BundleTableRow
-                                                                        key={index}
-                                                                        item={item}
-                                                                        index={index}
-                                                                        categoryFields={categoryFields}
-                                                                        onEdit={handleEditItem}
-                                                                        onRemove={removeBundleItem}
-                                                                        moveItem={moveBundleItem}
-                                                                    />
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-8 text-center text-gray-500">
-                                                        <Package size={40} className="mx-auto mb-2 text-gray-300" />
-                                                        <p>No items added to bundle yet</p>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setEditingItemIndex(null);
-                                                                setShowItemModal(true);
-                                                            }}
-                                                            className="mt-2 text-black underline"
-                                                        >
-                                                            Add your first item
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                {renderCategoryFields()}
                                             </div>
                                         )}
 
-                                        {/* Item Modal */}
-                                        <BundleItemModal
-                                            isOpen={showItemModal}
-                                            onClose={() => {
-                                                setShowItemModal(false);
-                                                setEditingItemIndex(null);
-                                            }}
-                                            onSave={(itemData) => {
-                                                if (editingItemIndex !== null) {
-                                                    updateBundleItem(editingItemIndex, itemData);
-                                                } else {
-                                                    addBundleItem(itemData);
-                                                }
-                                            }}
-                                            categoryFields={categoryFields}
-                                            initialData={editingItemIndex !== null ? bundleItems[editingItemIndex] : null}
-                                        />
-
-                                        {/* Parcel Details Section - Add this after video link field */}
-                                        <div className="border-t border-gray-200 pt-6 mb-6">
-                                            <h3 className="text-lg font-semibold mb-4 flex items-center">
-                                                <Package size={20} className="mr-2" />
-                                                Parcel Details
-                                            </h3>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                {/* Mass Unit */}
-                                                <div>
-                                                    <label htmlFor="massUnit" className="block text-sm font-medium text-secondary mb-1">
-                                                        Mass Unit
-                                                    </label>
-                                                    <select
-                                                        {...register('parcel.massUnit')}
-                                                        id="massUnit"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    >
-                                                        <option value="lb">lb</option>
-                                                        <option value="kg">kg</option>
-                                                        <option value="g">g</option>
-                                                        <option value="oz">oz</option>
-                                                    </select>
-                                                </div>
-
-                                                {/* Distance Unit */}
-                                                <div>
-                                                    <label htmlFor="distanceUnit" className="block text-sm font-medium text-secondary mb-1">
-                                                        Distance Unit
-                                                    </label>
-                                                    <select
-                                                        {...register('parcel.distanceUnit')}
-                                                        id="distanceUnit"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    >
-                                                        <option value="in">in</option>
-                                                        <option value="cm">cm</option>
-                                                        <option value="mm">mm</option>
-                                                        <option value="m">m</option>
-                                                        <option value="ft">ft</option>
-                                                    </select>
-                                                </div>
-
-                                                {/* Weight with its own unit dropdown */}
-                                                <div>
-                                                    <label htmlFor="weight" className="block text-sm font-medium text-secondary mb-1">
-                                                        Weight ({massUnit})
-                                                    </label>
-                                                    <input
-                                                        {...register('parcel.weight', {
-                                                            min: { value: 0, message: 'Weight must be positive' }
-                                                        })}
-                                                        id="weight"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="0.00"
-                                                    />
-                                                    {errors.parcel?.weight && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.parcel.weight.message}</p>
-                                                    )}
-                                                </div>
-
-                                                {/* Length with its own unit dropdown */}
-                                                <div>
-                                                    <label htmlFor="length" className="block text-sm font-medium text-secondary mb-1">
-                                                        Length ({distanceUnit})
-                                                    </label>
-                                                    <input
-                                                        {...register('parcel.length', {
-                                                            min: { value: 0, message: 'Length must be positive' }
-                                                        })}
-                                                        id="length"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="0.00"
-                                                    />
-                                                    {errors.parcel?.length && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.parcel.length.message}</p>
-                                                    )}
-                                                </div>
-
-                                                {/* Width */}
-                                                <div>
-                                                    <label htmlFor="width" className="block text-sm font-medium text-secondary mb-1">
-                                                        Width ({distanceUnit})
-                                                    </label>
-                                                    <input
-                                                        {...register('parcel.width', {
-                                                            min: { value: 0, message: 'Width must be positive' }
-                                                        })}
-                                                        id="width"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="0.00"
-                                                    />
-                                                    {errors.parcel?.width && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.parcel.width.message}</p>
-                                                    )}
-                                                </div>
-
-                                                {/* Height */}
-                                                <div>
-                                                    <label htmlFor="height" className="block text-sm font-medium text-secondary mb-1">
-                                                        Height ({distanceUnit})
-                                                    </label>
-                                                    <input
-                                                        {...register('parcel.height', {
-                                                            min: { value: 0, message: 'Height must be positive' }
-                                                        })}
-                                                        id="height"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="0.00"
-                                                    />
-                                                    {errors.parcel?.height && (
-                                                        <p className="text-red-500 text-sm mt-1">{errors.parcel.height.message}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <p className="text-xs text-gray-500 mt-2">
-                                                Provide package dimensions for shipping cost calculation. Fields are optional.
-                                            </p>
-                                        </div>
-
                                         <div className="mb-6">
-                                            <label htmlFor="description" className="block text-sm font-medium text-secondary mb-1">
-                                                Bundle Description *
+                                            <label htmlFor="description" className="block text-sm font-medium text-primary mb-1">
+                                                Description *
                                             </label>
                                             <RTE
                                                 name="description"
                                                 control={control}
                                                 label="Description:"
                                                 defaultValue={getValues('description') || ''}
-                                                placeholder="Describe the bundle, highlight key pieces, condition notes..."
+                                                placeholder="Describe the item's history, condition, and any notable details..."
                                             />
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
-                                                <label htmlFor="location" className="block text-sm font-medium text-secondary mb-1">
+                                                <label htmlFor="location" className="block text-sm font-medium text-primary mb-1">
                                                     Location
                                                 </label>
                                                 <div className="relative">
@@ -898,13 +893,13 @@ const CreateAuction = () => {
                                                         id="location"
                                                         type="text"
                                                         className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="e.g., New York, NY"
+                                                        placeholder="e.g., Los Angeles, California, USA"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label htmlFor="video" className="block text-sm font-medium text-secondary mb-1">
+                                                <label htmlFor="video" className="block text-sm font-medium text-primary mb-1">
                                                     Video Link
                                                 </label>
                                                 <div className="relative">
@@ -919,7 +914,7 @@ const CreateAuction = () => {
                                                         id="video"
                                                         type="url"
                                                         className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="YouTube video URL (bundle overview)"
+                                                        placeholder="YouTube video URL (walkaround, test drive)"
                                                     />
                                                 </div>
                                                 {errors.video && <p className="text-red-500 text-sm mt-1">{errors.video.message}</p>}
@@ -928,7 +923,7 @@ const CreateAuction = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
-                                                <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
+                                                <label htmlFor="startDate" className="block text-sm font-medium text-primary mb-1">
                                                     Start Date & Time *
                                                 </label>
                                                 <div className="relative">
@@ -944,7 +939,7 @@ const CreateAuction = () => {
                                             </div>
 
                                             <div>
-                                                <label htmlFor="endDate" className="block text-sm font-medium text-secondary mb-1">
+                                                <label htmlFor="endDate" className="block text-sm font-medium text-primary mb-1">
                                                     End Date & Time *
                                                 </label>
                                                 <div className="relative">
@@ -970,7 +965,7 @@ const CreateAuction = () => {
                                         </div>
 
                                         <div className="mb-6">
-                                            <label htmlFor="photo-upload" className="block text-sm font-medium text-secondary mb-1">
+                                            <label htmlFor="photo-upload" className="block text-sm font-medium text-primary mb-1">
                                                 Attach Photos *
                                             </label>
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -985,7 +980,7 @@ const CreateAuction = () => {
                                                 <label htmlFor="photo-upload" className="cursor-pointer">
                                                     <Image size={40} className="mx-auto text-gray-400 mb-2" />
                                                     <p className="text-gray-600">Browse photo(s) to upload</p>
-                                                    <p className="text-sm text-secondary">Bundle photos, group shots, detail shots</p>
+                                                    <p className="text-sm text-primary">Recommended: different angles</p>
                                                 </label>
                                             </div>
                                             {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos.message}</p>}
@@ -1000,7 +995,7 @@ const CreateAuction = () => {
                                         </div>
 
                                         <div className="mb-6">
-                                            <label htmlFor="document-upload" className="block text-sm font-medium text-secondary mb-1">
+                                            <label htmlFor="document-upload" className="block text-sm font-medium text-primary mb-1">
                                                 Attach Documents
                                             </label>
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -1014,7 +1009,7 @@ const CreateAuction = () => {
                                                 <label htmlFor="document-upload" className="cursor-pointer">
                                                     <File size={40} className="mx-auto text-gray-400 mb-2" />
                                                     <p className="text-gray-600">Browse document(s) to upload</p>
-                                                    <p className="text-sm text-secondary">Authentication certificates, receipts, etc.</p>
+                                                    <p className="text-sm text-primary">Any docs</p>
                                                 </label>
                                             </div>
 
@@ -1047,12 +1042,13 @@ const CreateAuction = () => {
                                         </h2>
 
                                         <div className="mb-6">
-                                            <label className="block text-sm font-medium text-secondary mb-1">Auction Type *</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <label className="block text-sm font-medium text-primary mb-1">Auction Type *</label>
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4"> {/* Changed from grid-cols-3 to grid-cols-4 */}
                                                 {[
                                                     { value: 'standard', label: 'Standard Auction' },
                                                     { value: 'reserve', label: 'Reserve Price Auction' },
                                                     { value: 'buy_now', label: 'Buy Now Auction' },
+                                                    // { value: 'giveaway', label: 'Free Giveaway' }, 
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                                                         <input
@@ -1068,8 +1064,9 @@ const CreateAuction = () => {
                                             {errors.auctionType && <p className="text-red-500 text-sm mt-1">{errors.auctionType.message}</p>}
                                         </div>
 
+                                        {/* Show immediate start message for buy_now and giveaway */}
                                         {(watch('auctionType') === 'buy_now' || watch('auctionType') === 'giveaway') && (
-                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                                 <p className="text-green-700 flex items-center gap-2">
                                                     <Zap size={18} />
                                                     <span>This auction will start immediately upon creation.</span>
@@ -1077,12 +1074,13 @@ const CreateAuction = () => {
                                             </div>
                                         )}
 
+                                        {/* Only show pricing fields if NOT giveaway */}
                                         {watch('auctionType') !== 'giveaway' && (
                                             <>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                     {(watch('auctionType') === 'standard' || watch('auctionType') === 'reserve') && (
                                                         <div>
-                                                            <label htmlFor="startPrice" className="block text-sm font-medium text-secondary mb-1">Start Price *</label>
+                                                            <label htmlFor="startPrice" className="block text-sm font-medium text-primary mb-1">Start Price *</label>
                                                             <div className="relative">
                                                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600">$</span>
                                                                 <input
@@ -1099,12 +1097,11 @@ const CreateAuction = () => {
                                                                 />
                                                             </div>
                                                             {errors.startPrice && <p className="text-red-500 text-sm mt-1">{errors.startPrice.message}</p>}
-                                                        </div>
-                                                    )}
+                                                        </div>)}
 
                                                     {(watch('auctionType') === 'standard' || watch('auctionType') === 'reserve') && (
                                                         <div>
-                                                            <label htmlFor="bidIncrement" className="block text-sm font-medium text-secondary mb-1">Bid Increment *</label>
+                                                            <label htmlFor="bidIncrement" className="block text-sm font-medium text-primary mb-1">Bid Increment *</label>
                                                             <div className="relative">
                                                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600">$</span>
                                                                 <input
@@ -1127,7 +1124,7 @@ const CreateAuction = () => {
 
                                                 {watch('auctionType') === 'reserve' && (
                                                     <div className="mb-6">
-                                                        <label htmlFor="reservePrice" className="block text-sm font-medium text-secondary mb-1">Reserve Price *</label>
+                                                        <label htmlFor="reservePrice" className="block text-sm font-medium text-primary mb-1">Reserve Price *</label>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600">$</span>
                                                             <input
@@ -1149,13 +1146,13 @@ const CreateAuction = () => {
                                                             />
                                                         </div>
                                                         {errors.reservePrice && <p className="text-red-500 text-sm mt-1">{errors.reservePrice.message}</p>}
-                                                        <p className="text-sm text-secondary mt-1">Bundle will not sell if bids don't reach this price</p>
+                                                        <p className="text-sm text-primary mt-1">Item will not sell if bids don't reach this price</p>
                                                     </div>
                                                 )}
 
                                                 {watch('auctionType') === 'buy_now' && (
                                                     <div className="mb-4">
-                                                        <label htmlFor="buyNowPrice" className="block text-sm font-medium text-secondary mb-1">
+                                                        <label htmlFor="buyNowPrice" className="block text-sm font-medium text-primary mb-1">
                                                             Buy Now Price *
                                                         </label>
                                                         <div className="relative">
@@ -1179,12 +1176,13 @@ const CreateAuction = () => {
                                                             />
                                                         </div>
                                                         {errors.buyNowPrice && <p className="text-red-500 text-sm mt-1">{errors.buyNowPrice.message}</p>}
-                                                        <p className="text-sm text-secondary mt-1">
-                                                            Buyers can purchase the entire bundle immediately at this price
+                                                        <p className="text-sm text-primary mt-1">
+                                                            Buyers can purchase immediately at this price, ending the auction
                                                         </p>
                                                     </div>
                                                 )}
 
+                                                {/* Allow Offers Toggle */}
                                                 <div className="mb-6">
                                                     <label className="flex items-center cursor-pointer">
                                                         <div className="relative">
@@ -1198,9 +1196,9 @@ const CreateAuction = () => {
                                                             <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${watch('allowOffers') ? 'transform translate-x-6' : ''}`}></div>
                                                         </div>
                                                         <div className="ml-3">
-                                                            <span className="font-medium text-secondary">Allow Offers on Bundle</span>
-                                                            <p className="text-sm text-secondary mt-1">
-                                                                Enable buyers to make purchase offers for the entire bundle
+                                                            <span className="font-medium text-primary">Allow Offers</span>
+                                                            <p className="text-sm text-primary mt-1">
+                                                                Enable buyers to make purchase offers during the auction
                                                             </p>
                                                         </div>
                                                     </label>
@@ -1208,13 +1206,14 @@ const CreateAuction = () => {
                                             </>
                                         )}
 
+                                        {/* Show giveaway info */}
                                         {watch('auctionType') === 'giveaway' && (
                                             <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
                                                 <h3 className="text-lg font-semibold text-green-700 mb-2 flex items-center gap-2">
-                                                    <span>🎁 Free Giveaway Bundle</span>
+                                                    <span>🎁 Free Giveaway</span>
                                                 </h3>
                                                 <p className="text-green-600 mb-2">
-                                                    This bundle will be given away for free. The first user who clicks "Claim" will win it immediately.
+                                                    This item will be given away for free. The first user who clicks "Claim" will win it immediately.
                                                 </p>
                                                 <p className="text-sm text-green-500">
                                                     No pricing needed. The auction will end as soon as someone claims it.
@@ -1233,78 +1232,61 @@ const CreateAuction = () => {
                                         </h2>
 
                                         <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
-                                            <h3 className="font-medium text-lg mb-4 border-b pb-2">Bundle Summary</h3>
+                                            <h3 className="font-medium text-lg mb-4 border-b pb-2">Auction Summary</h3>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {/* Bundle Details */}
+                                                {/* Item Details */}
                                                 <div className="space-y-4">
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                        <h4 className="font-medium mb-3">Bundle Details</h4>
+                                                        <h4 className="font-medium mb-3">Item Details</h4>
                                                         <div className="space-y-2">
                                                             <div>
-                                                                <p className="text-xs text-secondary">Bundle Name</p>
+                                                                <p className="text-xs text-primary">Item Name</p>
                                                                 <p className="font-medium">{watch('title') || 'Not provided'}</p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs text-secondary">Category</p>
+                                                                <p className="text-xs text-primary">Category</p>
                                                                 <p className="font-medium">
                                                                     {selectedParent?.name}
                                                                     {selectedCategory && ` / ${subCategories.find(s => s.slug === selectedCategory)?.name || selectedCategory}`}
                                                                 </p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs text-secondary">Total Items</p>
-                                                                <p className="font-medium">
-                                                                    {bundleItems.reduce((sum, item) => sum + (item.quantity || 1), 0)} pieces
-                                                                    ({bundleItems.length} unique items)
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-secondary">Location</p>
+                                                                <p className="text-xs text-primary">Location</p>
                                                                 <p className="font-medium">{watch('location') || 'Not specified'}</p>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* Bundle Items Preview */}
-                                                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                        <h4 className="font-medium mb-3">Bundle Contents</h4>
-                                                        <div className="overflow-x-auto">
-                                                            <table className="w-full text-xs">
-                                                                <thead className="bg-gray-50">
-                                                                    <tr>
-                                                                        <th className="px-2 py-1 text-left">#</th>
-                                                                        <th className="px-2 py-1 text-left">Qty</th>
-                                                                        {categoryFields.slice(0, 4).map(field => (
-                                                                            <th key={field.name} className="px-2 py-1 text-left">
-                                                                                {field.label}
-                                                                            </th>
-                                                                        ))}
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {bundleItems.slice(0, 5).map((item, idx) => (
-                                                                        <tr key={idx} className="border-t">
-                                                                            <td className="px-2 py-1">{idx + 1}</td>
-                                                                            <td className="px-2 py-1">{item.quantity}</td>
-                                                                            {categoryFields.slice(0, 4).map(field => (
-                                                                                <td key={field.name} className="px-2 py-1">
-                                                                                    {item.specifications?.[field.name] || '-'}
-                                                                                </td>
-                                                                            ))}
-                                                                        </tr>
-                                                                    ))}
-                                                                    {bundleItems.length > 5 && (
-                                                                        <tr>
-                                                                            <td colSpan={6} className="px-2 py-1 text-gray-500 italic">
-                                                                                ... and {bundleItems.length - 5} more items
-                                                                            </td>
-                                                                        </tr>
-                                                                    )}
-                                                                </tbody>
-                                                            </table>
+                                                    {categoryFields.length > 0 && (
+                                                        <div className="bg-white p-4 rounded-lg shadow-sm">
+                                                            <h4 className="font-medium mb-3">Specifications</h4>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {categoryFields.map((field) => {
+                                                                    const value = watch(`specifications.${field.name}`);
+                                                                    if (!value && value !== 0 && value !== false) return null;
+
+                                                                    let displayValue = value;
+                                                                    if (field.fieldType === 'boolean') {
+                                                                        displayValue = value ? 'Yes' : 'No';
+                                                                    } else if (field.fieldType === 'select' && field.options) {
+                                                                        const option = field.options.find(opt => opt.value === value);
+                                                                        displayValue = option?.label || value;
+                                                                    }
+
+                                                                    return (
+                                                                        <div key={field.name}>
+                                                                            <p className="text-xs text-primary">{field.label}</p>
+                                                                            <p className="font-medium">
+                                                                                {displayValue}
+                                                                                {field.unit && value && ` ${field.unit}`}
+                                                                            </p>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
 
                                                 {/* Auction Details */}
@@ -1313,28 +1295,34 @@ const CreateAuction = () => {
                                                         <h4 className="font-medium mb-3">Auction Details</h4>
                                                         <div className="space-y-2">
                                                             <div>
-                                                                <p className="text-xs text-secondary">Auction Type</p>
+                                                                <p className="text-xs text-primary">Auction Type</p>
                                                                 <p className="font-medium">
                                                                     {watch('auctionType') === 'buy_now' && 'Buy Now Auction'}
+                                                                </p>
+                                                                <p className="font-medium">
                                                                     {watch('auctionType') === 'standard' && 'Standard Auction'}
+                                                                </p>
+                                                                <p className="font-medium">
                                                                     {watch('auctionType') === 'reserve' && 'Reserve Auction'}
+                                                                </p>
+                                                                <p className="font-medium">
                                                                     {watch('auctionType') === 'giveaway' && 'Free Giveaway'}
                                                                 </p>
                                                             </div>
                                                             {watch('allowOffers') && (
                                                                 <div>
-                                                                    <p className="text-xs text-secondary">Allow Offers</p>
+                                                                    <p className="text-xs text-primary">Allow Offers</p>
                                                                     <p className="font-medium text-green-600">Yes</p>
                                                                 </div>
                                                             )}
                                                             <div>
-                                                                <p className="text-xs text-secondary">Start Date</p>
+                                                                <p className="text-xs text-primary">Start Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('startDate') ? new Date(watch('startDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs text-secondary">End Date</p>
+                                                                <p className="text-xs text-primary">End Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('endDate') ? new Date(watch('endDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
@@ -1344,23 +1332,23 @@ const CreateAuction = () => {
 
                                                     {/* Media */}
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                        <h4 className="font-medium mb-3">Media</h4>
+                                                        <h4 className="font-medium mb-3">Media & Documents</h4>
                                                         <div className="space-y-2">
                                                             <div className="flex justify-between items-center">
-                                                                <p className="text-xs text-secondary">Photos</p>
+                                                                <p className="text-xs text-primary">Photos</p>
                                                                 <span className="font-medium bg-gray-100 px-2 py-1 rounded-full text-xs">
                                                                     {uploadedPhotos.length} uploaded
                                                                 </span>
                                                             </div>
                                                             <div className="flex justify-between items-center">
-                                                                <p className="text-xs text-secondary">Documents</p>
+                                                                <p className="text-xs text-primary">Documents</p>
                                                                 <span className="font-medium bg-gray-100 px-2 py-1 rounded-full text-xs">
                                                                     {uploadedDocuments.length} uploaded
                                                                 </span>
                                                             </div>
                                                             {watch('video') && (
                                                                 <div className="flex justify-between items-center">
-                                                                    <p className="text-xs text-secondary">Video</p>
+                                                                    <p className="text-xs text-primary">Video</p>
                                                                     <span className="font-medium bg-gray-100 px-2 py-1 rounded-full text-xs">
                                                                         Included
                                                                     </span>
@@ -1373,88 +1361,23 @@ const CreateAuction = () => {
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
                                                         <h4 className="font-medium mb-3">Pricing</h4>
                                                         <div className="space-y-2">
-                                                            {watch('auctionType') !== 'giveaway' && (
-                                                                <>
-                                                                    <div>
-                                                                        <p className="text-xs text-secondary">Start Price</p>
-                                                                        <p className="font-medium">${watch('startPrice') || '0.00'}</p>
-                                                                    </div>
-                                                                    {watch('auctionType') === 'buy_now' && (
-                                                                        <div>
-                                                                            <p className="text-xs text-secondary">Buy Now Price</p>
-                                                                            <p className="font-medium text-blue-600">${watch('buyNowPrice') || '0.00'}</p>
-                                                                        </div>
-                                                                    )}
-                                                                    {watch('bidIncrement') > 0 && (
-                                                                        <div>
-                                                                            <p className="text-xs text-secondary">Bid Increment</p>
-                                                                            <p className="font-medium">${watch('bidIncrement')}</p>
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                            {watch('auctionType') === 'giveaway' && (
-                                                                <p className="text-green-600 font-medium">Free Giveaway</p>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                                            <div>
+                                                                <p className="text-xs text-primary">Start Price</p>
+                                                                <p className="font-medium">${watch('startPrice') || '0.00'}</p>
+                                                            </div>
 
-                                                    {/* Parcel Details Preview - Add this here */}
-                                                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                                                        <h4 className="font-medium mb-3 flex items-center gap-2">
-                                                            <Package size={18} />
-                                                            Parcel Details
-                                                        </h4>
-                                                        <div className="space-y-2">
-                                                            {watch('parcel.weight') && (
-                                                                <div className="grid grid-cols-2 gap-2">
-                                                                    <p className="text-xs text-secondary">Weight</p>
-                                                                    <p className="font-medium text-sm">
-                                                                        {watch('parcel.weight')} {watch('parcel.massUnit') || 'lb'}
-                                                                    </p>
+                                                            {watch('auctionType') === 'buy_now' && (
+                                                                <div>
+                                                                    <p className="text-xs text-primary">Buy Now Price</p>
+                                                                    <p className="font-medium text-blue-600">${watch('buyNowPrice') || '0.00'}</p>
                                                                 </div>
                                                             )}
 
-                                                            {watch('parcel.length') && watch('parcel.width') && watch('parcel.height') ? (
-                                                                <div className="grid grid-cols-2 gap-2">
-                                                                    <p className="text-xs text-secondary">Dimensions</p>
-                                                                    <p className="font-medium text-sm">
-                                                                        {watch('parcel.length')} × {watch('parcel.width')} × {watch('parcel.height')} {watch('parcel.distanceUnit') || 'in'}
-                                                                    </p>
+                                                            {watch('bidIncrement') > 0 && (
+                                                                <div>
+                                                                    <p className="text-xs text-primary">Bid Increment</p>
+                                                                    <p className="font-medium">${watch('bidIncrement')}</p>
                                                                 </div>
-                                                            ) : (
-                                                                <>
-                                                                    {watch('parcel.length') && (
-                                                                        <div className="grid grid-cols-2 gap-2">
-                                                                            <p className="text-xs text-secondary">Length</p>
-                                                                            <p className="font-medium text-sm">
-                                                                                {watch('parcel.length')} {watch('parcel.distanceUnit') || 'in'}
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {watch('parcel.width') && (
-                                                                        <div className="grid grid-cols-2 gap-2">
-                                                                            <p className="text-xs text-secondary">Width</p>
-                                                                            <p className="font-medium text-sm">
-                                                                                {watch('parcel.width')} {watch('parcel.distanceUnit') || 'in'}
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {watch('parcel.height') && (
-                                                                        <div className="grid grid-cols-2 gap-2">
-                                                                            <p className="text-xs text-secondary">Height</p>
-                                                                            <p className="font-medium text-sm">
-                                                                                {watch('parcel.height')} {watch('parcel.distanceUnit') || 'in'}
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            )}
-
-                                                            {!watch('parcel.weight') && !watch('parcel.length') && !watch('parcel.width') && !watch('parcel.height') && (
-                                                                <p className="text-gray-500 italic text-sm">No parcel details provided</p>
                                                             )}
                                                         </div>
                                                     </div>
@@ -1482,8 +1405,8 @@ const CreateAuction = () => {
                                                     id="termsAgreed"
                                                     className="mt-1 mr-2"
                                                 />
-                                                <span className="text-sm font-medium text-secondary">
-                                                    I agree to the terms and conditions and confirm that I have the right to sell this bundle
+                                                <span className="text-sm font-medium text-primary">
+                                                    I agree to the terms and conditions and confirm that I have the right to sell this item
                                                 </span>
                                             </label>
                                             {errors.termsAgreed && <p className="text-red-500 text-sm mt-1">{errors.termsAgreed.message}</p>}
@@ -1513,7 +1436,7 @@ const CreateAuction = () => {
                                                 e.preventDefault();
                                                 nextStep();
                                             }}
-                                            className="flex items-center px-6 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg transition-colors"
+                                            className="flex items-center px-6 py-2 bg-primary text-pure-white hover:bg-bg-primary/90 rounded-lg transition-colors"
                                         >
                                             Next
                                             <ArrowRight size={18} className="ml-2" />
@@ -1521,7 +1444,7 @@ const CreateAuction = () => {
                                     ) : (
                                         <button
                                             type="submit"
-                                            className="flex items-center px-6 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg transition-colors"
+                                            className="flex items-center px-6 py-2 bg-primary text-pure-white hover:bg-bg-primary/90 rounded-lg transition-colors"
                                         >
                                             <Gavel size={18} className="mr-2" />
                                             {isLoading ? 'Creating Auction...' : 'Create Auction'}

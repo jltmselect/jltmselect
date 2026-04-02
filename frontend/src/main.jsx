@@ -64,6 +64,7 @@ const WonAuctions = lazy(() => import('./pages/bidder/WonAuctions'));
 const BidderProfile = lazy(() => import('./pages/bidder/Profile'));
 const BidderNotifications = lazy(() => import('./pages/bidder/Notifications'));
 const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
+const BidderSubscriptions = lazy(() => import('./pages/bidder/Subscriptions'));
 
 {/* Admin Pages */ }
 const AdminLayout = lazy(() => import('./pages/admin/Layout'));
@@ -407,6 +408,15 @@ createRoot(document.getElementById('root')).render(
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <BidderProfile />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Bidder Subscriptions */}
+                            <Route
+                                path='/bidder/subscriptions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderSubscriptions />
                                     </Suspense>
                                 }
                             />

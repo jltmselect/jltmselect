@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { QuickActions, StatCard, BrokerContainer, BrokerHeader, BrokerSidebar } from "../../components";
+import { StatCard, BrokerContainer, BrokerHeader, BrokerSidebar } from "../../components";
 import { useState } from "react";
 import { TrendingUp, Gavel, Award, Heart, DollarSign, Clock, Eye } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
@@ -103,10 +103,6 @@ function Dashboard() {
                                 <StatCard key={stat.title} {...stat} />
                             ))
                         }
-                    </div>
-
-                    <div className="space-y-6 mb-16">
-                        <QuickActions />
                     </div>
                 </BrokerContainer>
             </div>

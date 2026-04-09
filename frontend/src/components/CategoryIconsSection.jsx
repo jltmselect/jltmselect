@@ -56,10 +56,10 @@ const CategoryIconsSection = () => {
         <Container className="py-14 dark:bg-bg-primary bg-bg-secondary">
             <div className='mb-8'>
                 <h2 className="text-3xl md:text-4xl font-bold text-pure-black dark:text-pure-white">
-                    Curated Fashion Categories
+                    Furniture Categories
                 </h2>
                 <p className="text-sm md:text-base text-text-secondary dark:text-text-secondary-dark mt-3">
-                    Navigate men's, women's, and kids' fashion the way it was meant to be browsed—beautifully organized, effortlessly discovered.
+                    Navigate different furniture categories the way it was meant to be browsed—beautifully organized, effortlessly discovered.
                 </p>
             </div>
 

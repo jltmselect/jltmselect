@@ -14,10 +14,8 @@ import {
     deleteAuction,
     updateAuction,
     updatePaymentStatus,
-    fetchDVLAData,
     verifyUserIdentity,
     rejectUserIdentity,
-    generateShippingLabelManually,
     createCashier,
     getCashiers,
     getCashierById,
@@ -41,9 +39,6 @@ AdminRouter.delete('/users/:userId', authAdmin, deleteUser);
 AdminRouter.patch('/users/:userId/identificationDocument/verify', authAdmin, verifyUserIdentity);
 AdminRouter.patch('/users/:userId/identificationDocument/reject', authAdmin, rejectUserIdentity);
 
-//dvla api route
-AdminRouter.post('/dvla', authAdmin, fetchDVLAData);
-
 // Auction management routes
 AdminRouter.get('/auctions', authAdmin, getAllAuctions);
 AdminRouter.get('/auctions/:auctionId', authAdmin, getAuctionDetails);
@@ -62,12 +57,6 @@ AdminRouter.put('/:id/payment-status',
     authAdmin, 
     upload.single('invoice'), 
     updatePaymentStatus
-);
-
-// generate label for shipping
-AdminRouter.post('/:id/generate-shipping-label', 
-    authAdmin, 
-    generateShippingLabelManually
 );
 
 // Cashier Management Routes

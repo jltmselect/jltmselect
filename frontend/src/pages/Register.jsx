@@ -427,6 +427,8 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
                     </div>
                 </div>
 
+                <p className='text-xs font-light text-primary'>Note: By putting my phone number, I agree to receive SMS notifications.</p>
+
                 <button
                     type="button"
                     onClick={handleSendOTP}

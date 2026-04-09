@@ -166,114 +166,6 @@ const BankTransferDetails = ({ bankDetails, onCopy }) => {
     );
 };
 
-// Shipping Options Component
-const ShippingOptions = ({ options, selected, onSelect, loading }) => {
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center p-8">
-                <Loader size={24} className="animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Calculating shipping rates...</span>
-            </div>
-        );
-    }
-
-    if (!options || options.length === 0) {
-        return (
-            <div className="bg-gray-50 p-6 rounded-lg text-center">
-                <Truck size={32} className="mx-auto text-gray-400 mb-2" />
-                <p className="text-gray-600">No shipping options available for this address.</p>
-                <p className="text-sm text-gray-500 mt-1">Please contact the seller for shipping arrangements.</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-3">
-            {options.map((option, index) => (
-                <label
-                    key={option.rateId || index}
-                    className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${selected === index
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                        }`}
-                >
-                    <div className="flex items-center gap-3 flex-1">
-                        <input
-                            type="radio"
-                            name="shipping"
-                            checked={selected === index}
-                            onChange={() => onSelect(index)}
-                            className="w-4 h-4 text-blue-600"
-                        />
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                {/* Show carrier logo if available */}
-                                {option.providerImage75 && (
-                                    <img
-                                        src={option.providerImage75}
-                                        alt={option.provider}
-                                        className="w-8 h-8 object-contain"
-                                    />
-                                )}
-                                {/* Fallback icon */}
-                                {!option.providerImage75 && (
-                                    <Truck size={18} className={selected === index ? 'text-blue-600' : 'text-gray-500'} />
-                                )}
-                                <div>
-                                    <span className="font-semibold">{option.provider || 'Carrier'}</span>
-                                    <span className="text-sm text-gray-600 ml-2">
-                                        {option.serviceLevel?.name || option.serviceName || 'Standard'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Delivery estimate */}
-                            {option.estimatedDays ? (
-                                <p className="text-sm text-gray-600 mt-1">
-                                    Estimated delivery: {option.estimatedDays} {option.estimatedDays === 1 ? 'day' : 'days'}
-                                </p>
-                            ) : option.durationTerms ? (
-                                <p className="text-sm text-gray-600 mt-1">
-                                    {option.durationTerms}
-                                </p>
-                            ) : (
-                                <p className="text-sm text-gray-500 mt-1 italic">
-                                    Delivery estimate not available
-                                </p>
-                            )}
-
-                            {/* Show attributes like FASTEST, CHEAPEST */}
-                            {option.attributes && option.attributes.length > 0 && (
-                                <div className="flex gap-2 mt-1">
-                                    {option.attributes.includes('FASTEST') && (
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                            Fastest
-                                        </span>
-                                    )}
-                                    {option.attributes.includes('CHEAPEST') && (
-                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                            Cheapest
-                                        </span>
-                                    )}
-                                    {option.attributes.includes('BESTVALUE') && (
-                                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                            Best Value
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="font-bold text-lg">${parseFloat(option.amount).toFixed(2)}</p>
-                        <p className="text-xs text-gray-500">{option.currency || 'USD'}</p>
-                    </div>
-                </label>
-            ))}
-        </div>
-    );
-};
-
 // Main Checkout Component
 const CheckoutContent = () => {
     const { auctionId } = useParams();
@@ -285,9 +177,6 @@ const CheckoutContent = () => {
     const [auction, setAuction] = useState(null);
     const [seller, setSeller] = useState(null);
     const [bidderAddress, setBidderAddress] = useState(null);
-    const [shippingOptions, setShippingOptions] = useState([]);
-    const [selectedShipping, setSelectedShipping] = useState(null);
-    const [calculatingShipping, setCalculatingShipping] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('stripe'); // 'stripe' or 'bank'
     const [processing, setProcessing] = useState(false);
     const [clientSecret, setClientSecret] = useState(null);
@@ -296,7 +185,6 @@ const CheckoutContent = () => {
     const [error, setError] = useState(null);
 
     const [paymentCompleted, setPaymentCompleted] = useState(false);
-    const [shippingPurchased, setShippingPurchased] = useState(false);
     const [purchasingLabel, setPurchasingLabel] = useState(false);
     const [trackingInfo, setTrackingInfo] = useState(null);
 
@@ -324,15 +212,6 @@ const CheckoutContent = () => {
                     setAuction(data.data.auction);
                     setSeller(data.data.seller);
                     setBidderAddress(data.data.bidderAddress);
-
-                    // Calculate shipping if parcel exists
-                    if (data.data.auction.parcel && data.data.bidderAddress) {
-                        calculateShippingRates(
-                            data.data.seller.address,
-                            data.data.bidderAddress,
-                            data.data.auction.parcel
-                        );
-                    }
 
                     // ✅ Use admin bank details instead of seller's
                     if (data.data.adminBankDetails) {
@@ -374,52 +253,17 @@ const CheckoutContent = () => {
         }
     }, [auctionId, navigate]);
 
-    // Calculate shipping rates
-    const calculateShippingRates = async (fromAddress, toAddress, parcel) => {
-        try {
-            setCalculatingShipping(true);
-
-            const { data } = await axiosInstance.post('/api/v1/shipping/rates', {
-                sellerAddress: fromAddress,
-                buyerAddress: toAddress,
-                parcel
-            });
-
-            if (data.success) {
-                setShippingOptions(data.data.rates);
-                if (data.data.rates.length > 0) {
-                    setSelectedShipping(0); // Select first option by default
-                }
-            }
-        } catch (error) {
-            console.error("Shipping calculation error:", error);
-            toast.error("Failed to calculate shipping rates");
-        } finally {
-            setCalculatingShipping(false);
-        }
-    };
-
     const handleOneClickPayment = async () => {
         const loadingToast = toast.loading('Processing your payment...');
 
         try {
-            const selectedRate = selectedShipping !== null ? shippingOptions[selectedShipping] : null;
-
             const response = await axiosInstance.post("/api/v1/payments/create-checkout-payment", {
-                auctionId: auction._id,
-                shippingAmount: selectedRate?.amount || 0,
-                rateId: selectedRate?.rateId,
-                rateDetails: selectedRate
+                auctionId: auction._id
             });
 
             if (response.data.success) {
                 toast.dismiss(loadingToast);
-                toast.success("Payment successful! Shipping label will be emailed to seller.");
-
-                // Show tracking info if available
-                if (response.data.data.shipping?.trackingNumber) {
-                    toast.success(`Tracking: ${response.data.data.shipping.trackingNumber}`);
-                }
+                toast.success("Payment successful! Details will be emailed to seller.");
 
                 // Redirect after success
                 setTimeout(() => navigate('/bidder/auctions/won'), 3000);
@@ -434,13 +278,8 @@ const CheckoutContent = () => {
         const loadingToast = toast.loading('Recording your bank transfer selection...');
 
         try {
-            const selectedRate = selectedShipping !== null ? shippingOptions[selectedShipping] : null;
-
             const response = await axiosInstance.post("/api/v1/payments/create-bank-transfer-payment", {
-                auctionId: auction._id,
-                shippingAmount: selectedRate?.amount || 0,
-                rateId: selectedRate?.rateId,
-                rateDetails: selectedRate
+                auctionId: auction._id
             });
 
             if (response.data.success) {
@@ -472,9 +311,8 @@ const CheckoutContent = () => {
 
         const winningBid = auction.finalPrice || auction.currentPrice || 0;
         const commission = auction.commissionAmount || 0;
-        const shipping = selectedShipping !== null ? shippingOptions[selectedShipping]?.amount || 0 : 0;
 
-        return winningBid + commission + shipping;
+        return winningBid + commission;
     };
 
     // Format currency
@@ -568,33 +406,6 @@ const CheckoutContent = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Column - 2 columns */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Shipping Address */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                    <MapPin size={20} className="text-blue-600" />
-                                    Shipping Address
-                                </h3>
-                                <div className="bg-gray-50 p-2 rounded-lg">
-                                    <p className="text-gray-800">{formatAddress(bidderAddress)}</p>
-                                </div>
-                            </div>
-
-                            {/* Shipping Options */}
-                            {auction.parcel && (
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                        <Truck size={20} className="text-blue-600" />
-                                        Shipping Options
-                                    </h3>
-                                    <ShippingOptions
-                                        options={shippingOptions}
-                                        selected={selectedShipping}
-                                        onSelect={setSelectedShipping}
-                                        loading={calculatingShipping}
-                                    />
-                                </div>
-                            )}
-
                             {/* Payment Method Selection */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -634,7 +445,7 @@ const CheckoutContent = () => {
                                     )}
 
                                     {/* Bank Transfer Option - Radio style */}
-                                    <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                                    {/* <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
                                         }`}>
                                         <input
                                             type="radio"
@@ -654,7 +465,7 @@ const CheckoutContent = () => {
                                             </p>
                                         </div>
                                         <Globe size={20} className="text-blue-600" />
-                                    </label>
+                                    </label> */}
                                 </div>
 
                                 {/* Bank Transfer Details - Show when selected */}
@@ -667,43 +478,6 @@ const CheckoutContent = () => {
                                     </div>
                                 )}
                             </div>
-
-                            {/* ===== NEW SECTION: TRACKING INFORMATION ===== */}
-                            {/* This appears AFTER shipping is purchased */}
-                            {shippingPurchased && trackingInfo && (
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                                    <h3 className="text-lg font-semibold mb-4">Tracking Information</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <Truck size={18} className="text-blue-600" />
-                                            <span className="font-medium">{trackingInfo.carrier}</span>
-                                            <span className="text-sm text-gray-600">{trackingInfo.service}</span>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-600">Tracking Number</p>
-                                            <a
-                                                href={trackingInfo.trackingUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline font-medium"
-                                            >
-                                                {trackingInfo.trackingNumber}
-                                            </a>
-                                        </div>
-                                        <div>
-                                            <a
-                                                href={trackingInfo.labelUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 text-primary hover:underline"
-                                            >
-                                                <FileText size={16} />
-                                                Download Shipping Label
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* Right Column - Order Summary */}
@@ -729,15 +503,6 @@ const CheckoutContent = () => {
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Commission</span>
                                                 <span className="font-medium">{formatCurrency(auction.commissionAmount)}</span>
-                                            </div>
-                                        )}
-
-                                        {selectedShipping !== null && shippingOptions[selectedShipping] && (
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Shipping</span>
-                                                <span className="font-medium">
-                                                    {formatCurrency(shippingOptions[selectedShipping].amount)}
-                                                </span>
                                             </div>
                                         )}
 
@@ -779,8 +544,7 @@ const CheckoutContent = () => {
                                         <p className="text-xs text-yellow-800 flex items-start gap-2">
                                             <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                                             <span>
-                                                By completing this purchase, you agree to release funds to the seller.
-                                                All sales are final.
+                                                By completing this purchase, you agree to pay with your saved card. All sales are final.
                                             </span>
                                         </p>
                                     </div>

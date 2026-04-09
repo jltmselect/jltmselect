@@ -49,9 +49,9 @@ function Home() {
     };
 
     const tabDescriptions = {
-        'active': 'Curated collections. Clear offers. Verified vintage. — Discover style that stands out.',
-        'sold': 'Informed bidding begins here — Browse sold bundles and past listings to understand value, and make your next move wisely.',
-        'approved': `Preview before you bid. — Browse upcoming fashion auctions and plan your bidding strategy around the pieces you can't miss.`
+        'active': 'Curated collections. Clear offers. Verified listings. — Discover furniture that stands out.',
+        'sold': 'Informed bidding begins here — Browse sold items and past listings to understand value, and make your next move wisely.',
+        'approved': 'Preview before you bid. — Browse upcoming furniture auctions and plan your bidding strategy around the pieces you can\'t miss.'
     };
 
     const fetchAuctions = async (tab = activeTab, category = null, limit = 4, sortBy = 'highestBid') => {
@@ -346,7 +346,7 @@ function Home() {
                                     No subscriptions yet
                                 </h3>
                                 <p className="text-gray-500 mb-6">
-                                    Purchase a subscription plan to start bidding on auctions
+                                    Purchase a subscription plan to start viewing/bidding on auctions
                                 </p>
                                 <button
                                     onClick={() => setShowSubscriptionModal(true)}
@@ -367,14 +367,14 @@ function Home() {
             )}
 
             {/* Who we are section */}
-            <Suspense fallback={<LoadingSpinner />}>
+            {/* <Suspense fallback={<LoadingSpinner />}>
                 <About />
-            </Suspense>
+            </Suspense> */}
 
             {/* Core platform features */}
-            <Suspense fallback={<LoadingSpinner />}>
+            {/* <Suspense fallback={<LoadingSpinner />}>
                 <CorePlatformFeatures />
-            </Suspense>
+            </Suspense> */}
 
             {/* Auction work flow */}
             <Suspense fallback={<LoadingSpinner />}>
@@ -384,6 +384,11 @@ function Home() {
             {/* Subscription Plan Section */}
             <Suspense fallback={<LoadingSpinner />}>
                 <SubscriptionSection />
+            </Suspense>
+
+            {/* Subscription Plan Section */}
+            <Suspense fallback={<LoadingSpinner />}>
+                <HowItWorks />
             </Suspense>
 
             {/* Testimonials */}

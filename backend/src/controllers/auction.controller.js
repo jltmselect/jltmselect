@@ -14,6 +14,8 @@ import {
   outbidNotificationEmail,
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
+  sendAuctionWonNotifications,
+  sendBulkAuctionNotifications,
   sendOutbidNotifications,
 } from "../utils/nodemailer.js";
 import Category from "../models/category.model.js";
@@ -337,6 +339,25 @@ export const createAuction = async (req, res) => {
 
     // Populate seller info for response
     await auction.populate("seller", "username firstName lastName");
+
+    // Send bulk notifications for immediately active auctions (buy_now/giveaway)
+    if (auction.status === "active") {
+      try {
+        const bidders = await User.find({
+          _id: { $ne: seller._id },
+          userType: "bidder",
+          isActive: true,
+        }).select("email username firstName phone preferences userType");
+
+        // Fire and forget - don't await to avoid delaying response
+        sendBulkAuctionNotifications(bidders, auction, seller).catch(err => {
+          console.error("Background notification error:", err);
+        });
+      } catch (notifError) {
+        console.error("Failed to send bulk notifications:", notifError);
+        // Don't throw - auction already created successfully
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -1913,42 +1934,6 @@ export const getWonAuctions = async (req, res) => {
         ? auction.offers.filter((o) => o.status === "pending").length
         : 0,
 
-      // Add shipping tracking information - Complete schema structure
-      shipping: auction.shipping
-        ? {
-          rate: {
-            provider: auction.shipping.rate?.provider,
-            serviceLevel: {
-              name: auction.shipping.rate?.serviceLevel?.name,
-              token: auction.shipping.rate?.serviceLevel?.token,
-              terms: auction.shipping.rate?.serviceLevel?.terms,
-            },
-            amount: auction.shipping.rate?.amount,
-            currency: auction.shipping.rate?.currency,
-            estimatedDays: auction.shipping.rate?.estimatedDays,
-          },
-          transaction: {
-            objectId: auction.shipping.transaction?.objectId,
-            status: auction.shipping.transaction?.status,
-            labelUrl: auction.shipping.transaction?.labelUrl,
-            trackingNumber: auction.shipping.transaction?.trackingNumber,
-            trackingUrl: auction.shipping.transaction?.trackingUrl,
-            commercialInvoiceUrl:
-              auction.shipping.transaction?.commercialInvoiceUrl,
-            purchasedAt: auction.shipping.transaction?.purchasedAt,
-            messages: auction.shipping.transaction?.messages,
-          },
-          tracking: {
-            status: auction.shipping.tracking?.status,
-            statusDetails: auction.shipping.tracking?.statusDetails,
-            estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
-            actualDelivery: auction.shipping.tracking?.actualDelivery,
-            trackingHistory: auction.shipping.tracking?.trackingHistory,
-            lastUpdated: auction.shipping.tracking?.lastUpdated,
-          },
-        }
-        : null,
-
       // Also include payment info for reference
       paymentMethod: auction.paymentMethod,
       transactionId: auction.transactionId,
@@ -2207,41 +2192,6 @@ export const getSoldAuctions = async (req, res) => {
         winningBid: auction.finalPrice || auction.currentPrice,
         startTime: auction.startDate,
         endTime: auction.endDate,
-
-        // ✅ Add shipping tracking information - Complete schema structure
-        shipping: auction.shipping
-          ? {
-            rate: {
-              provider: auction.shipping.rate?.provider,
-              serviceLevel: {
-                name: auction.shipping.rate?.serviceLevel?.name,
-                token: auction.shipping.rate?.serviceLevel?.token,
-                terms: auction.shipping.rate?.serviceLevel?.terms,
-              },
-              amount: auction.shipping.rate?.amount,
-              currency: auction.shipping.rate?.currency,
-              estimatedDays: auction.shipping.rate?.estimatedDays,
-            },
-            transaction: {
-              objectId: auction.shipping.transaction?.objectId,
-              status: auction.shipping.transaction?.status,
-              labelUrl: auction.shipping.transaction?.labelUrl,
-              trackingNumber: auction.shipping.transaction?.trackingNumber,
-              trackingUrl: auction.shipping.transaction?.trackingUrl,
-              commercialInvoiceUrl: auction.shipping.transaction?.commercialInvoiceUrl,
-              purchasedAt: auction.shipping.transaction?.purchasedAt,
-              messages: auction.shipping.transaction?.messages,
-            },
-            tracking: {
-              status: auction.shipping.tracking?.status,
-              statusDetails: auction.shipping.tracking?.statusDetails,
-              estimatedDelivery: auction.shipping.tracking?.estimatedDelivery,
-              actualDelivery: auction.shipping.tracking?.actualDelivery,
-              trackingHistory: auction.shipping.tracking?.trackingHistory,
-              lastUpdated: auction.shipping.tracking?.lastUpdated,
-            },
-          }
-          : null,
 
         // ✅ Add payment info
         paymentStatus: auction.paymentStatus || "pending",
@@ -2591,11 +2541,9 @@ export const buyNow = async (req, res) => {
       console.error("Failed to send seller ended auction email:", error),
     );
 
-    if (updatedAuction.winner?.preferences?.emailUpdates) {
-      sendAuctionWonEmail(updatedAuction).catch((error) =>
-        console.error("Failed to send buyer won auction email:", error),
-      );
-    }
+    sendAuctionWonNotifications(updatedAuction).catch((error) =>
+      console.error("Failed to send auction won notifications:", error),
+    );
 
     // Send admin emails to all admin users
     try {
@@ -2805,24 +2753,24 @@ export const getBargainDeals = async (req, res) => {
     // Calculate discount and apply filters
     const discountMin = parseFloat(req.query.discountMin || 80);
     const maxPriceRatio = (100 - discountMin) / 100;
-    
+
     // Filter auctions by discount and price range
     let filteredAuctions = auctions.filter(auction => {
       const effectiveFinalPrice = auction.finalPrice || auction.currentPrice;
       const retailPrice = auction.retailPrice;
-      
+
       if (!effectiveFinalPrice || !retailPrice) return false;
-      
+
       const priceRatio = effectiveFinalPrice / retailPrice;
       const discountPercentage = ((retailPrice - effectiveFinalPrice) / retailPrice) * 100;
-      
+
       // Check discount threshold
       if (discountPercentage < discountMin) return false;
-      
+
       // Check price range filters
       if (priceMin && effectiveFinalPrice < parseFloat(priceMin)) return false;
       if (priceMax && effectiveFinalPrice > parseFloat(priceMax)) return false;
-      
+
       return true;
     });
 
@@ -2832,7 +2780,7 @@ export const getBargainDeals = async (req, res) => {
       const retailPrice = auction.retailPrice;
       const discountPercentage = ((retailPrice - effectiveFinalPrice) / retailPrice) * 100;
       const savingsAmount = retailPrice - effectiveFinalPrice;
-      
+
       return {
         ...auction,
         effectiveFinalPrice,
@@ -2845,7 +2793,7 @@ export const getBargainDeals = async (req, res) => {
 
     // Apply sorting
     const sortDirection = sortOrder === "desc" ? -1 : 1;
-    
+
     if (sortBy === "discountPercentage") {
       processedAuctions.sort((a, b) => sortDirection * (a.discountPercentage - b.discountPercentage));
     } else if (sortBy === "savingsAmount") {
@@ -2871,10 +2819,10 @@ export const getBargainDeals = async (req, res) => {
 
     // Calculate statistics
     const totalSavings = processedAuctions.reduce((sum, a) => sum + a.savingsAmount, 0);
-    const averageDiscount = total > 0 
+    const averageDiscount = total > 0
       ? Math.round((processedAuctions.reduce((sum, a) => sum + a.discountPercentage, 0) / total) * 100) / 100
       : 0;
-    const biggestDiscount = total > 0 
+    const biggestDiscount = total > 0
       ? Math.max(...processedAuctions.map(a => a.discountPercentage))
       : 0;
     const totalRetailValue = processedAuctions.reduce((sum, a) => sum + a.retailPrice, 0);

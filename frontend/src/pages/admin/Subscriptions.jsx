@@ -1138,7 +1138,7 @@ const SubscriptionFormModal = ({
                                 Pricing & Duration
                             </h4>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Amount *
@@ -1160,7 +1160,7 @@ const SubscriptionFormModal = ({
                                         />
                                     </div>
                                 </div>
-                                <div>
+                                {/* <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Currency
                                     </label>
@@ -1177,7 +1177,7 @@ const SubscriptionFormModal = ({
                                         <option value="GBP">GBP (£)</option>
                                         <option value="INR">INR (₹)</option>
                                     </select>
-                                </div>
+                                </div> */}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

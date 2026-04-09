@@ -8,6 +8,7 @@ import {
   paymentSuccessEmail,
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
+  sendAuctionWonNotifications,
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
@@ -37,18 +38,22 @@ class AgendaService {
           // Send email to seller
           await auctionListedEmail(auction, auction.seller);
 
+          // Get frontend URL from env
+          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
           // Send bulk notifications to all users (except admin and auction seller)
           const allUsers = await User.find({
             _id: { $ne: auction.seller._id }, // Exclude auction owner
-            userType: { $ne: "admin" },
+            userType: "bidder", // Only bidder users
             "preferences.emailUpdates": { $ne: false }, // Exclude users who opted out
+            "preferences.smsUpdates": { $ne: false }, // Exclude users who opted out
             isActive: true, // Only active users
-          }).select("email username firstName preferences userType");
+          }).select("email username firstName phone preferences userType");
 
-          // Send bulk notifications
+          // Send bulk notifications (email + SMS)
           await sendBulkAuctionNotifications(allUsers, auction, auction.seller);
 
-          // console.log(`✅ Agenda: Activated auction ${auctionId}`);
+          console.log(`✅ Agenda: Activated auction ${auctionId}`);
         }
       } catch (error) {
         console.error("Agenda job error (activate auction):", error);
@@ -136,10 +141,8 @@ class AgendaService {
               }`,
             );
 
-            // Send auction won email to buyer
-            if (auction.winner?.preferences?.emailUpdates) {
-              await sendAuctionWonEmail(auction);
-            }
+            // Send auction won notifications (email + SMS)
+            await sendAuctionWonNotifications(auction);
 
             // Send admin email for sold auction
             const adminUsers = await User.find({ userType: "admin" });

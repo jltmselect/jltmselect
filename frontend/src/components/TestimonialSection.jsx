@@ -125,7 +125,7 @@ export default function TestimonialSection() {
           >
             <div className="flex items-center justify-between">
               <h2 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-text-primary-dark">
-                Loved by 10k+ People
+                Loved by 1k+ People
               </h2>
               {/* Navigation Arrows */}
               {loaded && instanceRef.current && (

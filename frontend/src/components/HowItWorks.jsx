@@ -1,4 +1,4 @@
-import { UserCheck, Car, DollarSign, Tractor } from "lucide-react";
+import { UserCheck, Car, DollarSign, Tractor, Sofa } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 function HowItWorks() {
@@ -19,27 +19,27 @@ function HowItWorks() {
         {
             icon: UserCheck,
             title: "Create Your Account",
-            desc: "Register in minutes to access all transaction types—bidding, buy now, free giveaways, and private offers."
+            desc: "Register and purchase a subscription in minutes to access all auctions — and start bidding and make offers."
         },
         {
-            icon: Tractor,
-            title: "Find Your Machine",
-            desc: "Browse thousands of listings across different categories. Filter by price, location, and sale type."
+            icon: Sofa,
+            title: "Find Your Furniture",
+            desc: "Browse thousands of listings across different categories. Filter by price, category, and auction type."
         },
         {
             icon: DollarSign,
             title: "Choose How to Buy",
-            desc: "Place a bid, buy instantly at a fixed price, make an offer, or enter a giveaway—whatever works best for you."
+            desc: "Place a bid or make an offer, make the furniture yours in a way that works best for you."
         }
     ];
 
     return (
-        <section ref={ref} className="py-10 bg-orange-100 rounded-xl overflow-hidden">
+        <section ref={ref} className="pt-10 pb-14 bg-secondary/10 rounded-xl overflow-hidden">
             <div className="text-center mb-16">
-                <p className="text-sm text-orange-500 font-semibold tracking-widest uppercase mb-2">
+                <p className="text-sm text-secondary font-semibold tracking-widest uppercase mb-2">
                     Start now
                 </p>
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+                <h2 className="text-3xl md:text-4xl font-bold text-primary dark:text-pure-white">
                     How It Works
                 </h2>
             </div>
@@ -62,13 +62,13 @@ function HowItWorks() {
                             refY="5"
                             orient="auto"
                         >
-                            <path d="M0,0 L10,5 L0,10 Z" fill="#f97316" />
+                            <path d="M0,0 L10,5 L0,10 Z" fill="#C9A84C" />
                         </marker>
                     </defs>
 
                     <path
                         d="M10 20 C 140 -10, 90 140, 200 100"
-                        stroke="#f97316"
+                        stroke="#C9A84C"
                         strokeWidth="2.5"
                         strokeLinecap="round"
                         strokeDasharray="7 7"
@@ -86,7 +86,7 @@ function HowItWorks() {
                 >
                     <path
                         d="M10 110 C 140 150, 90 -20, 200 30"
-                        stroke="#f97316"
+                        stroke="#C9A84C"
                         strokeWidth="2.5"
                         strokeLinecap="round"
                         strokeDasharray="7 7"
@@ -112,7 +112,7 @@ function HowItWorks() {
                             <div className="relative inline-flex items-center justify-center mb-6">
                                 <div className="absolute w-24 h-24 bg-red-100 rounded-2xl blur-xl opacity-60"></div>
 
-                                <div className="w-20 h-20 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 hover:-translate-y-1">
+                                <div className="w-20 h-20 rounded-2xl bg-secondary text-white flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 hover:-translate-y-1">
                                     <Icon size={34} />
                                 </div>
                             </div>

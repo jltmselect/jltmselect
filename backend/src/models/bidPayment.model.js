@@ -52,37 +52,6 @@ const bidPaymentSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    // Add these fields to your bidPayment schema
-    rateId: {
-      type: String,
-      trim: true,
-    },
-    rateProvider: {
-      type: String,
-      trim: true,
-    },
-    rateServiceLevel: {
-      type: String,
-      trim: true,
-    },
-    rateServiceToken: {
-      type: String,
-      trim: true,
-    },
-    rateAmount: {
-      type: Number,
-    },
-    rateCurrency: {
-      type: String,
-      default: "USD",
-    },
-    rateEstimatedDays: {
-      type: Number,
-    },
-    shippingAmount: {
-      type: Number,
-      required: false,
-    },
     type: {
       type: String,
       enum: [

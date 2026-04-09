@@ -71,16 +71,16 @@ const navigation = [
         path: '/admin/transactions',
         icon: <Banknote size={20} />
     },
-    {
-        name: 'Payouts',
-        path: '/admin/payouts',
-        icon: <BanknoteArrowDown size={20} />
-    },
-    {
-        name: 'Bank Details',
-        path: '/admin/payout-methods',
-        icon: <BanknoteArrowUp size={20} />
-    },
+    // {
+    //     name: 'Payouts',
+    //     path: '/admin/payouts',
+    //     icon: <BanknoteArrowDown size={20} />
+    // },
+    // {
+    //     name: 'Bank Details',
+    //     path: '/admin/payout-methods',
+    //     icon: <BanknoteArrowUp size={20} />
+    // },
     {
         name: 'Subscriptions',
         path: '/admin/subscriptions',
@@ -92,17 +92,17 @@ const navigation = [
         icon: <Tags size={20} />
     },
     {
-        name: 'AuctionVideos',
+        name: 'Benefits Videos',
         path: '/admin/videos',
         icon: <Video size={20} />
     },
+    // {
+    //     name: 'Comments',
+    //     path: '/admin/comments',
+    //     icon: <MessageCircle size={20} />,
+    // },
     {
-        name: 'Comments',
-        path: '/admin/comments',
-        icon: <MessageCircle size={20} />,
-    },
-    {
-        name: 'Support',
+        name: 'User Inquiries',
         path: '/admin/support/inquiries',
         icon: <MessageSquare size={20} />,
     },
@@ -111,11 +111,11 @@ const navigation = [
         path: '/admin/commissions',
         icon: <Settings size={20} />,
     },
-    {
-        name: 'Deposit',
-        path: '/admin/deposit-settings',
-        icon: <Shield size={20} />,
-    },
+    // {
+    //     name: 'Deposit',
+    //     path: '/admin/deposit-settings',
+    //     icon: <Shield size={20} />,
+    // },
     // {
     //     name: 'Notifications',
     //     path: '/admin/notifications',

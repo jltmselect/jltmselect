@@ -49,7 +49,7 @@ function Footer() {
             url: '/auctions?status=approved'
         },
         {
-            title: 'Deals',
+            title: 'Past',
             url: '/bargain-deals'
         },
         {

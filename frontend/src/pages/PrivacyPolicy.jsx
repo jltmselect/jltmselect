@@ -54,8 +54,8 @@ const PrivacyPolicy = () => {
                         <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                             <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">2. How We Use Your Information</h2>
                             <p className="text-text-secondary dark:text-text-secondary-dark">
-                                Your information is used to manage your membership, process payments, send transactional emails
-                                (bid notifications, pickup reminders, receipts), and improve our services.
+                                Your information is used to manage your membership, process payments, send transactional emails and sms updates
+                                (bid notifications, pickup reminders, receipts), and improve our services. User can always opt out of emails and sms updates in their account settings.
                             </p>
                         </div>
 

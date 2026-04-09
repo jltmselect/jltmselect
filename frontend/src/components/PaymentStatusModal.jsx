@@ -55,8 +55,6 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
             case 'processing': return 'text-orange-600 bg-orange-50 border-orange-200';
             case 'completed': return 'text-green-600 bg-green-50 border-green-200';
             case 'failed': return 'text-red-600 bg-red-50 border-red-200';
-            // case 'refunded': return 'text-blue-600 bg-blue-50 border-blue-200';
-            // case 'cancelled': return 'text-gray-600 bg-gray-50 border-gray-200';
             default: return 'text-gray-600 bg-gray-50 border-gray-200';
         }
     };
@@ -135,7 +133,7 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                                 Payment Method
                             </label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {['credit_card', 'bank_transfer', 'paypal', 'other'].map((method) => (
+                                {['credit_card', 'bank_transfer'].map((method) => (
                                     <button
                                         key={method}
                                         type="button"
@@ -147,8 +145,6 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                                     >
                                         {method === 'credit_card' && <CreditCard className="h-5 w-5" />}
                                         {method === 'bank_transfer' && <Building className="h-5 w-5" />}
-                                        {/* {method === 'paypal' && <Globe className="h-5 w-5" />} */}
-                                        {method === 'other' && <Banknote className="h-5 w-5" />}
                                         <span className="text-xs capitalize">{method.replace('_', ' ')}</span>
                                     </button>
                                 ))}
@@ -230,8 +226,6 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                             </div>
                         )}
                     </div>
-
-                    {formData.paymentStatus === 'completed' && <p className='text-orange-500 text-xs mb-3'>Note: Marking payment as completed will auto-generate the shipping label.</p>}
 
                     {/* Form Actions */}
                     <div className="flex gap-3 pt-4 border-t border-gray-200">

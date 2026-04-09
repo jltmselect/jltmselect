@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import Commission from "../models/commission.model.js";
+import { sendAuctionWonSMS, sendBulkAuctionSMS } from "../services/smsService.js";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -151,7 +152,7 @@ const contactEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: `${process.env.EMAIL_USER}`,
       subject: `New Contact Query - ${name}`,
       html: `
@@ -192,7 +193,7 @@ const contactEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -239,8 +240,8 @@ const contactEmail = async (
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This email was sent from the contact form on <span class="highlight">HangerStock</span> website.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This email was sent from the contact form on <span class="highlight">JLTM Select</span> website.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Fashion Closeout Auctions</p>
                         </div>
                     </div>
@@ -258,9 +259,9 @@ const contactEmail = async (
 const contactConfirmationEmail = async (name, email) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: `Thank You for Contacting HangerStock`,
+      subject: `Thank You for Contacting JLTM Select`,
       html: `
                 <!DOCTYPE html>
                 <html>
@@ -295,7 +296,7 @@ const contactConfirmationEmail = async (name, email) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -306,7 +307,7 @@ const contactConfirmationEmail = async (name, email) => {
                                 <p class="greeting">Dear <span class="highlight">${name}</span>,</p>
                                 
                                 <p class="message-text">
-                                    Thank you for reaching out to <span class="highlight">HangerStock</span>. We have successfully received your inquiry and appreciate you taking the time to contact us.
+                                    Thank you for reaching out to <span class="highlight">JLTM Select</span>. We have successfully received your inquiry and appreciate you taking the time to contact us.
                                 </p>
                                 
                                 <p class="message-text">
@@ -327,19 +328,19 @@ const contactConfirmationEmail = async (name, email) => {
                             
                             <div class="contact-info">
                                 <p><strong>Phone Support:</strong> Available Monday-Friday, 9:00 AM - 6:00 PM CET</p>
-                                <p><strong>Email Support:</strong> ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                                <p><strong>Email Support:</strong> ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                             </div>
                             
                             <div class="signature">
                                 <p>Best regards,</p>
-                                <p><strong>The HangerStock Team</strong></p>
+                                <p><strong>The JLTM Select Team</strong></p>
                                 <p>Fashion Closeout Auctions</p>
                             </div>
                         </div>
                         
                         <div class="footer">
                             <p class="footer-text">This is an automated confirmation email. Please do not reply to this message.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Your next great find is just a bid away!</p>
                         </div>
                     </div>
@@ -364,7 +365,7 @@ const bidConfirmationEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: `Bid Confirmation - ${auction.title}`,
       html: `
@@ -442,7 +443,7 @@ const bidConfirmationEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -530,7 +531,7 @@ const bidConfirmationEmail = async (
                             </div>
                             
                             <p>Dear <span class="highlight">${userName}</span>,</p>
-                            <p>Thank you for placing your bid on <strong>${auction.title}</strong> on HangerStock.</p>
+                            <p>Thank you for placing your bid on <strong>${auction.title}</strong> on JLTM Select.</p>
                             <p>We'll notify you immediately if you are outbid or when the auction ends.</p>
                             
                             <div style="text-align: center; margin: 25px 0;">
@@ -539,12 +540,12 @@ const bidConfirmationEmail = async (
                                 </a>
                             </div>
                             
-                            <p><strong>Important:</strong> Remember that auctions on HangerStock use automatic extension. If a bid is placed in the last 2 minutes, the auction extends by 2 minutes to ensure fair bidding.</p>
+                            <p><strong>Important:</strong> Remember that auctions on JLTM Select use automatic extension. If a bid is placed in the last 2 minutes, the auction extends by 2 minutes to ensure fair bidding.</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated confirmation from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated confirmation from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Happy Bidding! Your next great find awaits.</p>
                         </div>
                     </div>
@@ -570,7 +571,7 @@ const offerConfirmationEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: `Offer Submitted - ${auction.title}`,
       html: `
@@ -612,7 +613,7 @@ const offerConfirmationEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -665,13 +666,13 @@ const offerConfirmationEmail = async (
                             </div>
                             
                             <p>Dear <span class="highlight">${userName}</span>,</p>
-                            <p>Thank you for submitting your offer for the <strong>${auction.title}</strong> on HangerStock.</p>
+                            <p>Thank you for submitting your offer for the <strong>${auction.title}</strong> on JLTM Select.</p>
                             <p>We have notified the seller of your offer and they have 48 hours to respond.</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated confirmation from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated confirmation from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Your next great find is just an offer away!</p>
                         </div>
                     </div>
@@ -697,7 +698,7 @@ const outbidNotificationEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: `🚨 You've Been Outbid - ${auction.title}`,
       html: `
@@ -774,7 +775,7 @@ const outbidNotificationEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -857,7 +858,7 @@ const outbidNotificationEmail = async (
                             
                             <div class="tip-box">
                                 <div class="tip-title">💡 Quick Tip:</div>
-                                <p>For a better chance to win, consider placing a bid that's significantly higher than the current bid. Remember, auctions on HangerStock use automatic extension - if a bid is placed in the last 2 minutes, the auction extends by 2 minutes.</p>
+                                <p>For a better chance to win, consider placing a bid that's significantly higher than the current bid. Remember, auctions on JLTM Select use automatic extension - if a bid is placed in the last 2 minutes, the auction extends by 2 minutes.</p>
                             </div>
                             
                             <p>Dear <span class="highlight">${userName}</span>,</p>
@@ -867,9 +868,9 @@ const outbidNotificationEmail = async (
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you placed a bid on ${auction.title}.</p>
-                            <p class="footer-text">This is an automated notification from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -998,7 +999,7 @@ const sendAuctionWonEmail = async (auction) => {
     }
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: auction?.winner?.email,
       subject: `Invoice - ${auction?.title}`,
       html: `
@@ -1072,12 +1073,12 @@ const sendAuctionWonEmail = async (auction) => {
                     <div class="container">
                         <!-- Company Header -->
                         <div class="header">
-                            <div class="company-name">HangerStock</div>
+                            <div class="company-name">JLTM Select</div>
                             <div class="company-address">
                                 Norway
                             </div>
                             <div class="contact-info">
-                                Web: https://www.HangerStock.com | Email: admin@HangerStock.com
+                                Web: https://www.JLTM Select.com | Email: tech@jltmselect.com
                             </div>
                         </div>
                         
@@ -1173,7 +1174,7 @@ const sendAuctionWonEmail = async (auction) => {
                             </div>
                             
                             <div style="margin-top: 15px; font-size: 13px; color: #666; border-top: 1px dashed #bbdefb; padding-top: 15px;">
-                                <p><span class="highlight">Need help?</span> Contact our support team at <a href="mailto:admin@HangerStock.com" class="support-link">admin@HangerStock.com</a></p>
+                                <p><span class="highlight">Need help?</span> Contact our support team at <a href="mailto:tech@jltmselect.com" class="support-link">tech@jltmselect.com</a></p>
                                 <p style="margin-top: 5px;">You can also complete your payment by logging into your account and visiting the "Won Auctions" section.</p>
                             </div>
                         </div>
@@ -1181,21 +1182,21 @@ const sendAuctionWonEmail = async (auction) => {
                         <!-- Collection Information -->
                         <div class="collection-info">
                             <div class="collection-title">📦 ITEM COLLECTION</div>
-                            <p><strong>Important Information:</strong> Once your payment has been received and confirmed for the item and shipping, you will receive a tracking number and url. You can keep checking the shipping status using them.</p>
+                            <p><strong>Important Information:</strong> Once your payment has been received and confirmed for the item, we will reach out to you.</p>
                         </div>
                         
                         <!-- Call to Action -->
                         <div class="cta-section">
                             <p>If you have any questions, please feel free to leave a message.</p>
                             <p style="font-size: 12px; color: #666;">
-                                Questions? Contact <a href="mailto:admin@HangerStock.com" class="support-link">admin@HangerStock.com</a>
+                                Questions? Contact <a href="mailto:tech@jltmselect.com" class="support-link">tech@jltmselect.com</a>
                             </p>
                         </div>
                         
                         <!-- Footer -->
                         <div class="footer">
                             <div class="footer-company">
-                                HangerStock © ${new Date().getFullYear()}
+                                JLTM Select © ${new Date().getFullYear()}
                             </div>
                         </div>
                     </div>
@@ -1238,7 +1239,7 @@ const sendAuctionEndedSellerEmail = async (auction) => {
         : "Listing ended without sale";
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: auction?.seller?.email,
       subject: `Your Listing Has Ended - ${auction?.title}`,
       html: `
@@ -1303,7 +1304,7 @@ const sendAuctionEndedSellerEmail = async (auction) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -1406,14 +1407,14 @@ const sendAuctionEndedSellerEmail = async (auction) => {
                             }
                             
                             <p>Dear <span class="highlight">${auction?.seller?.firstName || auction?.seller?.username}</span>,</p>
-                            <p>Your listing for the <strong>${auction?.title}</strong> on HangerStock has ended.</p>
+                            <p>Your listing for the <strong>${auction?.title}</strong> on JLTM Select has ended.</p>
                             <p>For any questions about the sale process or assistance, please contact our support team.</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -1433,9 +1434,9 @@ const sendAuctionEndedSellerEmail = async (auction) => {
 const auctionListedEmail = async (auction, seller) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
-      subject: `✅ Your Listing is Live on HangerStock: ${auction?.title}`,
+      subject: `✅ Your Listing is Live on JLTM Select: ${auction?.title}`,
       html: `
                 <!DOCTYPE html>
                 <html>
@@ -1519,18 +1520,18 @@ const auctionListedEmail = async (auction, seller) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
                         <div class="content">
                             <div class="confirmation-box">
                                 <div class="confirmation-title">📦 YOUR LISTING IS NOW LIVE!</div>
-                                <p style="font-size: 18px; color: #155724;">Your item is now available on HangerStock</p>
+                                <p style="font-size: 18px; color: #155724;">Your item is now available on JLTM Select</p>
                             </div>
                             
                             <p>Dear <span class="highlight">${seller?.firstName || seller?.username}</span>,</p>
-                            <p>Great news! Your listing is now active and visible to thousands of potential buyers on HangerStock.</p>
+                            <p>Great news! Your listing is now active and visible to thousands of potential buyers on JLTM Select.</p>
                             
                             <div class="item-details">
                                 <div class="item-title">${auction?.title}</div>
@@ -1591,8 +1592,8 @@ const auctionListedEmail = async (auction, seller) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated confirmation from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated confirmation from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact our seller support team.</p>
                         </div>
                     </div>
@@ -1617,7 +1618,7 @@ const auctionEndingSoonEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: `⏰ Listing Expires Soon: ${auction?.title}`,
       html: `
@@ -1703,7 +1704,7 @@ const auctionEndingSoonEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -1802,7 +1803,7 @@ const auctionEndingSoonEmail = async (
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you showed interest in this item.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Don't miss out - act before time runs out!</p>
                         </div>
                     </div>
@@ -1821,7 +1822,7 @@ const auctionEndingSoonEmail = async (
 const paymentSuccessEmail = async (user, auction, paymentAmount) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: `Payment Confirmed - ${auction.title}`,
       html: `
@@ -1841,8 +1842,8 @@ const paymentSuccessEmail = async (user, auction, paymentAmount) => {
                 <body>
                     <div class="container">
                         <div class="confirmation">
-                            <img src="${process.env.FRONTEND_URL}/logo.png" alt="HangerStock Logo" class="logo">
-                            <div class="brand-name">HangerStock</div>
+                            <img src="${process.env.FRONTEND_URL}/logo.png" alt="JLTM Select Logo" class="logo">
+                            <div class="brand-name">JLTM Select</div>
                             <h2>✅ Payment Successful</h2>
                             <p>Your payment has been processed successfully</p>
                         </div>
@@ -1901,7 +1902,7 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
     }
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: user?.email,
       subject: `✅ Payment Confirmed - ${auction?.title}`,
       html: `
@@ -1970,7 +1971,7 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -2052,9 +2053,9 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This payment confirmation was sent by HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">This payment confirmation was sent by JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -2075,7 +2076,7 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
     const finalPrice = auction?.finalPrice || auction?.currentPrice || 0;
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller?.email,
       subject: `💰 Payment Received - ${auction?.title}`,
       html: `
@@ -2143,7 +2144,7 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -2189,7 +2190,6 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
                                     : ""
                                 }
                                 
-                                <p style="margin-top: 15px; font-size: 14px;"><strong>Next Step:</strong> As we confirm your payment, you will receive a tracking url and a number which you can use to check the status of your item shipped.</p>
                             </div>
                             
                             <div class="dashboard-box">
@@ -2204,9 +2204,9 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This payment confirmation was sent by HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">This payment confirmation was sent by JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -2230,9 +2230,9 @@ const welcomeEmail = async (user, verificationToken) => {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: `👋 Welcome to HangerStock!`,
+      subject: `👋 Welcome to JLTM Select!`,
       html: `
                 <!DOCTYPE html>
                 <html>
@@ -2296,13 +2296,13 @@ const welcomeEmail = async (user, verificationToken) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
                         <div class="content">
                             <div class="welcome-box">
-                                <div class="welcome-title">👋 WELCOME TO HangerStock!</div>
+                                <div class="welcome-title">👋 WELCOME TO JLTM Select!</div>
                                 <p style="font-size: 18px; color: #1e2d3b;">Your premier destination for online auctions in the US.</p>
                             </div>
                             
@@ -2310,7 +2310,7 @@ const welcomeEmail = async (user, verificationToken) => {
                                 Hello <span>${user.firstName || user.username}</span>!
                             </div>
                             
-                            <p>We're thrilled to welcome you to HangerStock, where you'll discover exceptional items and great deals across multiple categories. Your account has been successfully created.</p>
+                            <p>We're thrilled to welcome you to JLTM Select, where you'll discover exceptional items and great deals across multiple categories. Your account has been successfully created.</p>
 
                             <p>Your account has been successfully created. Please verify your email address to get started.</p>
 
@@ -2331,7 +2331,7 @@ const welcomeEmail = async (user, verificationToken) => {
                             
                             <div class="cta-box">
                                 <div class="cta-title">🚀 READY TO EXPLORE?</div>
-                                <p>Start browsing our diverse selection of items or complete your profile to get the most out of your HangerStock experience.</p>
+                                <p>Start browsing our diverse selection of items or complete your profile to get the most out of your JLTM Select experience.</p>
                                 <p style="margin: 15px 0;">
                                     <a href="${process.env.FRONTEND_URL}/${user?.userType}/profile" class="cta-button">GO TO PROFILE</a>
                                 </p>
@@ -2344,9 +2344,9 @@ const welcomeEmail = async (user, verificationToken) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">Welcome to the HangerStock community - where your next great find awaits!</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Questions? Contact us at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">Welcome to the JLTM Select community - where your next great find awaits!</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Questions? Contact us at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -2365,9 +2365,9 @@ const welcomeEmail = async (user, verificationToken) => {
 const resetPasswordEmail = async (email, url) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: `🔒 Reset Your HangerStock Password`,
+      subject: `🔒 Reset Your JLTM Select Password`,
       html: `
                 <!DOCTYPE html>
                 <html>
@@ -2430,14 +2430,14 @@ const resetPasswordEmail = async (email, url) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
                         <div class="content">
                             <div class="security-box">
                                 <div class="security-title">🔒 PASSWORD RESET REQUEST</div>
-                                <p style="font-size: 18px; color: #1e2d3b;">We received a request to reset your HangerStock password</p>
+                                <p style="font-size: 18px; color: #1e2d3b;">We received a request to reset your JLTM Select password</p>
                             </div>
                             
                             <div class="instruction-box">
@@ -2471,12 +2471,12 @@ const resetPasswordEmail = async (email, url) => {
                                 <p>• Don't reuse passwords from other websites</p>
                             </div>
                             
-                            <p>After resetting your password, you can log in to your HangerStock account and continue browsing our diverse selection of items.</p>
+                            <p>After resetting your password, you can log in to your JLTM Select account and continue browsing our diverse selection of items.</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated security email from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated security email from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you need further assistance, contact our support team.</p>
                         </div>
                     </div>
@@ -2494,7 +2494,7 @@ const resetPasswordEmail = async (email, url) => {
 const newUserRegistrationEmail = async (adminEmail, user) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: adminEmail,
       subject: `👤 New User Registration - ${user.userType || "Bidder"}`,
       html: `
@@ -2562,18 +2562,18 @@ const newUserRegistrationEmail = async (adminEmail, user) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
                         <div class="content">
                             <div class="notification-box">
                                 <div class="notification-title">👤 NEW USER REGISTRATION</div>
-                                <p style="font-size: 18px; color: #1e2d3b;">A new user has joined HangerStock</p>
+                                <p style="font-size: 18px; color: #1e2d3b;">A new user has joined JLTM Select</p>
                             </div>
                             
                             <p><strong>Hello Admin,</strong></p>
-                            <p>A new user has successfully registered on HangerStock. Here are the user details:</p>
+                            <p>A new user has successfully registered on JLTM Select. Here are the user details:</p>
                             
                             <div class="user-card">
                                 <div class="user-title">USER INFORMATION</div>
@@ -2623,8 +2623,8 @@ const newUserRegistrationEmail = async (adminEmail, user) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock Admin System.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select Admin System.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">You're receiving this email because you're an administrator.</p>
                         </div>
                     </div>
@@ -2646,7 +2646,7 @@ const newUserRegistrationEmail = async (adminEmail, user) => {
 const auctionWonAdminEmail = async (adminEmail, auction, buyer) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: adminEmail,
       subject: `🏆 Item Sold - ${auction?.title}`,
       html: `
@@ -2730,14 +2730,14 @@ const auctionWonAdminEmail = async (adminEmail, auction, buyer) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
                         <div class="content">
                             <div class="success-box">
                                 <div class="success-title">🏆 ITEM SOLD!</div>
-                                <p style="font-size: 18px; color: #155724;">An item has been successfully sold on HangerStock</p>
+                                <p style="font-size: 18px; color: #155724;">An item has been successfully sold on JLTM Select</p>
                             </div>
                             
                             <p><strong>Hello Admin,</strong></p>
@@ -2832,8 +2832,8 @@ const auctionWonAdminEmail = async (adminEmail, auction, buyer) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock Sales System.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select Sales System.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">You're receiving this email because you're an administrator.</p>
                         </div>
                     </div>
@@ -2901,7 +2901,7 @@ const auctionEndedAdminEmail = async (adminEmail, auction) => {
     const statusDetails = getStatusDetails(auction.status);
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: adminEmail,
       subject: `${statusDetails.subject} - ${auction?.title}`,
       html: `
@@ -2987,7 +2987,7 @@ const auctionEndedAdminEmail = async (adminEmail, auction) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -2999,7 +2999,7 @@ const auctionEndedAdminEmail = async (adminEmail, auction) => {
                             </div>
                             
                             <p><strong>Hello Admin,</strong></p>
-                            <p>An auction listing on HangerStock has ended. Here are the details:</p>
+                            <p>An auction listing on JLTM Select has ended. Here are the details:</p>
                             
                             <div class="item-card">
                                 <div class="item-title">${auction.title}</div>
@@ -3113,8 +3113,8 @@ const auctionEndedAdminEmail = async (adminEmail, auction) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock Admin System.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select Admin System.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">You're receiving this email because you're an administrator.</p>
                         </div>
                     </div>
@@ -3142,7 +3142,7 @@ const flaggedCommentAdminEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: adminEmail,
       subject: `🚩 Flagged Comment - ${auction?.title}`,
       html: `
@@ -3226,7 +3226,7 @@ const flaggedCommentAdminEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -3321,8 +3321,8 @@ const flaggedCommentAdminEmail = async (
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock Moderation System.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select Moderation System.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">You're receiving this email because you're a moderator/administrator.</p>
                         </div>
                     </div>
@@ -3350,7 +3350,7 @@ const newCommentSellerEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller?.email,
       subject: `💬 New Comment on Your Listing: ${auction.title}`,
       html: `
@@ -3441,7 +3441,7 @@ const newCommentSellerEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -3508,7 +3508,7 @@ const newCommentSellerEmail = async (
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you're the seller of this auction listing.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -3532,7 +3532,7 @@ const newCommentBidderEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: buyer?.email,
       subject: `💬 New Activity on Auction: ${auction?.title}`,
       html: `
@@ -3632,7 +3632,7 @@ const newCommentBidderEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -3682,7 +3682,7 @@ const newCommentBidderEmail = async (
                                 <div class="benefits-title">✅ WHY CHECK THE COMMENTS?</div>
                                 <p>• Get answers to questions from other potential buyers</p>
                                 <p>• Learn more about the item's condition and history</p>
-                                <p>• Understand shipping, delivery, and payment details</p>
+                                <p>• Understand delivery and payment details</p>
                                 <p>• Gauge seller responsiveness and professionalism</p>
                             </div>
                             
@@ -3710,7 +3710,7 @@ const newCommentBidderEmail = async (
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you've shown interest in this auction.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -3733,7 +3733,7 @@ const auctionSubmittedForApprovalEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: adminEmail,
       subject: `📝 New Listing for Approval - ${auction.title}`,
       html: `
@@ -3826,7 +3826,7 @@ const auctionSubmittedForApprovalEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -3956,8 +3956,8 @@ const auctionSubmittedForApprovalEmail = async (
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock Listing Approval System.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select Listing Approval System.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">You're receiving this email because you're an administrator.</p>
                         </div>
                     </div>
@@ -3979,7 +3979,7 @@ const auctionSubmittedForApprovalEmail = async (
 const auctionApprovedEmail = async (seller, auction) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
       subject: `✅ Your Listing is Live: ${auction?.title}`,
       html: `
@@ -4063,7 +4063,7 @@ const auctionApprovedEmail = async (seller, auction) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -4074,7 +4074,7 @@ const auctionApprovedEmail = async (seller, auction) => {
                             </div>
                             
                             <p>Dear <span class="highlight">${seller?.firstName || seller?.username}</span>,</p>
-                            <p>Great news! Your listing has been approved and is now live on HangerStock.</p>
+                            <p>Great news! Your listing has been approved and is now live on JLTM Select.</p>
                             
                             <div class="item-card">
                                 <div class="item-title">${auction?.title}</div>
@@ -4144,8 +4144,8 @@ const auctionApprovedEmail = async (seller, auction) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact our seller support team.</p>
                         </div>
                     </div>
@@ -4191,7 +4191,7 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
       : "No end date set";
 
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: buyer.email,
       subject: `🎯 New Auction: ${auction?.title}`,
       html: `
@@ -4313,14 +4313,14 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                             <div class="listing-badge">${listingStatus}</div>
                         </div>
                         
                         <div class="content">
                             <p>Dear <span class="highlight">${buyer?.firstName || buyer?.username}</span>,</p>
-                            <p>We're excited to let you know about a new auction listing on HangerStock that matches your interests!</p>
+                            <p>We're excited to let you know about a new auction listing on JLTM Select that matches your interests!</p>
                             
                             <div class="item-card">
                                 <div class="item-title">${auction?.title}</div>
@@ -4423,14 +4423,14 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
                             <ul>
                                 <li>Matches your saved preferences and search criteria</li>
                                 <li>Competitively priced in the current market</li>
-                                <li>From a verified seller on HangerStock</li>
+                                <li>From a verified seller on JLTM Select</li>
                                 <li>${auction?.buyNowPrice ? "Available for immediate purchase with Buy Now" : auction?.allowOffers ? "Open to offers and negotiations" : "Available for bidding"}</li>
                             </ul>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">You're receiving this email because you're a registered buyer on HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. Fashion Closeout Auctions.</p>
+                            <p class="footer-text">You're receiving this email because you're a registered buyer on JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. Fashion Closeout Auctions.</p>
                         </div>
                     </div>
                 </body>
@@ -4448,52 +4448,70 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
   }
 };
 
-// Bulk notification function for multiple bidders
+// Bulk notification function for multiple bidders (UPDATED with SMS support)
 const sendBulkAuctionNotifications = async (buyers, auction, seller) => {
   try {
-    const notificationPromises = buyers?.map(async (buyer) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    
+    // ============ EMAIL NOTIFICATIONS ============
+    const emailPromises = buyers?.map(async (buyer) => {
       try {
         // Check if buyer has notifications enabled for new listings
         if (buyer?.preferences?.emailUpdates) {
           await newAuctionNotificationEmail(buyer, auction, seller);
-          return { success: true, email: buyer.email };
+          return { success: true, email: buyer.email, type: 'email' };
         }
         return {
           success: false,
           email: buyer?.email,
-          reason: "Notifications disabled",
+          reason: "Email notifications disabled",
+          type: 'email'
         };
       } catch (error) {
         console.error(
-          `❌ Failed to send notification to ${buyer?.email}:`,
+          `❌ Failed to send email notification to ${buyer?.email}:`,
           error.message,
         );
-        return { success: false, email: buyer?.email, error: error.message };
+        return { success: false, email: buyer?.email, error: error.message, type: 'email' };
       }
     });
 
-    const results = await Promise.allSettled(notificationPromises);
+    // ============ SMS NOTIFICATIONS ============
+    // SMS will be sent separately using the same buyers array
+    const smsResults = await sendBulkAuctionSMS(buyers, auction, frontendUrl, 5);
 
-    // Log summary
-    const successful = results.filter(
+    // ============ WAIT FOR EMAIL RESULTS ============
+    const emailResults = await Promise.allSettled(emailPromises);
+
+    // ============ LOG SUMMARY ============
+    const successfulEmails = emailResults.filter(
       (result) => result.status === "fulfilled" && result.value.success,
     ).length;
-    const failed = results.filter(
+    
+    const failedEmails = emailResults.filter(
       (result) => result.status === "fulfilled" && !result.value.success,
     ).length;
-    const errors = results.filter(
+    
+    const errorEmails = emailResults.filter(
       (result) => result.status === "rejected",
     ).length;
 
-    console.log(
-      `📧 Bulk listing notifications completed: ${successful} successful, ${failed} skipped/failed, ${errors} errors`,
-    );
+    console.log(`📧 Email summary: ${successfulEmails} successful, ${failedEmails} skipped/failed, ${errorEmails} errors`);
+    console.log(`📱 SMS summary: ${smsResults.successful} sent, ${smsResults.failed} failed, ${smsResults.errors} errors`);
 
     return {
       total: buyers.length,
-      successful,
-      failed,
-      errors,
+      email: {
+        successful: successfulEmails,
+        failed: failedEmails,
+        errors: errorEmails
+      },
+      sms: {
+        total: smsResults.total,
+        successful: smsResults.successful,
+        failed: smsResults.failed,
+        errors: smsResults.errors
+      }
     };
   } catch (error) {
     console.error("❌ Error in bulk listing notifications:", error);
@@ -4501,10 +4519,62 @@ const sendBulkAuctionNotifications = async (buyers, auction, seller) => {
   }
 };
 
+/**
+ * Send both email and SMS notifications to auction winner
+ * @param {Object} auction - Auction object with populated winner and seller
+ * @returns {Promise<Object>} Results of both notifications
+ */
+const sendAuctionWonNotifications = async (auction) => {
+  try {
+    const winner = auction.winner;
+    const seller = auction.seller;
+    
+    if (!winner) {
+      console.log("⚠️ No winner found for auction, skipping notifications");
+      return { success: false, reason: "No winner" };
+    }
+    
+    // Send email notification
+    let emailResult = { success: false };
+    if (winner.preferences?.emailUpdates) {
+      try {
+        await sendAuctionWonEmail(auction);
+        emailResult = { success: true, type: "email" };
+        console.log(`✅ Auction won email sent to ${winner.email}`);
+      } catch (emailError) {
+        console.error(`❌ Failed to send auction won email to ${winner.email}:`, emailError);
+        emailResult = { success: false, error: emailError.message, type: "email" };
+      }
+    } else {
+      console.log(`⚠️ Email updates disabled for winner ${winner.email}`);
+      emailResult = { success: false, reason: "Email disabled", type: "email" };
+    }
+    
+    // Send SMS notification
+    const smsResult = await sendAuctionWonSMS(winner, auction);
+    
+    // Log summary
+    console.log(`📢 Auction won notifications for ${auction._id}: Email: ${emailResult.success ? "✅" : "❌"}, SMS: ${smsResult.success ? "✅" : "❌"}`);
+    
+    return {
+      success: true,
+      email: emailResult,
+      sms: smsResult,
+      winner: {
+        email: winner.email,
+        phone: winner.phone
+      }
+    };
+  } catch (error) {
+    console.error("❌ Error in sendAuctionWonNotifications:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 const newBidNotificationEmail = async (seller, auction, bidAmount, bidder) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
       subject: `💰 New Bid Received - ${auction.title}`,
       html: `
@@ -4575,7 +4645,7 @@ const newBidNotificationEmail = async (seller, auction, bidAmount, bidder) => {
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -4653,7 +4723,7 @@ const newBidNotificationEmail = async (seller, auction, bidAmount, bidder) => {
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you're the seller of this auction.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -4678,7 +4748,7 @@ const newOfferNotificationEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller?.email,
       subject: `💰 New Offer Received - ${auction?.title}`,
       html: `
@@ -4768,7 +4838,7 @@ const newOfferNotificationEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -4848,7 +4918,7 @@ const newOfferNotificationEmail = async (
                         
                         <div class="footer">
                             <p class="footer-text">You're receiving this email because you're the seller of this item.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Respond quickly to maximize your chances of a successful sale!</p>
                         </div>
                     </div>
@@ -4875,7 +4945,7 @@ const offerCanceledEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: buyerEmail,
       subject: `❌ Offer Canceled - ${auction?.title}`,
       html: `
@@ -4972,7 +5042,7 @@ const offerCanceledEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5041,7 +5111,7 @@ const offerCanceledEmail = async (
                             
                             <div class="cta-box">
                                 <div class="cta-title">🎯 FIND ANOTHER ITEM</div>
-                                <p>Continue your search for the perfect item. HangerStock has thousands of auctions waiting for you.</p>
+                                <p>Continue your search for the perfect item. JLTM Select has thousands of auctions waiting for you.</p>
                                 <p style="margin: 20px 0;">
                                     <a href="${process.env.FRONTEND_URL}/auctions" class="cta-button">BROWSE ALL AUCTIONS</a>
                                 </p>
@@ -5050,12 +5120,12 @@ const offerCanceledEmail = async (
                                 </div>
                             </div>
                             
-                            <p>Thank you for using HangerStock. We're here to help you find your next great find!</p>
+                            <p>Thank you for using JLTM Select. We're here to help you find your next great find!</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you have questions about this cancellation, please contact our support team.</p>
                         </div>
                     </div>
@@ -5082,7 +5152,7 @@ const offerAcceptedEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: buyerEmail,
       subject: `✅ Offer Accepted - ${auction?.title}`,
       html: `
@@ -5182,7 +5252,7 @@ const offerAcceptedEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5255,9 +5325,9 @@ const offerAcceptedEmail = async (
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">Congratulations on your successful purchase! This is an automated confirmation from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                            <p class="footer-text">Need assistance? Contact support at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
+                            <p class="footer-text">Congratulations on your successful purchase! This is an automated confirmation from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                            <p class="footer-text">Need assistance? Contact support at ${process.env.EMAIL_USER || "tech@jltmselect.com"}</p>
                         </div>
                     </div>
                 </body>
@@ -5284,7 +5354,7 @@ const offerRejectedEmail = async (
 ) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: buyerEmail,
       subject: `❌ Offer Declined - ${auction?.title}`,
       html: `
@@ -5383,7 +5453,7 @@ const offerRejectedEmail = async (
                     <div class="container">
                         <div class="header">
                             
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5395,7 +5465,7 @@ const offerRejectedEmail = async (
                             </div>
                             
                             <p>Dear <span class="highlight">${buyerName}</span>,</p>
-                            <p>We wanted to inform you that the seller has decided not to accept your offer on their item. This is a normal part of the negotiation process on HangerStock.</p>
+                            <p>We wanted to inform you that the seller has decided not to accept your offer on their item. This is a normal part of the negotiation process on JLTM Select.</p>
                             
                             ${
                               reason
@@ -5476,8 +5546,8 @@ const offerRejectedEmail = async (
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated notification from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you have questions about this decision, you can contact the seller directly.</p>
                         </div>
                     </div>
@@ -5505,7 +5575,7 @@ const sendOfferOutbidNotifications = async () => {
 const payoutInitiatedEmail = async (seller, auction, payout) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
       subject: `💰 Payout Initiated - ${auction.title}`,
       html: `
@@ -5559,7 +5629,7 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5600,8 +5670,8 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated message from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated message from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -5620,7 +5690,7 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
 const payoutCompletedEmail = async (seller, auction, payout) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
       subject: `✅ Payout Completed - ${auction.title}`,
       html: `
@@ -5682,7 +5752,7 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5729,12 +5799,12 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
                             <p><strong>Payment Details:</strong></p>
                             <p>Please check your ${payout.payoutMethod} account. The payment should appear in your account within 1-3 business days depending on your provider.</p>
                             
-                            <p>Thank you for selling with HangerStock! We appreciate your business.</p>
+                            <p>Thank you for selling with JLTM Select! We appreciate your business.</p>
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This payment confirmation was sent by HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This payment confirmation was sent by JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -5753,7 +5823,7 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
 const payoutFailedEmail = async (seller, payout) => {
   try {
     const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
+      from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
       to: seller.email,
       subject: `⚠️ Payout Update - Action Required`,
       html: `
@@ -5794,7 +5864,7 @@ const payoutFailedEmail = async (seller, payout) => {
                 <body>
                     <div class="container">
                         <div class="header">
-                            <div class="brand-name">HangerStock</div>
+                            <div class="brand-name">JLTM Select</div>
                             <div class="tagline">Fashion Closeout Auctions</div>
                         </div>
                         
@@ -5820,8 +5890,8 @@ const payoutFailedEmail = async (seller, payout) => {
                         </div>
                         
                         <div class="footer">
-                            <p class="footer-text">This is an automated message from HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
+                            <p class="footer-text">This is an automated message from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -5835,633 +5905,6 @@ const payoutFailedEmail = async (seller, payout) => {
     console.error("❌ Failed to send payout failed email:", error);
     return false;
   }
-};
-
-const sendShippingLabelToSeller = async (seller, auction, shippingData) => {
-  try {
-    const {
-      labelUrl,
-      trackingNumber,
-      trackingUrl,
-      carrier,
-      service,
-      estimatedDays,
-      rateAmount,
-      currency,
-      purchasedAt
-    } = shippingData;
-
-    const info = await transporter.sendMail({
-      from: `"HangerStock" <${process.env.EMAIL_USER}>`,
-      to: seller?.email,
-      subject: `📦 Shipping Label Ready - ${auction?.title}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-                .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
-                .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
-                .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
-                .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
-                .content { padding: 25px; }
-                .shipping-box { 
-                    background: #e8f4fd; 
-                    padding: 25px; 
-                    border-radius: 8px; 
-                    margin: 20px 0; 
-                    border: 2px solid #bbdefb;
-                    text-align: center;
-                }
-                .shipping-title { 
-                    font-size: 24px; 
-                    font-weight: bold; 
-                    color: #0d47a1;
-                    margin-bottom: 10px;
-                }
-                .label-box { 
-                    background: #ffffff; 
-                    padding: 20px; 
-                    border-radius: 8px; 
-                    margin: 20px 0; 
-                    border: 1px solid #e0e0e0;
-                    text-align: center;
-                }
-                .tracking-box { 
-                    background: #f8f9fa; 
-                    padding: 20px; 
-                    border-radius: 8px; 
-                    margin: 20px 0; 
-                    border-left: 4px solid #edcd1f;
-                }
-                .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
-                .info-row:last-child { border-bottom: none; }
-                .info-label { color: #666; font-weight: 500; }
-                .info-value { font-weight: bold; color: #1e2d3b; }
-                .address-box { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7; }
-                .address-title { color: #856404; font-size: 16px; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-                .cta-button { 
-                    background: #1e2d3b; 
-                    color: #ffffff !important; 
-                    padding: 14px 30px; 
-                    text-decoration: none; 
-                    border-radius: 6px; 
-                    display: inline-block; 
-                    font-weight: bold; 
-                    font-size: 16px;
-                    margin: 10px 0;
-                }
-                .cta-button-secondary {
-                    background: #edcd1f;
-                    color: #1e2d3b !important;
-                    padding: 12px 25px;
-                    text-decoration: none;
-                    border-radius: 6px;
-                    display: inline-block;
-                    font-weight: bold;
-                    font-size: 14px;
-                    margin: 10px 5px;
-                }
-                .instructions { background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #c8e6c9; }
-                .instructions-title { color: #2e7d32; font-size: 16px; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-                .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
-                .highlight { color: #edcd1f; font-weight: bold; }
-                .tracking-number { font-size: 20px; font-weight: bold; color: #0d47a1; letter-spacing: 1px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <div class="brand-name">HangerStock</div>
-                    <div class="tagline">Fashion Closeout Auctions</div>
-                </div>
-                
-                <div class="content">
-                    <div class="shipping-box">
-                        <div class="shipping-title">📦 SHIPPING LABEL READY</div>
-                        <p style="font-size: 16px; color: #0d47a1;">Your shipping label has been generated and is ready to print!</p>
-                    </div>
-                    
-                    <p>Dear <span class="highlight">${seller?.firstName || seller?.username}</span>,</p>
-                    <p>Great news! A shipping label has been purchased for your sold item: <strong>"${auction?.title}"</strong>. The buyer has paid for shipping, so there's no cost to you.</p>
-                    
-                    <div class="label-box">
-                        <div style="margin-bottom: 15px;">
-                            <strong style="font-size: 18px;">✈️ PRINT YOUR SHIPPING LABEL</strong>
-                        </div>
-                        <a href="${labelUrl}" target="_blank" class="cta-button" style="background: #2e7d32;">
-                            📄 DOWNLOAD LABEL (PDF)
-                        </a>
-                        <p style="margin-top: 15px; font-size: 12px; color: #666;">Click the button above to download and print your shipping label. Attach it securely to your package.</p>
-                    </div>
-                    
-                    <div class="tracking-box">
-                        <div class="info-row">
-                            <span class="info-label">🔢 Tracking Number:</span>
-                            <span class="info-value tracking-number">${trackingNumber}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">🚚 Carrier:</span>
-                            <span class="info-value">${carrier || 'Not specified'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">📦 Service:</span>
-                            <span class="info-value">${service || 'Standard'}</span>
-                        </div>
-                        ${estimatedDays ? `
-                        <div class="info-row">
-                            <span class="info-label">⏱️ Estimated Delivery:</span>
-                            <span class="info-value">${estimatedDays} business days</span>
-                        </div>
-                        ` : ''}
-                        ${rateAmount ? `
-                        <div class="info-row">
-                            <span class="info-label">💰 Shipping Cost:</span>
-                            <span class="info-value">${formatCurrency(rateAmount)} ${currency || 'USD'} (Paid by buyer)</span>
-                        </div>
-                        ` : ''}
-                        ${purchasedAt ? `
-                        <div class="info-row">
-                            <span class="info-label">📅 Label Purchased:</span>
-                            <span class="info-value">${new Date(purchasedAt).toLocaleString()}</span>
-                        </div>
-                        ` : ''}
-                        <div class="info-row">
-                            <span class="info-label">🔗 Track Package:</span>
-                            <span class="info-value">
-                                <a href="${trackingUrl}" target="_blank" style="color: #1e2d3b;">Click to track</a>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="address-box">
-                        <div class="address-title">
-                            <span>📍 BUYER SHIPPING ADDRESS</span>
-                        </div>
-                        <p style="margin: 5px 0;"><strong>${auction?.winner?.firstName} ${auction?.winner?.lastName}</strong></p>
-                        ${auction?.winner?.address?.street ? `<p style="margin: 2px 0;">${auction.winner.address.street}</p>` : ''}
-                        ${auction?.winner?.address?.buildingNameNo ? `<p style="margin: 2px 0;">${auction.winner.address.buildingNameNo}</p>` : ''}
-                        <p style="margin: 2px 0;">
-                            ${auction?.winner?.address?.city || ''}${auction?.winner?.address?.city && auction?.winner?.address?.state ? ', ' : ''}
-                            ${auction?.winner?.address?.state || ''} ${auction?.winner?.address?.postCode || ''}
-                        </p>
-                        <p style="margin: 2px 0;">${auction?.winner?.address?.country || ''}</p>
-                        ${auction?.winner?.phone ? `<p style="margin-top: 10px;"><strong>Phone:</strong> ${auction.winner.phone}</p>` : ''}
-                    </div>
-                    
-                    <div class="instructions">
-                        <div class="instructions-title">
-                            <span>📋 SHIPPING INSTRUCTIONS</span>
-                        </div>
-                        <ol style="margin: 10px 0 10px 20px;">
-                            <li><strong>Print the label</strong> - Click the download button above and print on a standard printer (PDF format)</li>
-                            <li><strong>Package the item</strong> - Securely pack the item with appropriate padding/protection</li>
-                            <li><strong>Attach the label</strong> - Tape the printed label securely to the outside of the package</li>
-                            <li><strong>Drop off or schedule pickup</strong> - Take the package to your nearest ${carrier?.split(' ')[0] || 'carrier'} location or schedule a free pickup</li>
-                            <li><strong>Keep the receipt</strong> - Always get a drop-off receipt for proof of shipment</li>
-                        </ol>
-                        <p style="margin-top: 15px; font-size: 14px; background: #fff; padding: 10px; border-radius: 6px;">
-                            ⚠️ <strong>Important:</strong> Please ship faster to ensure timely delivery. 
-                            The buyer has already paid for this shipping label.
-                        </p>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${trackingUrl}" target="_blank" class="cta-button-secondary">🔍 Track Package</a>
-                        <a href="${process.env.FRONTEND_URL}/seller/auctions/sold" class="cta-button-secondary">📊 View Sold Items</a>
-                    </div>
-                    
-                    <p>If you have any questions or encounter issues with the label, please contact our support team immediately.</p>
-                    
-                    <hr style="margin: 25px 0; border: none; border-top: 1px solid #e9ecef;">
-                    
-                    <p style="font-size: 14px; color: #666;">Need assistance? Reply to this email or contact us at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
-                </div>
-                
-                <div class="footer">
-                    <p class="footer-text">This shipping label was generated by HangerStock.</p>
-                    <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-      `,
-    });
-
-    console.log(`✅ Shipping label email sent to seller ${seller?.email}`);
-    return !!info;
-  } catch (error) {
-    console.error(`❌ Failed to send shipping label email:`, error);
-    return false;
-  }
-};
-
-const sendShippingLabelToBuyer = async (buyer, auction, shippingData) => {
-    try {
-        const {
-            labelUrl,
-            trackingNumber,
-            trackingUrl,
-            carrier,
-            service,
-            estimatedDays,
-            rateAmount,
-            currency,
-            purchasedAt
-        } = shippingData;
-
-        const info = await transporter.sendMail({
-            from: `"HangerStock" <${process.env.EMAIL_USER}>`,
-            to: buyer?.email,
-            subject: `📦 Your Item Has Been Shipped - ${auction?.title}`,
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-                        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
-                        .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
-                        .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
-                        .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
-                        .content { padding: 25px; }
-                        .shipped-box { 
-                            background: #d4edda; 
-                            padding: 25px; 
-                            border-radius: 8px; 
-                            margin: 20px 0; 
-                            border: 2px solid #c3e6cb;
-                            text-align: center;
-                        }
-                        .shipped-title { 
-                            font-size: 24px; 
-                            font-weight: bold; 
-                            color: #155724;
-                            margin-bottom: 10px;
-                        }
-                        .tracking-box { 
-                            background: #f8f9fa; 
-                            padding: 20px; 
-                            border-radius: 8px; 
-                            margin: 20px 0; 
-                            border-left: 4px solid #edcd1f;
-                        }
-                        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
-                        .info-row:last-child { border-bottom: none; }
-                        .info-label { color: #666; font-weight: 500; }
-                        .info-value { font-weight: bold; color: #1e2d3b; }
-                        .tracking-number { font-size: 20px; font-weight: bold; color: #0d47a1; letter-spacing: 1px; }
-                        .delivery-timeline { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
-                        .status-badge { 
-                            background: #2e7d32; 
-                            color: white; 
-                            padding: 5px 15px; 
-                            border-radius: 20px; 
-                            display: inline-block;
-                            font-size: 14px;
-                            font-weight: bold;
-                        }
-                        .cta-button { 
-                            background: #1e2d3b; 
-                            color: #ffffff !important; 
-                            padding: 14px 30px; 
-                            text-decoration: none; 
-                            border-radius: 6px; 
-                            display: inline-block; 
-                            font-weight: bold; 
-                            font-size: 16px;
-                            margin: 10px 0;
-                        }
-                        .cta-button-secondary {
-                            background: #edcd1f;
-                            color: #1e2d3b !important;
-                            padding: 12px 25px;
-                            text-decoration: none;
-                            border-radius: 6px;
-                            display: inline-block;
-                            font-weight: bold;
-                            font-size: 14px;
-                            margin: 10px 5px;
-                        }
-                        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
-                        .highlight { color: #edcd1f; font-weight: bold; }
-                        .shipping-summary { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <div class="brand-name">HangerStock</div>
-                            <div class="tagline">Fashion Closeout Auctions</div>
-                        </div>
-                        
-                        <div class="content">
-                            <div class="shipped-box">
-                                <div class="shipped-title">📦 YOUR ITEM IS ON THE WAY!</div>
-                                <p style="font-size: 16px; color: #155724;">Your package has been shipped and is on its way to you!</p>
-                            </div>
-                            
-                            <p>Dear <span class="highlight">${buyer?.firstName || buyer?.username}</span>,</p>
-                            <p>Great news! Your item <strong>"${auction?.title}"</strong> has been shipped by the seller. You can track its journey using the tracking information below.</p>
-                            
-                            <div class="tracking-box">
-                                <h3 style="margin-bottom: 15px;">🔍 Tracking Information</h3>
-                                <div class="info-row">
-                                    <span class="info-label">🔢 Tracking Number:</span>
-                                    <span class="info-value tracking-number">${trackingNumber}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">🚚 Carrier:</span>
-                                    <span class="info-value">${carrier || 'Not specified'}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">📦 Service:</span>
-                                    <span class="info-value">${service || 'Standard'}</span>
-                                </div>
-                                ${estimatedDays ? `
-                                <div class="info-row">
-                                    <span class="info-label">⏱️ Estimated Delivery:</span>
-                                    <span class="info-value">${estimatedDays} business days</span>
-                                </div>
-                                ` : ''}
-                                ${purchasedAt ? `
-                                <div class="info-row">
-                                    <span class="info-label">📅 Shipped On:</span>
-                                    <span class="info-value">${new Date(purchasedAt).toLocaleString()}</span>
-                                </div>
-                                ` : ''}
-                                <div class="info-row">
-                                    <span class="info-label">🔗 Track Package:</span>
-                                    <span class="info-value">
-                                        <a href="${trackingUrl}" target="_blank" style="color: #1e2d3b; font-weight: bold;">Click to track your shipment</a>
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <div class="delivery-timeline">
-                                <div class="status-badge" style="margin-bottom: 10px;">🚚 IN TRANSIT</div>
-                                <p style="margin-top: 10px;">Your package is on its way. Track it for the most up-to-date delivery status.</p>
-                                ${estimatedDays ? `<p style="margin-top: 5px; font-size: 14px;"><strong>Expected Delivery:</strong> Within ${estimatedDays} business days</p>` : ''}
-                            </div>
-                            
-                            <div class="shipping-summary">
-                                <h3 style="margin-bottom: 10px;">📋 Shipping Summary</h3>
-                                <div class="info-row">
-                                    <span class="info-label">Item:</span>
-                                    <span class="info-value">${auction?.title}</span>
-                                </div>
-                                ${rateAmount ? `
-                                <div class="info-row">
-                                    <span class="info-label">Shipping Cost:</span>
-                                    <span class="info-value">${formatCurrency(rateAmount)} ${currency || 'USD'} (Included in your payment)</span>
-                                </div>
-                                ` : ''}
-                                <div class="info-row">
-                                    <span class="info-label">Seller:</span>
-                                    <span class="info-value">${auction?.seller?.firstName} ${auction?.seller?.lastName}</span>
-                                </div>
-                            </div>
-                            
-                            <div style="text-align: center; margin: 25px 0;">
-                                <a href="${trackingUrl}" target="_blank" class="cta-button">🔍 TRACK YOUR PACKAGE</a>
-                                <a href="${process.env.FRONTEND_URL}/bidder/auctions/won" class="cta-button-secondary">📊 VIEW WON AUCTIONS</a>
-                            </div>
-                            
-                            <p>We're excited for you to receive your item! If you have any questions about your shipment, please don't hesitate to contact our support team.</p>
-                            
-                            <hr style="margin: 25px 0; border: none; border-top: 1px solid #e9ecef;">
-                            
-                            <p style="font-size: 14px; color: #666;">Need assistance? Reply to this email or contact us at ${process.env.EMAIL_USER || "admin@HangerStock.com"}</p>
-                        </div>
-                        
-                        <div class="footer">
-                            <p class="footer-text">This shipping confirmation was sent by HangerStock.</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `
-        });
-
-        console.log(`✅ Shipping confirmation email sent to buyer ${buyer?.email}`);
-        return !!info;
-    } catch (error) {
-        console.error(`❌ Failed to send shipping confirmation email:`, error);
-        return false;
-    }
-};
-
-const sendShippingLabelToAdmin = async (admin, auction, shippingData) => {
-    try {
-        const {
-            labelUrl,
-            trackingNumber,
-            trackingUrl,
-            carrier,
-            service,
-            estimatedDays,
-            rateAmount,
-            currency,
-            purchasedAt
-        } = shippingData;
-
-        const info = await transporter.sendMail({
-            from: `"HangerStock" <${process.env.EMAIL_USER}>`,
-            to: admin?.email,
-            subject: `📦 Shipping Label Generated - ${auction?.title}`,
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-                        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
-                        .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
-                        .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
-                        .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
-                        .content { padding: 25px; }
-                        .admin-badge { 
-                            background: #1e2d3b; 
-                            color: #edcd1f;
-                            padding: 5px 15px; 
-                            border-radius: 20px; 
-                            display: inline-block;
-                            font-size: 12px;
-                            font-weight: bold;
-                            margin-bottom: 20px;
-                        }
-                        .label-box { 
-                            background: #e8f4fd; 
-                            padding: 25px; 
-                            border-radius: 8px; 
-                            margin: 20px 0; 
-                            border: 2px solid #bbdefb;
-                            text-align: center;
-                        }
-                        .tracking-box { 
-                            background: #f8f9fa; 
-                            padding: 20px; 
-                            border-radius: 8px; 
-                            margin: 20px 0; 
-                            border-left: 4px solid #edcd1f;
-                        }
-                        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
-                        .info-row:last-child { border-bottom: none; }
-                        .info-label { color: #666; font-weight: 500; }
-                        .info-value { font-weight: bold; color: #1e2d3b; }
-                        .tracking-number { font-size: 18px; font-weight: bold; color: #0d47a1; letter-spacing: 1px; }
-                        .auction-summary { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                        .cta-button { 
-                            background: #1e2d3b; 
-                            color: #ffffff !important; 
-                            padding: 12px 25px; 
-                            text-decoration: none; 
-                            border-radius: 6px; 
-                            display: inline-block; 
-                            font-weight: bold; 
-                            font-size: 14px;
-                            margin: 10px 5px;
-                        }
-                        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
-                        .highlight { color: #edcd1f; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <div class="brand-name">HangerStock</div>
-                            <div class="tagline">Admin Notification</div>
-                        </div>
-                        
-                        <div class="content">
-                            <div style="text-align: center;">
-                                <div class="admin-badge">ADMIN NOTIFICATION</div>
-                            </div>
-                            
-                            <h2>📦 Shipping Label Generated</h2>
-                            <p>Dear <span class="highlight">${admin?.firstName || 'Admin'}</span>,</p>
-                            <p>A shipping label has been generated for auction: <strong>"${auction?.title}"</strong>.</p>
-                            
-                            <div class="label-box">
-                                <a href="${labelUrl}" target="_blank" class="cta-button" style="background: #2e7d32;">📄 VIEW SHIPPING LABEL (PDF)</a>
-                                <p style="margin-top: 10px; font-size: 12px;">Click to download or preview the shipping label</p>
-                            </div>
-                            
-                            <div class="tracking-box">
-                                <h3 style="margin-bottom: 15px;">🔍 Tracking Details</h3>
-                                <div class="info-row">
-                                    <span class="info-label">🔢 Tracking Number:</span>
-                                    <span class="info-value tracking-number">${trackingNumber}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">🚚 Carrier:</span>
-                                    <span class="info-value">${carrier || 'Not specified'}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">📦 Service:</span>
-                                    <span class="info-value">${service || 'Standard'}</span>
-                                </div>
-                                ${estimatedDays ? `
-                                <div class="info-row">
-                                    <span class="info-label">⏱️ Estimated Delivery:</span>
-                                    <span class="info-value">${estimatedDays} business days</span>
-                                </div>
-                                ` : ''}
-                                ${rateAmount ? `
-                                <div class="info-row">
-                                    <span class="info-label">💰 Shipping Cost:</span>
-                                    <span class="info-value">${formatCurrency(rateAmount)} ${currency || 'USD'}</span>
-                                </div>
-                                ` : ''}
-                                ${purchasedAt ? `
-                                <div class="info-row">
-                                    <span class="info-label">📅 Label Purchased:</span>
-                                    <span class="info-value">${new Date(purchasedAt).toLocaleString()}</span>
-                                </div>
-                                ` : ''}
-                                <div class="info-row">
-                                    <span class="info-label">🔗 Track Package:</span>
-                                    <span class="info-value">
-                                        <a href="${trackingUrl}" target="_blank" style="color: #1e2d3b;">${trackingUrl}</a>
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <div class="auction-summary">
-                                <h3 style="margin-bottom: 15px;">📋 Auction Summary</h3>
-                                <div class="info-row">
-                                    <span class="info-label">Auction ID:</span>
-                                    <span class="info-value">${auction?._id}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Title:</span>
-                                    <span class="info-value">${auction?.title}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Final Price:</span>
-                                    <span class="info-value">${formatCurrency(auction?.finalPrice || auction?.currentPrice)}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Commission:</span>
-                                    <span class="info-value">${formatCurrency(auction?.commissionAmount || 0)}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Total with Shipping:</span>
-                                    <span class="info-value">${formatCurrency((auction?.finalPrice || auction?.currentPrice) + (auction?.commissionAmount || 0) + (rateAmount || 0))}</span>
-                                </div>
-                            </div>
-                            
-                            <div style="margin-top: 20px;">
-                                <h3>👥 Party Details</h3>
-                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                    <h4 style="margin-bottom: 10px;">Seller</h4>
-                                    <p><strong>Name:</strong> ${auction?.seller?.firstName} ${auction?.seller?.lastName}</p>
-                                    <p><strong>Email:</strong> ${auction?.seller?.email}</p>
-                                    <p><strong>Phone:</strong> ${auction?.seller?.phone || 'Not provided'}</p>
-                                </div>
-                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-                                    <h4 style="margin-bottom: 10px;">Buyer</h4>
-                                    <p><strong>Name:</strong> ${auction?.winner?.firstName} ${auction?.winner?.lastName}</p>
-                                    <p><strong>Email:</strong> ${auction?.winner?.email}</p>
-                                    <p><strong>Phone:</strong> ${auction?.winner?.phone || 'Not provided'}</p>
-                                    ${auction?.winner?.address ? `
-                                    <p><strong>Shipping Address:</strong><br>
-                                    ${auction.winner.address.street || ''}<br>
-                                    ${auction.winner.address.city || ''} ${auction.winner.address.state || ''} ${auction.winner.address.postCode || ''}<br>
-                                    ${auction.winner.address.country || ''}
-                                    </p>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            
-                            <div style="text-align: center; margin: 25px 0;">
-                                <a href="${process.env.FRONTEND_URL}/admin/auctions/all" class="cta-button">🔧 VIEW AUCTIONS</a>
-                                <a href="${trackingUrl}" target="_blank" class="cta-button">🔍 TRACK SHIPMENT</a>
-                            </div>
-                            
-                            <hr style="margin: 25px 0; border: none; border-top: 1px solid #e9ecef;">
-                            
-                            <p style="font-size: 14px; color: #666;">This is an automated notification from HangerStock. The shipping label has been charged to the platform account as per the shipping funds collected from the buyer.</p>
-                        </div>
-                        
-                        <div class="footer">
-                            <p class="footer-text">HangerStock Admin Notification | Shipping Label Generated</p>
-                            <p class="footer-text">© ${new Date().getFullYear()} HangerStock. All rights reserved.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `
-        });
-
-        console.log(`✅ Shipping label email sent to admin ${admin?.email}`);
-        return !!info;
-    } catch (error) {
-        console.error(`❌ Failed to send shipping label email to admin:`, error);
-        return false;
-    }
 };
 
 export {
@@ -6486,6 +5929,7 @@ export {
   auctionSubmittedForApprovalEmail, // tested
   auctionApprovedEmail, // tested
   sendBulkAuctionNotifications, // tested
+  sendAuctionWonNotifications,
   newBidNotificationEmail, // tested
   newOfferNotificationEmail, // tested
   newAuctionNotificationEmail, // tested
@@ -6499,7 +5943,4 @@ export {
   payoutInitiatedEmail,
   payoutCompletedEmail,
   payoutFailedEmail,
-  sendShippingLabelToSeller,
-  sendShippingLabelToBuyer,
-  sendShippingLabelToAdmin,
 };

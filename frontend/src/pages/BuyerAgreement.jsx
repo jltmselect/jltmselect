@@ -36,7 +36,7 @@ const BuyerAgreement = () => {
                                 enter into this Membership & Auction Agreement governing all purchases made through our exclusive furniture auction platform.
                             </p>
                             <p className="text-text-primary dark:text-text-primary-dark">
-                                By purchasing a membership or placing a bid, you agree to be bound by this Agreement.
+                                By purchasing a membership or placing a bid, you agree to be bound by this Agreement. We use buyer's email and phone number to send transactional emails and SMS updates. User can always opt out of emails and SMS updates in their account settings.
                             </p>
                         </div>
 

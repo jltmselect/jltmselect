@@ -48,7 +48,7 @@ const TermsOfUse = () => {
                                 govern your access to and use of our website, platform, and services.
                             </p>
                             <p className="text-text-primary dark:text-text-primary-dark">
-                                By purchasing a membership, registering for, accessing, or using the Platform, you agree to be bound by these Terms.
+                                By purchasing a membership, registering for, accessing, or using the Platform, you agree to be bound by these Terms. We use buyer's email and phone number to send transactional emails and SMS updates. User can always opt out of emails and SMS updates in their account settings.
                             </p>
                         </div>
 

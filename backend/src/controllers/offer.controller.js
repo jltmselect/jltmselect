@@ -10,7 +10,7 @@ import {
   offerConfirmationEmail,
   offerRejectedEmail,
   sendAuctionEndedSellerEmail,
-  sendAuctionWonEmail,
+  sendAuctionWonNotifications,
 } from "../utils/nodemailer.js";
 
 /**
@@ -1258,11 +1258,9 @@ export const adminRespondToOffer = async (req, res) => {
         console.error("Failed to send seller ended auction email:", error),
       );
 
-      if (updatedAuction.winner?.preferences?.emailUpdates) {
-        sendAuctionWonEmail(updatedAuction).catch((error) =>
-          console.error("Failed to send buyer won auction email:", error),
-        );
-      }
+      sendAuctionWonNotifications(updatedAuction).catch((error) =>
+        console.error("Failed to send auction won notifications:", error),
+      );
 
       auctionWonAdminEmail(admin?.email, updatedAuction, offer?.buyer).catch(
         (error) =>
@@ -1707,11 +1705,9 @@ export const reactivateOffer = async (req, res) => {
         );
       }
 
-      if (updatedAuction.winner?.preferences?.emailUpdates) {
-        sendAuctionWonEmail(updatedAuction).catch((error) =>
-          console.error("Failed to send buyer won auction email:", error),
-        );
-      }
+      sendAuctionWonNotifications(updatedAuction).catch((error) =>
+        console.error("Failed to send auction won notifications:", error),
+      );
 
       // Notify admin (if seller did it)
       if (!isAdmin) {

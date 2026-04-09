@@ -69,7 +69,7 @@ export const getCheckoutData = async (req, res) => {
       bidder?.stripeCustomerId && bidder?.paymentMethodId
     );
 
-    // Format seller address for shipping
+    // Format seller address
     const sellerAddress = seller.address
       ? {
           name: `${seller.firstName} ${seller.lastName}`,
@@ -86,7 +86,7 @@ export const getCheckoutData = async (req, res) => {
         }
       : null;
 
-    // Format bidder address for shipping
+    // Format bidder address
     const bidderAddress = bidder.address
       ? {
           name: `${bidder.firstName} ${bidder.lastName}`,
@@ -113,23 +113,6 @@ export const getCheckoutData = async (req, res) => {
       auctionType: auction.auctionType,
       status: auction.status,
       paymentStatus: auction.paymentStatus,
-      // Parcel data for shipping calculation
-      parcel: auction.parcel
-        ? {
-            weight: auction.parcel.weight
-              ? String(auction.parcel.weight)
-              : null,
-            length: auction.parcel.length
-              ? String(auction.parcel.length)
-              : null,
-            width: auction.parcel.width ? String(auction.parcel.width) : null,
-            height: auction.parcel.height
-              ? String(auction.parcel.height)
-              : null,
-            distanceUnit: auction.parcel.distanceUnit || "in",
-            massUnit: auction.parcel.massUnit || "lb",
-          }
-        : null,
       // Include basic info for display
       photos: auction.photos?.length > 0 ? [auction.photos[0]] : [],
       endDate: auction.endDate,
@@ -165,7 +148,7 @@ export const getCheckoutData = async (req, res) => {
       email: seller.email,
       phone: seller.phone,
       memberSince: seller.createdAt,
-      // Include address for shipping
+      // Include address
       address: sellerAddress,
       // Include bank transfer details if available
       payoutMethods: seller.payoutMethods
@@ -219,7 +202,6 @@ export const getCheckoutData = async (req, res) => {
           winningBid: auction.finalPrice || 0,
           commission: auction.commissionAmount || 0,
           subtotal: totalAmount,
-          // Shipping will be added later
         },
         // ✅ Add admin bank details for bank transfer payments
         adminBankDetails: adminBankDetails,
@@ -237,7 +219,7 @@ export const getCheckoutData = async (req, res) => {
 
 /**
  * Verify checkout access before creating payment
- * This can be used as a middleware or separate endpoint
+ * This can be used as a middleware
  */
 export const verifyCheckoutAccess = async (req, res, next) => {
   try {

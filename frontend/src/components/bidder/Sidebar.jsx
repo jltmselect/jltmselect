@@ -22,8 +22,8 @@ import { useAuth } from "../../contexts/AuthContext";
 const navigation = [
     { name: 'Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Active Auctions', path: '/bidder/auctions/active', icon: <Gavel size={20} /> },
-    { name: 'Auction Videos', path: '/bidder/videos', icon: <Video size={20} /> },
-    { name: 'Watchlist', path: '/bidder/watchlist', icon: <Bookmark size={20} /> },
+    { name: 'Past Auctions', path: '/bargain-deals', icon: <Bookmark size={20} /> },
+    { name: 'Benefits', path: '/bidder/videos', icon: <Video size={20} /> },
     { name: 'My Offers', path: '/bidder/offers', icon: <Hand size={20} /> },
     { name: 'My Bids', path: '/bidder/bids', icon: <TrendingUp size={20} /> },
     { name: 'Won Auctions', path: '/bidder/auctions/won', icon: <Award size={20} /> },

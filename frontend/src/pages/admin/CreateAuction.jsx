@@ -1047,11 +1047,11 @@ const CreateAuction = () => {
 
                                         <div className="mb-6">
                                             <label className="block text-sm font-medium text-primary mb-1">Auction Type *</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4"> {/* Changed from grid-cols-3 to grid-cols-4 */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Changed from grid-cols-3 to grid-cols-4 */}
                                                 {[
                                                     { value: 'standard', label: 'Standard Auction' },
                                                     { value: 'reserve', label: 'Reserve Price Auction' },
-                                                    { value: 'buy_now', label: 'Buy Now Auction' },
+                                                    // { value: 'buy_now', label: 'Buy Now Auction' },
                                                     // { value: 'giveaway', label: 'Free Giveaway' }, 
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">

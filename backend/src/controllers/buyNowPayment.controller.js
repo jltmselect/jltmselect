@@ -8,6 +8,7 @@ import {
   sendAuctionEndedSellerEmail,
   auctionWonAdminEmail,
   paymentCompletedEmail,
+  sendAuctionWonNotifications,
 } from "../utils/nodemailer.js";
 import { calculateCommission } from "../utils/commissionCalculator.js";
 
@@ -141,10 +142,8 @@ export const processBuyNowPayment = async (req, res) => {
         .populate("seller", "username firstName lastName email")
         .populate("winner", "username firstName lastName email phone address preferences");
 
-    //   sendAuctionWonEmail(populatedAuction).catch(console.error);
-      if (populatedAuction.winner?.preferences?.emailUpdates) {
-        paymentCompletedEmail(user, populatedAuction).catch(console.error);
-      }
+      sendAuctionWonNotifications(populatedAuction).catch(console.error);
+
       sendAuctionEndedSellerEmail(populatedAuction).catch(console.error);
 
       // Notify admins
@@ -236,137 +235,137 @@ export const getBuyNowPaymentStatus = async (req, res) => {
 };
 
 export const claimBuyNowAuction = async (req, res) => {
-    try {
-        const { auctionId } = req.body;
-        const userId = req.user.id;
-        const username = req.user.username;
+  try {
+    const { auctionId } = req.body;
+    const userId = req.user.id;
+    const username = req.user.username;
 
-        // Find auction
-        const auction = await Auction.findById(auctionId)
-            .populate("seller", "email username firstName lastName");
+    // Find auction
+    const auction = await Auction.findById(auctionId)
+      .populate("seller", "email username firstName lastName");
 
-        if (!auction) {
-            return res.status(404).json({
-                success: false,
-                message: "Auction not found"
-            });
-        }
-
-        // Validate user is not the seller
-        if (auction.seller._id.toString() === userId) {
-            return res.status(400).json({
-                success: false,
-                message: "You cannot buy your own auction"
-            });
-        }
-
-        // Validate auction can be bought
-        if (auction.status !== "active") {
-            return res.status(400).json({
-                success: false,
-                message: `Auction is not active. Current status: ${auction.status}`
-            });
-        }
-
-        if (auction.winner) {
-            return res.status(400).json({
-                success: false,
-                message: "Auction already has a winner"
-            });
-        }
-
-        if (!auction.buyNowPrice) {
-            return res.status(400).json({
-                success: false,
-                message: "Buy Now is not available for this auction"
-            });
-        }
-
-        // Get user details
-        const user = await User.findById(userId);
-
-        // Check if user has saved card
-        const hasSavedCard = !!(user.stripeCustomerId && user.paymentMethodId);
-
-        // Calculate commission
-        const buyNowPrice = auction.buyNowPrice;
-        const commissionData = await calculateCommission(buyNowPrice);
-        const commissionAmount = commissionData.commissionAmount;
-
-        // Update auction directly - mark as sold
-        auction.status = "sold";
-        auction.winner = userId;
-        auction.finalPrice = buyNowPrice;
-        auction.currentPrice = buyNowPrice;
-        auction.currentBidder = userId;
-        auction.endDate = new Date(); // End auction immediately
-        auction.paymentStatus = "pending";
-        auction.paymentMethod = null;
-        auction.commissionAmount = commissionAmount;
-        auction.commissionType = commissionData.commissionType;
-        auction.commissionValue = commissionData.commissionValue;
-
-        // Reject all pending offers (if any)
-        if (auction.offers && auction.offers.length > 0) {
-            auction.offers.forEach((offer) => {
-                if (offer.status === "pending") {
-                    offer.status = "rejected";
-                    offer.sellerResponse = "Offer rejected - item sold via Buy Now";
-                }
-            });
-        }
-
-        // Add buy now as a bid record
-        auction.bids.push({
-            bidder: userId,
-            bidderUsername: username,
-            amount: buyNowPrice,
-            timestamp: new Date(),
-            isBuyNow: true
-        });
-
-        auction.bidCount += 1;
-
-        await auction.save();
-
-        // Create bid payment record for tracking
-        const totalAmount = buyNowPrice + commissionAmount;
-
-        await BidPayment.create({
-            auction: auctionId,
-            bidder: userId,
-            bidAmount: buyNowPrice,
-            commissionAmount: commissionAmount,
-            totalAmount: totalAmount,
-            status: "pending",
-            type: "checkout_payment",
-            paymentMethod: null,
-            metadata: {
-                buyNow: true,
-                claimedAt: new Date()
-            }
-        });
-
-        // Return success with auction data for redirect
-        return res.status(200).json({
-            success: true,
-            message: "Auction claimed successfully! Proceed to checkout.",
-            data: {
-                auctionId: auction._id,
-                title: auction.title,
-                buyNowPrice: buyNowPrice,
-                finalPrice: auction.finalPrice,
-                commissionAmount: commissionAmount,
-                totalAmount: totalAmount,
-                hasSavedCard: hasSavedCard
-            }
-        });
-
-    } catch (error) {
-        console.error("Buy now claim error:", error);
-        return res.status(500).json({
-            success: false,
-            message: error.message || "Failed to claim auction"
-        });
+    if (!auction) {
+      return res.status(404).json({
+        success: false,
+        message: "Auction not found"
+      });
     }
+
+    // Validate user is not the seller
+    if (auction.seller._id.toString() === userId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot buy your own auction"
+      });
+    }
+
+    // Validate auction can be bought
+    if (auction.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message: `Auction is not active. Current status: ${auction.status}`
+      });
+    }
+
+    if (auction.winner) {
+      return res.status(400).json({
+        success: false,
+        message: "Auction already has a winner"
+      });
+    }
+
+    if (!auction.buyNowPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Buy Now is not available for this auction"
+      });
+    }
+
+    // Get user details
+    const user = await User.findById(userId);
+
+    // Check if user has saved card
+    const hasSavedCard = !!(user.stripeCustomerId && user.paymentMethodId);
+
+    // Calculate commission
+    const buyNowPrice = auction.buyNowPrice;
+    const commissionData = await calculateCommission(buyNowPrice);
+    const commissionAmount = commissionData.commissionAmount;
+
+    // Update auction directly - mark as sold
+    auction.status = "sold";
+    auction.winner = userId;
+    auction.finalPrice = buyNowPrice;
+    auction.currentPrice = buyNowPrice;
+    auction.currentBidder = userId;
+    auction.endDate = new Date(); // End auction immediately
+    auction.paymentStatus = "pending";
+    auction.paymentMethod = null;
+    auction.commissionAmount = commissionAmount;
+    auction.commissionType = commissionData.commissionType;
+    auction.commissionValue = commissionData.commissionValue;
+
+    // Reject all pending offers (if any)
+    if (auction.offers && auction.offers.length > 0) {
+      auction.offers.forEach((offer) => {
+        if (offer.status === "pending") {
+          offer.status = "rejected";
+          offer.sellerResponse = "Offer rejected - item sold via Buy Now";
+        }
+      });
+    }
+
+    // Add buy now as a bid record
+    auction.bids.push({
+      bidder: userId,
+      bidderUsername: username,
+      amount: buyNowPrice,
+      timestamp: new Date(),
+      isBuyNow: true
+    });
+
+    auction.bidCount += 1;
+
+    await auction.save();
+
+    // Create bid payment record for tracking
+    const totalAmount = buyNowPrice + commissionAmount;
+
+    await BidPayment.create({
+      auction: auctionId,
+      bidder: userId,
+      bidAmount: buyNowPrice,
+      commissionAmount: commissionAmount,
+      totalAmount: totalAmount,
+      status: "pending",
+      type: "checkout_payment",
+      paymentMethod: null,
+      metadata: {
+        buyNow: true,
+        claimedAt: new Date()
+      }
+    });
+
+    // Return success with auction data for redirect
+    return res.status(200).json({
+      success: true,
+      message: "Auction claimed successfully! Proceed to checkout.",
+      data: {
+        auctionId: auction._id,
+        title: auction.title,
+        buyNowPrice: buyNowPrice,
+        finalPrice: auction.finalPrice,
+        commissionAmount: commissionAmount,
+        totalAmount: totalAmount,
+        hasSavedCard: hasSavedCard
+      }
+    });
+
+  } catch (error) {
+    console.error("Buy now claim error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to claim auction"
+    });
+  }
 };

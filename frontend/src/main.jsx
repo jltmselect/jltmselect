@@ -87,14 +87,14 @@ const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
 const AdminProfile = lazy(() => import('./pages/admin/Profile'));
 const AdminComments = lazy(() => import('./pages/admin/Comments'));
 const Commissions = lazy(() => import('./pages/admin/Commissions'));
-const DepositSettings = lazy(() => import('./pages/admin/DepositSettings'));
+// const DepositSettings = lazy(() => import('./pages/admin/DepositSettings'));
 const AdminBidHistory = lazy(() => import('./pages/admin/BidHistory'));
 const AdminAllOffers = lazy(() => import('./pages/admin/AllOffers'));
 const Transactions = lazy(() => import('./pages/admin/Transactions'));
 const Categories = lazy(() => import('./pages/admin/Categories'));
 const Subscriptions = lazy(() => import('./pages/admin/Subscriptions'));
-const AdminPayouts = lazy(() => import('./pages/admin/Payouts'));
-const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
+// const AdminPayouts = lazy(() => import('./pages/admin/Payouts'));
+// const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
 const AdminVideos = lazy(() => import('./pages/admin/Videos'));
 
 createRoot(document.getElementById('root')).render(
@@ -631,14 +631,14 @@ createRoot(document.getElementById('root')).render(
                             />
 
                             {/* Admin Deposit Settings */}
-                            <Route
+                            {/* <Route
                                 path='/admin/deposit-settings'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <DepositSettings />
                                     </Suspense>
                                 }
-                            />
+                            /> */}
 
                             {/* Admin Bids */}
                             <Route
@@ -671,24 +671,24 @@ createRoot(document.getElementById('root')).render(
                             />
 
                             {/* Admin Payouts */}
-                            <Route
+                            {/* <Route
                                 path='/admin/payouts'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <AdminPayouts />
                                     </Suspense>
                                 }
-                            />
+                            /> */}
 
                             {/* Admin Payout Methods */}
-                            <Route
+                            {/* <Route
                                 path='/admin/payout-methods'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <AdminPayoutMethods />
                                     </Suspense>
                                 }
-                            />
+                            /> */}
 
                             {/* Admin Videos */}
                             <Route

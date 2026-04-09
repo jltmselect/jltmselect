@@ -17,13 +17,9 @@ import {
   paymentCompletedEmail,
   paymentCompletedSellerEmail,
   sendBulkAuctionNotifications,
-  sendShippingLabelToAdmin,
-  sendShippingLabelToBuyer,
-  sendShippingLabelToSeller,
 } from "../utils/nodemailer.js";
 import BidPayment from "../models/bidPayment.model.js";
 import Payout from "../models/payout.model.js";
-import shippo from "../utils/shippo.js";
 import UserSubscription from "../models/userSubscription.model.js";
 
 export const getAdminStats = async (req, res) => {
@@ -1933,6 +1929,35 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    // Check if the auction is now active (and wasn't active before, or is a reset sold auction)
+    const wasActiveBefore = auction.status === "active";
+    const isNowActive = newStatus === "active";
+    const isBuyNowOrGiveaway = auctionType === "buy_now" || auctionType === "giveaway";
+
+    // Send notifications when:
+    // 1. Auction becomes active (wasn't active before)
+    // 2. OR it's a sold auction being reset and now active
+    if (isNowActive && (!wasActiveBefore || isSoldAuction)) {
+      try {
+        // Get all potential bidders (excluding seller and admins)
+        const bidders = await User.find({
+          _id: { $ne: updatedAuction.seller._id },
+          userType: "bidder",
+          isActive: true,
+        }).select("email username firstName phone preferences userType");
+
+        // Fire and forget - don't await to avoid delaying response
+        sendBulkAuctionNotifications(bidders, updatedAuction, updatedAuction.seller).catch(err => {
+          console.error("Background notification error in updateAuction:", err);
+        });
+
+        console.log(`📢 Update: Bulk notifications triggered for auction ${updatedAuction._id} (status: active)`);
+      } catch (notifError) {
+        console.error("Failed to send bulk notifications from updateAuction:", notifError);
+        // Don't throw - auction updated successfully
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: isSoldAuction
@@ -2099,123 +2124,6 @@ export const updatePaymentStatus = async (req, res) => {
     // When payment is marked as completed
     if (paymentStatus === "completed") {
       auction.paymentDate = new Date();
-
-      // Auto-generate shipping label for bank transfer
-      if (paymentMethod === "bank_transfer" || paymentMethod === "bank") {
-        // Find the bid payment again to get rateId
-        const updatedBidPayment = await BidPayment.findOne({
-          auction: id,
-        });
-
-        if (updatedBidPayment?.rateId) {
-          try {
-            const transaction = await shippo.transactions.create({
-              rate: updatedBidPayment.rateId,
-              label_file_type: "PDF",
-              async: false,
-            });
-
-            // Store COMPLETE shipping data
-            auction.shipping = {
-              rate: {
-                objectId: updatedBidPayment.rateId,
-                provider: updatedBidPayment.rateProvider,
-                serviceLevel: {
-                  name: updatedBidPayment.rateServiceLevel,
-                  token: updatedBidPayment.rateServiceToken,
-                  terms: "",
-                },
-                amount: updatedBidPayment.rateAmount,
-                currency: updatedBidPayment.rateCurrency,
-                estimatedDays: updatedBidPayment.rateEstimatedDays,
-              },
-              transaction: {
-                objectId: transaction.objectId,
-                status: "PURCHASED",
-                labelUrl: transaction.labelUrl,
-                trackingNumber: transaction.trackingNumber,
-                trackingUrl: transaction.trackingUrlProvider,
-                commercialInvoiceUrl: transaction.commercialInvoiceUrl || null,
-                purchasedAt: new Date(),
-                messages: transaction.messages || [],
-              },
-              tracking: {
-                status: "PRE_TRANSIT",
-                statusDetails: "Label purchased, awaiting carrier pickup",
-                estimatedDelivery: updatedBidPayment.rateEstimatedDays
-                  ? new Date(
-                    Date.now() +
-                    updatedBidPayment.rateEstimatedDays *
-                    24 *
-                    60 *
-                    60 *
-                    1000,
-                  )
-                  : null,
-                actualDelivery: null,
-                trackingHistory: [],
-                lastUpdated: new Date(),
-              },
-            };
-            await auction.save();
-
-            // Update bid payment with shipping info
-            updatedBidPayment.shippingLabelGenerated = true;
-            updatedBidPayment.trackingNumber = transaction.trackingNumber;
-            await updatedBidPayment.save();
-
-            // Send label to seller
-            sendShippingLabelToSeller(auction.seller, auction, {
-              labelUrl: transaction.labelUrl,
-              trackingNumber: transaction.trackingNumber,
-              trackingUrl: transaction.trackingUrlProvider,
-              carrier: updatedBidPayment.rateProvider,
-              service: updatedBidPayment.rateServiceLevel,
-              estimatedDays: updatedBidPayment.rateEstimatedDays,
-              rateAmount: parseFloat(updatedBidPayment.rateAmount) || 0,
-              currency: updatedBidPayment.rateCurrency || "USD",
-              purchasedAt: new Date(),
-            }).catch((error) =>
-              console.error(`Error in sending seller label email:`, error),
-            );
-
-            // Send label to buyer
-            sendShippingLabelToBuyer(auction.winner, auction, {
-              labelUrl: transaction.labelUrl,
-              trackingNumber: transaction.trackingNumber,
-              trackingUrl: transaction.trackingUrlProvider,
-              carrier: updatedBidPayment.rateProvider,
-              service: updatedBidPayment.rateServiceLevel,
-              estimatedDays: updatedBidPayment.rateEstimatedDays,
-              rateAmount: parseFloat(updatedBidPayment.rateAmount) || 0,
-              currency: updatedBidPayment.rateCurrency || "USD",
-              purchasedAt: new Date(),
-            }).catch((error) =>
-              console.error(`Error in sending seller label email:`, error),
-            );
-
-            const adminUsers = await User.find({ userType: "admin" });
-
-            for (const admin of adminUsers) {
-              sendShippingLabelToAdmin(admin, auction, {
-                labelUrl: transaction.labelUrl,
-                trackingNumber: transaction.trackingNumber,
-                trackingUrl: transaction.trackingUrlProvider,
-                carrier: updatedBidPayment.rateProvider,
-                service: updatedBidPayment.rateServiceLevel,
-                estimatedDays: updatedBidPayment.rateEstimatedDays,
-                rateAmount: parseFloat(updatedBidPayment.rateAmount) || 0,
-                currency: updatedBidPayment.rateCurrency || "USD",
-                purchasedAt: new Date(),
-              }).catch((error) =>
-                console.error(`Error in sending admin label email:`, error),
-              );
-            }
-          } catch (shippingError) {
-            console.error("Auto-label generation failed:", shippingError);
-          }
-        }
-      }
     }
 
     // Attach invoice if uploaded
@@ -2266,132 +2174,6 @@ export const updatePaymentStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to update payment status",
-    });
-  }
-};
-
-export const generateShippingLabelManually = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const auction = await Auction.findById(id)
-      .populate("seller", "email username firstName lastName")
-      .populate("winner", "email username firstName lastName address");
-
-    const bidPayment = await BidPayment.findOne({ auction: id });
-
-    if (!bidPayment?.rateId) {
-      return res.status(400).json({
-        success: false,
-        message: "No shipping rate found for this auction",
-      });
-    }
-
-    const transaction = await shippo.transactions.create({
-      rate: bidPayment.rateId,
-      label_file_type: "PDF",
-      async: false,
-    });
-
-    // ✅ Store COMPLETE shipping data
-    auction.shipping = {
-      rate: {
-        objectId: transaction.rate?.object_id || bidPayment.rateId,
-        provider: transaction.rate?.provider || "Unknown",
-        serviceLevel: {
-          name: transaction.rate?.servicelevel?.name || "Standard",
-          token: transaction.rate?.servicelevel?.token || "",
-          terms: transaction.rate?.servicelevel?.terms || "",
-        },
-        amount: parseFloat(transaction.rate?.amount) || 0,
-        currency: transaction.rate?.currency || "USD",
-        estimatedDays: transaction.rate?.estimated_days || null,
-      },
-      transaction: {
-        objectId: transaction.objectId,
-        status: "PURCHASED",
-        labelUrl: transaction.labelUrl,
-        trackingNumber: transaction.trackingNumber,
-        trackingUrl: transaction.trackingUrlProvider,
-        commercialInvoiceUrl: transaction.commercial_invoice_url || null,
-        purchasedAt: new Date(),
-        messages: transaction.messages || [],
-      },
-      tracking: {
-        status: "PRE_TRANSIT",
-        statusDetails: "Label purchased, awaiting carrier pickup",
-        estimatedDelivery: transaction.rate?.estimated_days
-          ? new Date(
-            Date.now() +
-            transaction.rate.estimated_days * 24 * 60 * 60 * 1000,
-          )
-          : null,
-        actualDelivery: null,
-        trackingHistory: [],
-        lastUpdated: new Date(),
-      },
-    };
-    await auction.save();
-
-    // Send label to seller
-    // await sendLabelToSeller(auction.seller.email, {
-    //     labelUrl: transaction.labelUrl,
-    //     trackingNumber: transaction.trackingNumber,
-    //     trackingUrl: transaction.trackingUrlProvider,
-    //     auctionTitle: auction.title,
-    //     carrier: transaction.rate?.provider,
-    //     service: transaction.rate?.servicelevel?.name,
-    //     estimatedDays: transaction.rate?.estimated_days
-    // });
-
-    return res.status(200).json({
-      success: true,
-      message: "Shipping label generated and sent to seller",
-      data: {
-        trackingNumber: transaction.trackingNumber,
-        trackingUrl: transaction.trackingUrlProvider,
-        labelUrl: transaction.labelUrl,
-        carrier: transaction.rate?.provider,
-        service: transaction.rate?.servicelevel?.name,
-      },
-    });
-  } catch (error) {
-    console.error("Manual label generation error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to generate shipping label",
-    });
-  }
-};
-
-export const fetchDVLAData = async (req, res) => {
-  try {
-    const { registrationNumber } = req.body;
-
-    if (!registrationNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "registrationNumber is required",
-      });
-    }
-
-    const response = await axios.post(
-      process.env.DVLA_WORKER_URL,
-      { registrationNumber },
-      { timeout: 10000 },
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Vehicle details fetched successfully",
-      data: response.data,
-    });
-  } catch (error) {
-    console.error("DVLA Worker error:", error?.response?.data || error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch vehicle details",
     });
   }
 };

@@ -23,7 +23,6 @@ import depositSettingsRouter from "./routes/depositSettings.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import payoutRouter from "./routes/payout.route.js";
 import buyNowPaymentRouter from "./routes/buyNowPayment.route.js";
-import shippingRouter from "./routes/shipping.route.js";
 import checkoutRouter from "./routes/checkout.route.js";
 import subscriptionRouter from "./routes/subscription.route.js";
 import userSubscriptionRouter from "./routes/userSubscription.route.js";
@@ -54,7 +53,7 @@ app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ limit: '16kb' }));
 
 app.use(cors({
-    origin: ['https://www.hangerstock.com', 'https://hangerstock.com', 'https://hangerstock-frontend.onrender.com', 'http://localhost:5173', "https://hangerstock-backend.onrender.com"],
+    origin: ['https://www.jltmselect.com', 'https://jltmselect.com', 'https://jltmselect-frontend.onrender.com', 'http://localhost:5173', "https://jltmselect-backend.onrender.com"],
     credentials: true,
 }));
 
@@ -87,7 +86,6 @@ app.use('/api/v1/otp', otpRouter);
 app.use('/api/v1/payments', paymentRouter);
 app.use("/api/v1/payouts", payoutRouter);
 app.use("/api/v1/buy-now-payment", buyNowPaymentRouter);
-app.use("/api/v1/shipping", shippingRouter);
 app.use("/api/v1/checkout", checkoutRouter);
 app.use("/api/v1/user-subscription", userSubscriptionRouter);
 app.use("/api/v1/videos", videoRouter);

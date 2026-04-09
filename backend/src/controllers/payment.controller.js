@@ -5,11 +5,7 @@ import User from "../models/user.model.js";
 import Commission from "../models/commission.model.js";
 import {
   paymentCompletedEmail,
-  sendShippingLabelToAdmin,
-  sendShippingLabelToBuyer,
-  sendShippingLabelToSeller,
 } from "../utils/nodemailer.js";
-import shippo from "../utils/shippo.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -208,7 +204,7 @@ async function handlePaymentSuccess(paymentIntent) {
   try {
     const { auctionId } = paymentIntent.metadata;
 
-    // Find the bid payment to get the rate ID
+    // Find the bid payment
     const bidPayment = await BidPayment.findOne({
       paymentIntentId: paymentIntent.id,
     });
@@ -241,42 +237,6 @@ async function handlePaymentSuccess(paymentIntent) {
         chargeSucceeded: true,
       },
     );
-
-    // 👇 AUTO PURCHASE SHIPPING LABEL IF RATE ID EXISTS
-    if (bidPayment.rateId && auction) {
-      try {
-        // Purchase the label using admin's Shippo account
-        const transaction = await shippo.transactions.create({
-          rate: bidPayment.rateId,
-          label_file_type: "PDF",
-          async: false,
-        });
-
-        // Update auction with shipping info
-        auction.shipping = {
-          transaction: {
-            objectId: transaction.object_id,
-            labelUrl: transaction.label_url,
-            trackingNumber: transaction.tracking_number,
-            trackingUrl: transaction.tracking_url_provider,
-            purchasedAt: new Date(),
-            status: "PURCHASED",
-          },
-        };
-        await auction.save();
-
-        console.log(
-          `Shipping label purchased for auction ${auctionId}. Tracking: ${transaction.tracking_number}`,
-        );
-
-        // TODO: Send email to seller with label PDF
-        // await sendLabelToSeller(auction.seller, transaction);
-      } catch (shippingError) {
-        console.error("Failed to auto-purchase shipping label:", shippingError);
-        // Don't fail the payment success - just log the error
-        // Admin can manually purchase later
-      }
-    }
 
     console.log(`Payment succeeded for auction ${auctionId}`);
   } catch (error) {
@@ -355,166 +315,9 @@ export const getAuctionPaymentStatus = async (req, res) => {
   }
 };
 
-/**
- * Create checkout payment for won auction (with shipping)
- * Uses saved payment method but allows new cards via PaymentElement
- */
-// export const createCheckoutPayment = async (req, res) => {
-//   try {
-//     const { auctionId, shippingAmount = 0, rateId } = req.body;
-//     const userId = req.user.id;
-
-//     // Find the auction
-//     const auction = await Auction.findById(auctionId)
-//       .populate("seller", "email username firstName lastName")
-//       .populate(
-//         "winner",
-//         "email username firstName lastName stripeCustomerId paymentMethodId cardLast4 cardBrand",
-//       );
-
-//     if (!auction) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Auction not found",
-//       });
-//     }
-
-//     // Verify user is the winner
-//     if (auction.winner?._id.toString() !== userId) {
-//       return res.status(403).json({
-//         success: false,
-//         message: "You are not the winner of this auction",
-//       });
-//     }
-
-//     // Check if already paid
-//     if (auction.paymentStatus === "completed") {
-//       return res.status(400).json({
-//         success: false,
-//         message: "This auction has already been paid for",
-//       });
-//     }
-
-//     // Get user's stripe info
-//     const user = await User.findById(userId);
-
-//     // Calculate total amount (finalPrice + commission + shipping)
-//     const bidAmount = auction.finalPrice || auction.currentPrice;
-//     const commissionAmount = auction.commissionAmount || 0;
-//     const totalAmount = bidAmount + commissionAmount + shippingAmount;
-
-//     // Check if payment record already exists
-//     let bidPayment = await BidPayment.findOne({
-//       auction: auctionId,
-//       bidder: userId,
-//     });
-
-//     // Determine payment method type
-//     const hasSavedCard = !!(user.stripeCustomerId && user.paymentMethodId);
-
-//     // Create PaymentIntent with setup_future_usage to allow saving new cards
-//     const paymentIntentData = {
-//       amount: Math.round(totalAmount * 100), // Convert to cents
-//       currency: "usd",
-//       description: `Payment for auction: ${auction.title} (includes shipping)`,
-//       metadata: {
-//         auctionId: auctionId,
-//         userId: userId,
-//         type: "checkout_payment",
-//         shippingAmount: shippingAmount.toString(),
-//         bidAmount: bidAmount.toString(),
-//         commissionAmount: commissionAmount.toString(),
-//       },
-//     };
-
-//     // If user has saved card, add customer and payment_method
-//     if (hasSavedCard) {
-//       paymentIntentData.customer = user.stripeCustomerId;
-//       paymentIntentData.payment_method = user.paymentMethodId;
-//       paymentIntentData.off_session = true;
-//       paymentIntentData.confirm = true;
-//       // paymentIntentData.setup_future_usage = "off_session"; // Allow saving new cards
-//     } else {
-//       // No saved card - still create PaymentIntent for PaymentElement
-//       paymentIntentData.customer = user.stripeCustomerId; // Still attach customer
-//       paymentIntentData.setup_future_usage = "off_session"; // Will save card after payment
-//     }
-
-//     try {
-//       // Create Stripe payment intent
-//       const paymentIntent =
-//         await stripe.paymentIntents.create(paymentIntentData);
-
-//       // Update or create bid payment record
-//       const paymentData = {
-//         auction: auctionId,
-//         bidder: userId,
-//         bidAmount: bidAmount,
-//         commissionAmount: commissionAmount,
-//         shippingAmount: shippingAmount,
-//         rateId: rateId,
-//         totalAmount: totalAmount,
-//         paymentIntentId: paymentIntent.id,
-//         clientSecret: paymentIntent.client_secret,
-//         status: paymentIntent.status,
-//         type: "checkout_payment",
-//       };
-
-//       if (bidPayment) {
-//         Object.assign(bidPayment, paymentData);
-//         await bidPayment.save();
-//       } else {
-//         bidPayment = await BidPayment.create(paymentData);
-//       }
-
-//       // Return response with saved card info if available
-//       return res.status(200).json({
-//         success: true,
-//         data: {
-//           paymentIntent: {
-//             id: paymentIntent.id,
-//             status: paymentIntent.status,
-//             clientSecret: paymentIntent.client_secret,
-//           },
-//           hasSavedCard,
-//           savedCard: hasSavedCard
-//             ? {
-//                 last4: user.cardLast4,
-//                 brand: user.cardBrand,
-//                 expiryMonth: user.cardExpMonth,
-//                 expiryYear: user.cardExpYear,
-//               }
-//             : null,
-//           bidPayment: bidPayment,
-//           totals: {
-//             bidAmount,
-//             commissionAmount,
-//             shippingAmount,
-//             totalAmount,
-//           },
-//         },
-//       });
-//     } catch (stripeError) {
-//       console.error("Stripe payment error:", stripeError);
-
-//       return res.status(400).json({
-//         success: false,
-//         message: stripeError.message || "Payment processing failed",
-//         error: stripeError.code,
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Create checkout payment error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
 export const createCheckoutPayment = async (req, res) => {
   try {
-    const { auctionId, shippingAmount = 0, rateId, rateDetails } = req.body;
+    const { auctionId } = req.body;
     const userId = req.user.id;
 
     // 1. Find auction and verify winner
@@ -550,10 +353,10 @@ export const createCheckoutPayment = async (req, res) => {
       });
     }
 
-    // 3. Calculate total (winning bid + commission + shipping)
+    // 3. Calculate total (winning bid + commission)
     const bidAmount = auction.finalPrice || auction.currentPrice;
     const commissionAmount = auction.commissionAmount || 0;
-    const totalAmount = bidAmount + commissionAmount + shippingAmount;
+    const totalAmount = bidAmount + commissionAmount;
 
     // 4. Create and confirm payment immediately
     const paymentIntent = await stripe.paymentIntents.create({
@@ -561,14 +364,12 @@ export const createCheckoutPayment = async (req, res) => {
       currency: "usd",
       customer: user.stripeCustomerId,
       payment_method: user.paymentMethodId,
-      description: `Payment for auction: ${auction.title} (includes shipping)`,
+      description: `Payment for auction: ${auction.title}`,
       confirm: true,
       off_session: true,
       metadata: {
         auctionId: auctionId,
         userId: userId,
-        shippingAmount: shippingAmount.toString(),
-        rateId: rateId || "",
       },
     });
 
@@ -592,132 +393,12 @@ export const createCheckoutPayment = async (req, res) => {
       bidder: userId,
       bidAmount,
       commissionAmount,
-      shippingAmount,
       totalAmount,
       paymentIntentId: paymentIntent.id,
       status: "succeeded",
       chargeSucceeded: true,
       type: "checkout_payment",
-      // Store rate information
-      rateId: rateId,
-      rateProvider: rateDetails?.provider,
-      rateServiceLevel: rateDetails?.serviceLevel?.name,
-      rateServiceToken: rateDetails?.serviceLevel?.token,
-      rateAmount: rateDetails?.amount,
-      rateCurrency: rateDetails?.currency,
-      rateEstimatedDays: rateDetails?.estimatedDays,
     });
-
-    // 7. 🚀 AUTO-PURCHASE SHIPPING LABEL
-    let shippingInfo = null;
-    if (rateId) {
-      try {
-        const transaction = await shippo.transactions.create({
-          rate: rateId,
-          label_file_type: "PDF",
-          async: false,
-        });
-
-        // ✅ Store COMPLETE shipping data using data from bidPayment (since transaction.rate may be incomplete)
-        auction.shipping = {
-          rate: {
-            objectId: bidPayment.rateId,
-            provider: bidPayment.rateProvider || "Unknown",
-            serviceLevel: {
-              name: bidPayment.rateServiceLevel || "Standard",
-              token: bidPayment.rateServiceToken || "",
-              terms: "",
-            },
-            amount: bidPayment.rateAmount || 0,
-            currency: bidPayment.rateCurrency || "USD",
-            estimatedDays: bidPayment.rateEstimatedDays || null,
-          },
-          transaction: {
-            objectId: transaction.objectId,
-            status: "PURCHASED",
-            labelUrl: transaction.labelUrl,
-            trackingNumber: transaction.trackingNumber,
-            trackingUrl: transaction.trackingUrlProvider,
-            commercialInvoiceUrl: transaction.commercial_invoice_url || null,
-            purchasedAt: new Date(),
-            messages: transaction.messages || [],
-          },
-          tracking: {
-            status: "PRE_TRANSIT",
-            statusDetails: "Label purchased, awaiting carrier pickup",
-            estimatedDelivery: bidPayment.rateEstimatedDays
-              ? new Date(
-                  Date.now() +
-                    bidPayment.rateEstimatedDays * 24 * 60 * 60 * 1000,
-                )
-              : null,
-            actualDelivery: null,
-            trackingHistory: [],
-            lastUpdated: new Date(),
-          },
-        };
-        await auction.save();
-
-        shippingInfo = {
-          trackingNumber: transaction.trackingNumber,
-          trackingUrl: transaction.trackingUrlProvider,
-          labelUrl: transaction.labelUrl,
-          carrier: bidPayment.rateProvider,
-          service: bidPayment.rateServiceLevel,
-          estimatedDays: bidPayment.rateEstimatedDays,
-        };
-
-        // Send label to seller
-        sendShippingLabelToSeller(auction.seller, auction, {
-          labelUrl: transaction.labelUrl,
-          trackingNumber: transaction.trackingNumber,
-          trackingUrl: transaction.trackingUrlProvider,
-          carrier: bidPayment.rateProvider,
-          service: bidPayment.rateServiceLevel,
-          estimatedDays: bidPayment.rateEstimatedDays,
-          rateAmount: parseFloat(bidPayment.rateAmount) || 0,
-          currency: bidPayment.rateCurrency || "USD",
-          purchasedAt: new Date(),
-        }).catch((error) =>
-          console.error(`Error in sending seller label email:`, error),
-        );
-
-        // Send label to buyer
-        sendShippingLabelToBuyer(auction.winner, auction, {
-          labelUrl: transaction.labelUrl,
-          trackingNumber: transaction.trackingNumber,
-          trackingUrl: transaction.trackingUrlProvider,
-          carrier: bidPayment.rateProvider,
-          service: bidPayment.rateServiceLevel,
-          estimatedDays: bidPayment.rateEstimatedDays,
-          rateAmount: parseFloat(bidPayment.rateAmount) || 0,
-          currency: bidPayment.rateCurrency || "USD",
-          purchasedAt: new Date(),
-        }).catch((error) =>
-          console.error(`Error in sending buyer label email:`, error),
-        );
-
-        const adminUsers = await User.find({ userType: "admin" });
-
-        for (const admin of adminUsers) {
-          sendShippingLabelToAdmin(admin, auction, {
-            labelUrl: transaction.labelUrl,
-            trackingNumber: transaction.trackingNumber,
-            trackingUrl: transaction.trackingUrlProvider,
-            carrier: bidPayment.rateProvider,
-            service: bidPayment.rateServiceLevel,
-            estimatedDays: bidPayment.rateEstimatedDays,
-            rateAmount: parseFloat(bidPayment.rateAmount) || 0,
-            currency: bidPayment.rateCurrency || "USD",
-            purchasedAt: new Date(),
-          }).catch((error) =>
-            console.error(`Error in sending admin label email:`, error),
-          );
-        }
-      } catch (shippingError) {
-        console.error("❌ Label purchase failed:", shippingError);
-      }
-    }
 
     // 8. Send email to buyer (optional)
     if (user.preferences?.emailUpdates) {
@@ -726,7 +407,7 @@ export const createCheckoutPayment = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Payment successful! Shipping label will be emailed to seller.",
+      message: "Payment successful! Details will be emailed to seller.",
       data: {
         paymentIntent: {
           id: paymentIntent.id,
@@ -736,7 +417,6 @@ export const createCheckoutPayment = async (req, res) => {
           id: auction._id,
           paymentStatus: auction.paymentStatus,
         },
-        shipping: shippingInfo,
       },
     });
   } catch (error) {
@@ -750,7 +430,7 @@ export const createCheckoutPayment = async (req, res) => {
 
 export const createBankTransferPayment = async (req, res) => {
   try {
-    const { auctionId, shippingAmount = 0, rateId, rateDetails } = req.body;
+    const { auctionId } = req.body;
     const userId = req.user.id;
 
     // Find the auction and verify winner
@@ -780,7 +460,7 @@ export const createBankTransferPayment = async (req, res) => {
     // Calculate total
     const bidAmount = auction.finalPrice || auction.currentPrice;
     const commissionAmount = auction.commissionAmount || 0;
-    const totalAmount = bidAmount + commissionAmount + shippingAmount;
+    const totalAmount = bidAmount + commissionAmount;
 
     // Update auction status to pending (bank transfer)
     auction.paymentStatus = "processing";
@@ -793,18 +473,9 @@ export const createBankTransferPayment = async (req, res) => {
       bidder: userId,
       bidAmount,
       commissionAmount,
-      shippingAmount,
       totalAmount,
       status: "pending",
       type: "bank_transfer_payment",
-      // Store rate information
-      rateId: rateId,
-      rateProvider: rateDetails?.provider,
-      rateServiceLevel: rateDetails?.serviceLevel?.name,
-      rateServiceToken: rateDetails?.serviceLevel?.token,
-      rateAmount: rateDetails?.amount,
-      rateCurrency: rateDetails?.currency,
-      rateEstimatedDays: rateDetails?.estimatedDays,
       paymentMethod: "bank_transfer",
     });
 
@@ -896,43 +567,6 @@ export const confirmCheckoutPayment = async (req, res) => {
       bidPayment.chargeSucceeded = true;
       await bidPayment.save();
 
-      // 👇 AUTO PURCHASE SHIPPING LABEL IF RATE ID EXISTS
-      if (bidPayment.rateId) {
-        try {
-          // Purchase the label
-          const transaction = await shippo.transactions.create({
-            rate: bidPayment.rateId,
-            label_file_type: "PDF",
-            async: false,
-          });
-
-          // Update auction with shipping info
-          auction.shipping = {
-            transaction: {
-              objectId: transaction.object_id,
-              labelUrl: transaction.label_url,
-              trackingNumber: transaction.tracking_number,
-              trackingUrl: transaction.tracking_url_provider,
-              purchasedAt: new Date(),
-              status: "PURCHASED",
-            },
-          };
-          await auction.save();
-
-          console.log(
-            `✅ Shipping label purchased for auction ${auctionId}. Tracking: ${transaction.tracking_number}`,
-          );
-
-          // TODO: Send email to seller with label
-        } catch (shippingError) {
-          console.error(
-            "❌ Failed to auto-purchase shipping label:",
-            shippingError,
-          );
-          // Don't fail the payment - just log error
-        }
-      }
-
       return res.status(200).json({
         success: true,
         message: "Payment successful!",
@@ -945,7 +579,6 @@ export const confirmCheckoutPayment = async (req, res) => {
             id: auction._id,
             paymentStatus: auction.paymentStatus,
           },
-          shipping: auction.shipping?.transaction,
         },
       });
     } else {

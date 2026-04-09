@@ -53,12 +53,12 @@ const TabSection = forwardRef(
       component: <Description description={description} />,
     });
 
-    tabs.push({
-      id: "comments",
-      label: "Comments",
-      icon: <MessageSquare size={18} />,
-      component: <CommentSection auctionId={auction._id} />,
-    });
+    // tabs.push({
+    //   id: "comments",
+    //   label: "Comments",
+    //   icon: <MessageSquare size={18} />,
+    //   component: <CommentSection auctionId={auction._id} />,
+    // });
 
     if (isBiddingAllowed) {
       tabs.push({

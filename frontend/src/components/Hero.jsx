@@ -38,7 +38,7 @@ function Hero() {
 
         <div className="flex items-center justify-start gap-5 uppercase">
           <p className="inline-block">
-            <Link to="/auctions" className="text-pure-white font-medium transition duration-300 flex items-center gap-2 group relative">
+            <Link to="/register" className="text-pure-white font-medium transition duration-300 flex items-center gap-2 group relative">
               <span className="">Join Now</span>
               <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
@@ -46,7 +46,7 @@ function Hero() {
 
           <p className="inline-block">
             <Link to="/auctions" className="text-pure-white font-medium transition duration-300 flex items-center gap-2 group relative hover:underline">
-              <span className="">View Benefits</span>
+              <span className="">View Auctions</span>
             </Link>
           </p>
         </div>

@@ -36,6 +36,7 @@ export const createAuction = async (req, res) => {
       bidIncrement,
       auctionType,
       reservePrice,
+      retailPrice,
       buyNowPrice,
       allowOffers,
       startDate,
@@ -266,6 +267,7 @@ export const createAuction = async (req, res) => {
       location: location || "",
       videoLink: videoLink || "",
       startPrice: parseFloat(startPrice),
+      retailPrice: retailPrice ? parseFloat(retailPrice) : undefined,
       startDate: start,
       endDate: end,
       auctionType,
@@ -275,10 +277,22 @@ export const createAuction = async (req, res) => {
       photos: uploadedPhotos,
       documents: uploadedDocuments,
       serviceRecords: uploadedServiceRecords,
-      status:
-        auctionType === "buy_now" || auctionType === "giveaway" || seller?.userType === "admin"
-          ? "active"
-          : "draft",
+      status: (() => {
+        const now = new Date();
+        const startDateObj = new Date(start);
+        const isAdmin = seller?.userType === "admin";
+        const isBuyNowOrGiveaway = auctionType === "buy_now" || auctionType === "giveaway";
+
+        if (isAdmin && startDateObj <= now) {
+          return "active";
+        } else if (isAdmin && startDateObj > now) {
+          return "approved";
+        } else if (isBuyNowOrGiveaway && isAdmin) {
+          return "active";
+        } else {
+          return "draft";
+        }
+      })(),
     };
 
     // Add bid increment for standard and reserve auctions
@@ -797,6 +811,7 @@ export const updateAuction = async (req, res) => {
       location,
       videoLink,
       startPrice,
+      retailPrice,
       bidIncrement,
       auctionType,
       reservePrice,
@@ -1358,6 +1373,7 @@ export const updateAuction = async (req, res) => {
       location,
       videoLink,
       startPrice: parseFloat(startPrice),
+      retailPrice: retailPrice ? parseFloat(retailPrice) : undefined,
       auctionType,
       allowOffers: allowOffers === "true" || allowOffers === true,
       startDate: start,
@@ -1539,7 +1555,6 @@ export const deleteAuction = async (req, res) => {
 };
 
 // Place Bid
-
 export const placeBid = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1607,13 +1622,15 @@ export const placeBid = async (req, res) => {
     });
 
     // Send bid confirmation to the current bidder
-    await bidConfirmationEmail(
-      bidder.email,
-      bidder.username,
-      auction,
-      amount,
-      auction.currentPrice,
-    );
+    if (bidder?.preferences && bidder?.preferences?.emailUpdates) {
+      await bidConfirmationEmail(
+        bidder.email,
+        bidder.username,
+        auction,
+        amount,
+        auction.currentPrice,
+      );
+    }
 
     await newBidNotificationEmail(
       auction.seller,
@@ -1627,13 +1644,16 @@ export const placeBid = async (req, res) => {
       previousHighestBidder &&
       previousHighestBidder.toString() !== bidder._id.toString()
     ) {
-      await sendOutbidNotifications(
-        auction,
-        previousHighestBidder,
-        previousBidders,
-        bidder._id.toString(),
-        amount,
-      );
+      const previousHighestBidderUser = await User.findById(previousHighestBidder).select("email username preferences");
+      if (previousHighestBidderUser?.preferences?.emailUpdates) {
+        await sendOutbidNotifications(
+          auction,
+          previousHighestBidder,
+          previousBidders,
+          bidder._id.toString(),
+          amount,
+        );
+      }
     }
   } catch (error) {
     console.error("Place bid error:", error);
@@ -2087,7 +2107,6 @@ const generateCongratulatoryMessage = (auction) => {
   );
 };
 
-// Get seller's sold auctions
 // Get seller's sold auctions
 export const getSoldAuctions = async (req, res) => {
   try {
@@ -2550,7 +2569,7 @@ export const buyNow = async (req, res) => {
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
       .populate("seller", "username firstName lastName email")
-      .populate("winner", "username firstName lastName email phone address")
+      .populate("winner", "username firstName lastName email phone address preferences")
       .populate("bids.bidder", "username firstName lastName");
 
     // Custom message for giveaway
@@ -2572,9 +2591,11 @@ export const buyNow = async (req, res) => {
       console.error("Failed to send seller ended auction email:", error),
     );
 
-    sendAuctionWonEmail(updatedAuction).catch((error) =>
-      console.error("Failed to send buyer won auction email:", error),
-    );
+    if (updatedAuction.winner?.preferences?.emailUpdates) {
+      sendAuctionWonEmail(updatedAuction).catch((error) =>
+        console.error("Failed to send buyer won auction email:", error),
+      );
+    }
 
     // Send admin emails to all admin users
     try {
@@ -2698,6 +2719,204 @@ export const getAuctionCommission = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch commission info",
+    });
+  }
+};
+
+/**
+ * @desc    Get auctions sold at 80% discount or more (finalPrice <= 20% of retailPrice)
+ * @route   GET /api/v1/auctions/bargain-deals
+ * @access  Public
+ */
+export const getBargainDeals = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 12,
+      category,
+      categories,
+      search,
+      sortBy = "discountPercentage",
+      sortOrder = "desc",
+      priceMin,
+      priceMax,
+      location,
+      auctionType,
+      allowOffers,
+    } = req.query;
+
+    // First, build the base filter (without $expr)
+    const filter = {};
+
+    // Only include sold auctions with retailPrice
+    filter.status = { $in: ["sold", "sold_buy_now"] };
+    filter.retailPrice = { $exists: true, $ne: null, $gt: 0 };
+
+    // ========== CATEGORY FILTERING ==========
+    if (categories || category) {
+      if (categories) {
+        let categoriesArray = [];
+        if (Array.isArray(categories)) {
+          categoriesArray = categories;
+        } else if (typeof categories === "string") {
+          categoriesArray = categories.split(",").filter((c) => c.trim() !== "");
+        }
+        if (categoriesArray.length > 0) {
+          filter.categories = { $in: categoriesArray };
+        }
+      } else if (category) {
+        filter.categories = { $in: [category] };
+      }
+    }
+
+    // Search in title and description
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { subTitle: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Location filtering
+    if (location) {
+      filter.location = { $regex: location, $options: "i" };
+    }
+
+    // Auction type filter
+    if (auctionType && auctionType !== "") {
+      filter.auctionType = auctionType;
+    }
+
+    // Allow offers filter
+    if (allowOffers !== undefined && allowOffers !== "") {
+      filter.allowOffers = allowOffers === "true";
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // First, get all auctions matching the base filters
+    let auctions = await Auction.find(filter)
+      .populate("seller", "username firstName lastName")
+      .populate("winner", "username firstName lastName")
+      .lean();
+
+    // Calculate discount and apply filters
+    const discountMin = parseFloat(req.query.discountMin || 80);
+    const maxPriceRatio = (100 - discountMin) / 100;
+    
+    // Filter auctions by discount and price range
+    let filteredAuctions = auctions.filter(auction => {
+      const effectiveFinalPrice = auction.finalPrice || auction.currentPrice;
+      const retailPrice = auction.retailPrice;
+      
+      if (!effectiveFinalPrice || !retailPrice) return false;
+      
+      const priceRatio = effectiveFinalPrice / retailPrice;
+      const discountPercentage = ((retailPrice - effectiveFinalPrice) / retailPrice) * 100;
+      
+      // Check discount threshold
+      if (discountPercentage < discountMin) return false;
+      
+      // Check price range filters
+      if (priceMin && effectiveFinalPrice < parseFloat(priceMin)) return false;
+      if (priceMax && effectiveFinalPrice > parseFloat(priceMax)) return false;
+      
+      return true;
+    });
+
+    // Add calculated fields to each auction
+    let processedAuctions = filteredAuctions.map(auction => {
+      const effectiveFinalPrice = auction.finalPrice || auction.currentPrice;
+      const retailPrice = auction.retailPrice;
+      const discountPercentage = ((retailPrice - effectiveFinalPrice) / retailPrice) * 100;
+      const savingsAmount = retailPrice - effectiveFinalPrice;
+      
+      return {
+        ...auction,
+        effectiveFinalPrice,
+        discountPercentage: Math.round(discountPercentage * 100) / 100,
+        savingsAmount,
+        formattedDiscount: `${Math.round(discountPercentage)}% OFF`,
+        priceRatio: effectiveFinalPrice / retailPrice
+      };
+    });
+
+    // Apply sorting
+    const sortDirection = sortOrder === "desc" ? -1 : 1;
+    
+    if (sortBy === "discountPercentage") {
+      processedAuctions.sort((a, b) => sortDirection * (a.discountPercentage - b.discountPercentage));
+    } else if (sortBy === "savingsAmount") {
+      processedAuctions.sort((a, b) => sortDirection * (a.savingsAmount - b.savingsAmount));
+    } else if (sortBy === "finalPrice") {
+      processedAuctions.sort((a, b) => sortDirection * (a.effectiveFinalPrice - b.effectiveFinalPrice));
+    } else if (sortBy === "retailPrice") {
+      processedAuctions.sort((a, b) => sortDirection * (a.retailPrice - b.retailPrice));
+    } else if (sortBy === "endDate") {
+      processedAuctions.sort((a, b) => sortDirection * (new Date(a.endDate) - new Date(b.endDate)));
+    } else if (sortBy === "createdAt") {
+      processedAuctions.sort((a, b) => sortDirection * (new Date(a.createdAt) - new Date(b.createdAt)));
+    } else {
+      // Default: highest discount first
+      processedAuctions.sort((a, b) => b.discountPercentage - a.discountPercentage);
+    }
+
+    // Get total count before pagination
+    const total = processedAuctions.length;
+
+    // Apply pagination
+    const paginatedAuctions = processedAuctions.slice(skip, skip + parseInt(limit));
+
+    // Calculate statistics
+    const totalSavings = processedAuctions.reduce((sum, a) => sum + a.savingsAmount, 0);
+    const averageDiscount = total > 0 
+      ? Math.round((processedAuctions.reduce((sum, a) => sum + a.discountPercentage, 0) / total) * 100) / 100
+      : 0;
+    const biggestDiscount = total > 0 
+      ? Math.max(...processedAuctions.map(a => a.discountPercentage))
+      : 0;
+    const totalRetailValue = processedAuctions.reduce((sum, a) => sum + a.retailPrice, 0);
+    const totalSoldValue = processedAuctions.reduce((sum, a) => sum + a.effectiveFinalPrice, 0);
+
+    res.status(200).json({
+      success: true,
+      message: `${paginatedAuctions.length} bargain ${paginatedAuctions.length === 1 ? 'deal' : 'deals'} found with ${discountMin}%+ discount`,
+      data: {
+        auctions: paginatedAuctions,
+        filters: {
+          discountMin,
+          sortBy,
+          sortOrder,
+          search: search || null,
+          category: category || null,
+          priceMin: priceMin || null,
+          priceMax: priceMax || null,
+        },
+        stats: {
+          totalDeals: total,
+          averageDiscount,
+          biggestDiscount,
+          totalSavings,
+          totalRetailValue,
+          totalSoldValue,
+        },
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalAuctions: total,
+          limit: parseInt(limit),
+          hasNextPage: skip + paginatedAuctions.length < total,
+          hasPrevPage: skip > 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get bargain deals error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching bargain deals",
     });
   }
 };

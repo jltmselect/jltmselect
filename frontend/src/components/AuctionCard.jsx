@@ -29,6 +29,20 @@ function AuctionCard({ auction }) {
         setTilt({ x: y * -threshold, y: x * threshold });
     };
 
+    // Calculate discount percentage if it's a bargain deal
+    const getDiscountBadge = () => {
+        if (auction.discountPercentage && auction.discountPercentage >= 80) {
+            return {
+                label: `${Math.round(auction.discountPercentage)}% OFF`,
+                icon: Zap,
+                color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+            };
+        }
+        return null;
+    };
+
+    const discountBadge = getDiscountBadge();
+
     const [auctionEndDate] = useState(() => new Date(auction.endDate));
     const auctionTime = useAuctionCountdown(auction);
     const { isWatchlisted, watchlistCount, loading, toggleWatchlist } = useWatchlist(auction._id);
@@ -120,13 +134,13 @@ function AuctionCard({ auction }) {
             onClick={() => navigate(`/auction/${auction._id}`)}
         >
             {/* Image Section */}
-            <div 
-    className="relative overflow-hidden rounded-t-xl transform-gpu"
-    style={{ 
-        borderRadius: '0.75rem 0.75rem 0 0',
-        WebkitMaskImage: 'radial-gradient(white, black)' // forces GPU layer in Safari/Chrome
-    }}
->
+            <div
+                className="relative overflow-hidden rounded-t-xl transform-gpu"
+                style={{
+                    borderRadius: '0.75rem 0.75rem 0 0',
+                    WebkitMaskImage: 'radial-gradient(white, black)' // forces GPU layer in Safari/Chrome
+                }}
+            >
                 <img
                     src={auction.photos?.[0]?.url || heroImg}
                     alt={auction.title}
@@ -135,7 +149,31 @@ function AuctionCard({ auction }) {
 
                 {/* Status Badges */}
                 <div className="absolute w-full top-3 px-4 flex items-center justify-between gap-3 flex-wrap">
+                    {/* <div className="flex gap-2">
+                        {statusBadges.map((badge, index) => {
+                            const IconComponent = badge.icon;
+                            return (
+                                <span
+                                    key={index}
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${badge.color}`}
+                                >
+                                    <IconComponent size={12} />
+                                    {badge.label}
+                                </span>
+                            );
+                        })}
+                    </div> */}
+
+                    {/* Status Badges */}
                     <div className="flex gap-2">
+                        {discountBadge && (
+                            <span
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${discountBadge.color}`}
+                            >
+                                <discountBadge.icon size={12} />
+                                {discountBadge.label}
+                            </span>
+                        )}
                         {statusBadges.map((badge, index) => {
                             const IconComponent = badge.icon;
                             return (
@@ -218,7 +256,7 @@ function AuctionCard({ auction }) {
                                 {auction.status === 'sold' ? 'Final Price' : 'Starting Price'}
                             </div>
                             <div className="font-bold text-lg text-green-600 dark:text-green-400">
-                                {formatCurrency(auction.currentPrice || auction.startPrice)}
+                                {formatCurrency(auction.finalPrice || auction.currentPrice)}
                             </div>
                         </div>
                     )}

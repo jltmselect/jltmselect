@@ -148,6 +148,10 @@ const auctionSchema = new Schema(
       type: Number,
       min: 0,
     },
+    retailPrice: {
+      type: Number,
+      min: 0,
+    },
     auctionType: {
       type: String,
       enum: ["standard", "reserve", "buy_now", "giveaway"], // ADDED 'giveaway'
@@ -199,124 +203,6 @@ const auctionSchema = new Schema(
         caption: { type: String, default: "" },
       },
     ],
-
-    // For bundle auctions - list of items in the bundle
-    bundleItems: [
-      {
-        itemNumber: {
-          type: Number,
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          default: 1,
-          min: 1,
-        },
-        specifications: {
-          type: Map,
-          of: Schema.Types.Mixed,
-          required: true,
-          default: new Map(),
-        },
-        notes: {
-          type: String,
-          trim: true,
-          default: "",
-        },
-      },
-    ],
-
-    // Parcel details for shipping
-    parcel: {
-      weight: Number,
-      length: Number,
-      width: Number,
-      height: Number,
-      distanceUnit: {
-        type: String,
-        default: "in",
-      },
-      massUnit: {
-        type: String,
-        default: "lb",
-      },
-    },
-
-    shipping: {
-      rate: {
-        objectId: String,
-        provider: String,
-        serviceLevel: {
-          name: String,
-          token: String,
-          terms: String,
-        },
-        amount: Number,
-        currency: String,
-        estimatedDays: Number,
-      },
-      transaction: {
-        objectId: String,
-        status: {
-          type: String,
-          enum: ["PURCHASED", "FAILED", "REFUNDED", "CANCELLED"],
-          default: "PURCHASED",
-        },
-        labelUrl: String,
-        trackingNumber: String,
-        trackingUrl: String,
-        commercialInvoiceUrl: String,
-        purchasedAt: Date,
-        messages: [
-          {
-            text: String,
-            code: String,
-          },
-        ],
-      },
-      tracking: {
-        status: {
-          type: String,
-          enum: [
-            "PRE_TRANSIT",
-            "TRANSIT",
-            "DELIVERED",
-            "RETURNED",
-            "FAILURE",
-            "UNKNOWN",
-          ],
-          default: "PRE_TRANSIT",
-        },
-        statusDetails: String,
-        estimatedDelivery: Date,
-        actualDelivery: Date,
-        trackingHistory: [
-          {
-            status: String,
-            statusDetails: String,
-            location: String,
-            timestamp: Date,
-          },
-        ],
-        lastUpdated: Date,
-      },
-      recipient: {
-        name: String,
-        street1: String,
-        street2: String,
-        city: String,
-        state: String,
-        zip: String,
-        country: String,
-        phone: String,
-        email: String,
-      },
-      metadata: {
-        labelPurchasedAt: Date,
-        labelPrintedAt: Date,
-        notifiedAt: Date,
-      },
-    },
 
     // Bidding
     bids: [
@@ -471,15 +357,15 @@ auctionSchema.virtual("timeRemaining").get(function () {
 });
 
 // Add this virtual to your auction schema
-auctionSchema.virtual("isTimedAuction").get(function () {
+auctionSchema.virtual('isTimedAuction').get(function () {
   // Only standard and reserve auctions have timers
-  return this.auctionType === "standard" || this.auctionType === "reserve";
+  return this.auctionType === 'standard' || this.auctionType === 'reserve';
 });
 
 // Also add this for convenience
-auctionSchema.virtual("isAlwaysAvailable").get(function () {
+auctionSchema.virtual('isAlwaysAvailable').get(function () {
   // Buy now and giveaway are always available until purchased
-  return this.auctionType === "buy_now" || this.auctionType === "giveaway";
+  return this.auctionType === 'buy_now' || this.auctionType === 'giveaway';
 });
 
 // Check if auction is about to end
@@ -1188,22 +1074,22 @@ auctionSchema.pre("save", function (next) {
   }
 
   // Validate buy now price is higher than start price
-  // if (this.buyNowPrice && this.buyNowPrice < this.startPrice) {
-  //   return next(
-  //     new Error("Buy Now price must be greater than or equal to start price"),
-  //   );
-  // }
+  if (this.buyNowPrice && this.buyNowPrice < this.startPrice) {
+    return next(
+      new Error("Buy Now price must be greater than or equal to start price"),
+    );
+  }
 
   // Validate buy now price is higher than reserve price for reserve auctions
-  // if (
-  //   this.auctionType === "reserve" &&
-  //   this.buyNowPrice &&
-  //   this.buyNowPrice < this.reservePrice
-  // ) {
-  //   return next(
-  //     new Error("Buy Now price must be greater than or equal to reserve price"),
-  //   );
-  // }
+  if (
+    this.auctionType === "reserve" &&
+    this.buyNowPrice &&
+    this.buyNowPrice < this.reservePrice
+  ) {
+    return next(
+      new Error("Buy Now price must be greater than or equal to reserve price"),
+    );
+  }
 
   next();
 });

@@ -21,6 +21,10 @@ const userSchema = new Schema(
       required: false,
       trim: true,
     },
+    referredBy: {
+      type: String,
+      trim: true,
+    },
     // REMOVE username field entirely
     email: {
       type: String,
@@ -44,19 +48,19 @@ const userSchema = new Schema(
     // User Type
     userType: {
       type: String,
-      enum: ["bidder", "seller", "broker", "admin"],
+      enum: ["bidder", "seller", "broker", "admin", "cashier"],
       required: true,
     },
 
     // Additional Info
     countryCode: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     countryName: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     phone: {
@@ -77,11 +81,17 @@ const userSchema = new Schema(
       postCode: { type: String, trim: true },
       country: { type: String, trim: true },
     },
+    // preferences: {
+    //   bidAlerts: { type: Boolean, default: true },
+    //   outbidNotifications: { type: Boolean, default: true },
+    //   newsletter: { type: Boolean, default: true },
+    //   smsUpdates: { type: Boolean, default: false },
+    //   favoriteCategories: [{ type: String }],
+    // },
     preferences: {
-      bidAlerts: { type: Boolean, default: true },
-      outbidNotifications: { type: Boolean, default: true },
+      emailUpdates: { type: Boolean, default: true },
+      smsUpdates: { type: Boolean, default: true },
       newsletter: { type: Boolean, default: true },
-      smsUpdates: { type: Boolean, default: false },
       favoriteCategories: [{ type: String }],
     },
 
@@ -132,7 +142,7 @@ const userSchema = new Schema(
         },
         isVerified: {
           type: Boolean,
-          default: true,
+          default: false,
         },
         addedAt: Date,
         updatedAt: Date,
@@ -233,7 +243,7 @@ const userSchema = new Schema(
     identificationStatus: {
       type: String,
       enum: ["pending", "verified", "rejected"],
-      default: "pending",
+      default: "verified",
     },
     identificationVerifiedAt: {
       type: Date,

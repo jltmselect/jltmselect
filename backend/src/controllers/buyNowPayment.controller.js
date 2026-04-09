@@ -139,10 +139,12 @@ export const processBuyNowPayment = async (req, res) => {
       // Send emails in background
       const populatedAuction = await Auction.findById(auctionId)
         .populate("seller", "username firstName lastName email")
-        .populate("winner", "username firstName lastName email phone address");
+        .populate("winner", "username firstName lastName email phone address preferences");
 
     //   sendAuctionWonEmail(populatedAuction).catch(console.error);
-      paymentCompletedEmail(user, populatedAuction).catch(console.error);
+      if (populatedAuction.winner?.preferences?.emailUpdates) {
+        paymentCompletedEmail(user, populatedAuction).catch(console.error);
+      }
       sendAuctionEndedSellerEmail(populatedAuction).catch(console.error);
 
       // Notify admins

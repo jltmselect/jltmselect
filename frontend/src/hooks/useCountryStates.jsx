@@ -19,11 +19,11 @@ function useCountryStates() {
 
     const useStatesByCountry = async (countryCode = 'US') => {
         try {
-            const username = 'hangerstock'; // Your username
+            const username = 'chris_folayan'; // Your username
             
             // Use the countryInfo endpoint to get the geonameId first
             const countryInfoResponse = await fetch(
-                `http://api.geonames.org/countryInfoJSON?country=${countryCode}&username=${username}`
+                `https://secure.geonames.org/countryInfoJSON?country=${countryCode}&username=${username}`
             );
             
             const countryInfo = await countryInfoResponse.json();
@@ -33,7 +33,7 @@ function useCountryStates() {
                 
                 // Now fetch the states using the correct geonameId
                 const statesResponse = await fetch(
-                    `http://api.geonames.org/childrenJSON?geonameId=${geonameId}&username=${username}`
+                    `https://secure.geonames.org/childrenJSON?geonameId=${geonameId}&username=${username}`
                 );
                 
                 const statesData = await statesResponse.json();

@@ -83,6 +83,11 @@ const userSubscriptionSchema = new Schema(
       enum: ["active", "expired", "cancelled", "pending"],
       default: "pending",
     },
+    // Discount availed status (for cashier to toggle)
+    isDiscountAvailed: {
+      type: Boolean,
+      default: false,
+    },
     // For tracking multiple subscriptions
     isCurrent: {
       type: Boolean,

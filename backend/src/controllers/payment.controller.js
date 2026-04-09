@@ -122,8 +122,9 @@ export const createWonAuctionPayment = async (req, res) => {
         await auction.save();
       }
 
-      // paymentCompletedEmail(user, populatedAuction).catch(console.error);
-      paymentCompletedEmail(user, auction).catch(console.error);
+      if (user.preferences?.emailUpdates) {
+        paymentCompletedEmail(user, auction).catch(console.error);
+      }
 
       return res.status(200).json({
         success: true,
@@ -719,7 +720,9 @@ export const createCheckoutPayment = async (req, res) => {
     }
 
     // 8. Send email to buyer (optional)
-    paymentCompletedEmail(user, auction).catch(console.error);
+    if (user.preferences?.emailUpdates) {
+      paymentCompletedEmail(user, auction).catch(console.error);
+    }
 
     return res.status(200).json({
       success: true,

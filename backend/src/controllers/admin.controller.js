@@ -24,6 +24,7 @@ import {
 import BidPayment from "../models/bidPayment.model.js";
 import Payout from "../models/payout.model.js";
 import shippo from "../utils/shippo.js";
+import UserSubscription from "../models/userSubscription.model.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -266,12 +267,12 @@ export const getAdminStats = async (req, res) => {
       averageSalePrice,
       highestSaleAuction: highestSaleAuction
         ? {
-            title: highestSaleAuction.title,
-            amount: highestSaleAuction.finalPrice,
-            seller: highestSaleAuction.seller?.username || "Unknown",
-            winner: highestSaleAuction.winner?.username || "Unknown",
-            date: highestSaleAuction.createdAt,
-          }
+          title: highestSaleAuction.title,
+          amount: highestSaleAuction.finalPrice,
+          seller: highestSaleAuction.seller?.username || "Unknown",
+          winner: highestSaleAuction.winner?.username || "Unknown",
+          date: highestSaleAuction.createdAt,
+        }
         : null,
 
       // Performance metrics
@@ -339,6 +340,7 @@ export const getAllUsers = async (req, res) => {
 
     // Build search query
     let searchQuery = {
+      userType: { $ne: "cashier" },
       $or: [
         { firstName: { $regex: search, $options: "i" } },
         { lastName: { $regex: search, $options: "i" } },
@@ -382,10 +384,48 @@ export const getAllUsers = async (req, res) => {
       bidders: userStats.find((stat) => stat._id === "bidder")?.count || 0,
     };
 
+    const userIds = users.map(user => user._id);
+    const activeSubscriptions = await UserSubscription.aggregate([
+      {
+        $match: {
+          user: { $in: userIds },
+          status: "active",
+          expiresAt: { $gt: new Date() }
+        }
+      },
+      {
+        $sort: { expiresAt: 1 }
+      },
+      {
+        $group: {
+          _id: "$user",
+          subscriptionTitle: { $first: "$title" },
+          subscriptionExpiry: { $first: "$expiresAt" },
+          isDiscountAvailed: { $first: "$isDiscountAvailed" }
+        }
+      }
+    ]);
+
+    // Create a map for quick lookup
+    const subscriptionMap = {};
+    activeSubscriptions.forEach(sub => {
+      subscriptionMap[sub._id.toString()] = {
+        title: sub.subscriptionTitle,
+        expiry: sub.subscriptionExpiry,
+        discountAvailed: sub.isDiscountAvailed || false
+      };
+    });
+
+    // Add subscription info to each user
+    const usersWithSubscription = users.map(user => ({
+      ...user.toObject(),
+      activeSubscription: subscriptionMap[user._id.toString()] || null
+    }));
+
     res.status(200).json({
       success: true,
       data: {
-        users,
+        users: usersWithSubscription,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(totalUsers / limit),
@@ -420,6 +460,12 @@ export const getUserDetails = async (req, res) => {
         message: "User not found",
       });
     }
+
+    const activeSubscription = await UserSubscription.findOne({
+      user: userId,
+      status: "active",
+      expiresAt: { $gt: new Date() }
+    }).sort({ expiresAt: 1 });
 
     let userStats = {};
 
@@ -500,6 +546,11 @@ export const getUserDetails = async (req, res) => {
         user: {
           ...user.toObject(),
           stats: userStats,
+          activeSubscription: activeSubscription ? {
+            title: activeSubscription.title,
+            expiry: activeSubscription.expiresAt,
+            discountAvailed: activeSubscription.isDiscountAvailed || false
+          } : null
         },
       },
     });
@@ -1072,9 +1123,11 @@ export const updateAuction = async (req, res) => {
       subTitle,
       features,
       description,
+      specifications,
       location,
       videoLink,
       startPrice,
+      retailPrice,
       bidIncrement,
       auctionType,
       reservePrice,
@@ -1089,10 +1142,11 @@ export const updateAuction = async (req, res) => {
       serviceRecordOrder,
     } = req.body;
 
-    // ========== CATEGORIES HANDLING ==========
+    // ========== CATEGORIES HANDLING - FIXED ==========
     let categoriesArray = [];
     if (req.body.categories) {
       try {
+        // Try to parse it as JSON first (from frontend JSON.stringify)
         const parsed = JSON.parse(req.body.categories);
         if (Array.isArray(parsed)) {
           categoriesArray = parsed;
@@ -1100,14 +1154,16 @@ export const updateAuction = async (req, res) => {
           categoriesArray = [parsed];
         }
       } catch (e) {
+        // If it's not JSON, handle as regular string or array
         if (Array.isArray(req.body.categories)) {
           categoriesArray = req.body.categories;
         } else if (typeof req.body.categories === "string") {
+          // Check if it's a comma-separated string
           categoriesArray = req.body.categories.includes(",")
             ? req.body.categories
-                .split(",")
-                .map((c) => c.trim())
-                .filter(Boolean)
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean)
             : [req.body.categories];
         }
       }
@@ -1120,53 +1176,7 @@ export const updateAuction = async (req, res) => {
         message: "At least one category is required",
       });
     }
-
-    // ========== BUNDLE ITEMS HANDLING ==========
-    let bundleItems = [];
-    if (req.body.bundleItems) {
-      try {
-        bundleItems = JSON.parse(req.body.bundleItems);
-
-        if (!bundleItems || bundleItems.length === 0) {
-          return res.status(400).json({
-            success: false,
-            message: "At least one bundle item is required",
-          });
-        }
-
-        // Transform bundle items to ensure specifications are stored as Maps
-        const processedBundleItems = bundleItems.map((item, index) => {
-          // Convert specifications object to Map
-          const specificationsMap = new Map();
-
-          // Make sure we have specifications
-          if (item.specifications && typeof item.specifications === "object") {
-            Object.entries(item.specifications).forEach(([key, value]) => {
-              // Don't store empty values
-              if (value !== null && value !== undefined && value !== "") {
-                specificationsMap.set(key, value);
-              }
-            });
-          }
-
-          return {
-            itemNumber: index + 1,
-            quantity: item.quantity || 1,
-            specifications: specificationsMap, // Store as Map, not plain object
-            notes: item.notes || "",
-          };
-        });
-
-        // Replace bundleItems with processed version
-        bundleItems = processedBundleItems;
-      } catch (e) {
-        console.error("Error parsing bundleItems:", e);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid bundle items format",
-        });
-      }
-    }
+    // =================================================
 
     // Basic validation - check if fields exist in req.body
     if (!title || !description || !auctionType || !startDate || !endDate) {
@@ -1243,30 +1253,6 @@ export const updateAuction = async (req, res) => {
 
       // Apply reset data to auction object
       Object.assign(auction, resetData);
-
-      // ========== ADD THIS: DELETE ASSOCIATED PAYMENT RECORDS ==========
-      try {
-        // Find and delete any BidPayment records for this auction
-        const deletedPayments = await BidPayment.deleteMany({ auction: id });
-
-        if (deletedPayments.deletedCount > 0) {
-          console.log(
-            `✅ Deleted ${deletedPayments.deletedCount} payment record(s) for relisted auction ${id}`,
-          );
-        }
-
-        // Optional: Also delete any Payout records if they exist
-        const deletedPayouts = await Payout.deleteMany({ auction: id });
-
-        if (deletedPayouts.deletedCount > 0) {
-          console.log(
-            `✅ Deleted ${deletedPayouts.deletedCount} payout record(s) for relisted auction ${id}`,
-          );
-        }
-      } catch (paymentError) {
-        console.error("Error deleting payment records:", paymentError);
-        // Don't fail the update if payment deletion fails, just log it
-      }
     }
 
     // Validate bid increment for standard and reserve auctions
@@ -1311,80 +1297,52 @@ export const updateAuction = async (req, res) => {
       }
     }
 
-    // ========== GENERATE AGGREGATED SPECIFICATIONS FROM BUNDLE ITEMS ==========
-    const aggregatedSpecs = {};
+    // Handle specifications
+    let finalSpecifications = new Map();
 
-    if (bundleItems && bundleItems.length > 0) {
-      const brands = new Set();
-      const sizes = new Set();
-      const colors = new Set();
-      const conditions = new Set();
-      const materials = new Set();
-
-      let totalQuantity = 0;
-      let totalUniqueItems = bundleItems.length;
-      let minPrice = Infinity;
-      let maxPrice = -Infinity;
-
-      bundleItems.forEach((item) => {
-        const quantity = item.quantity || 1;
-        totalQuantity += quantity;
-
-        // Convert Map back to object for easier access
-        const specs = {};
-        if (item.specifications instanceof Map) {
-          item.specifications.forEach((value, key) => {
-            specs[key] = value;
-          });
-        }
-
-        if (specs.brand) brands.add(specs.brand);
-        if (specs.size) sizes.add(specs.size);
-        if (specs.color) colors.add(specs.color);
-        if (specs.condition) conditions.add(specs.condition);
-        if (specs.material) materials.add(specs.material);
-
-        if (specs.retailValue) {
-          const price = parseFloat(specs.retailValue);
-          if (price < minPrice) minPrice = price;
-          if (price > maxPrice) maxPrice = price;
+    // Convert existing specifications to Map if they exist
+    if (auction.specifications && auction.specifications instanceof Map) {
+      auction.specifications.forEach((value, key) => {
+        if (value !== null && value !== undefined && value !== "") {
+          finalSpecifications.set(key, value);
         }
       });
-
-      aggregatedSpecs.totalItems = totalQuantity;
-      aggregatedSpecs.uniqueItems = totalUniqueItems;
-      aggregatedSpecs.brands = Array.from(brands);
-      aggregatedSpecs.sizes = Array.from(sizes);
-      aggregatedSpecs.colors = Array.from(colors);
-      aggregatedSpecs.conditions = Array.from(conditions);
-      aggregatedSpecs.materials = Array.from(materials);
-
-      if (minPrice !== Infinity) {
-        aggregatedSpecs.minRetailValue = minPrice;
-        aggregatedSpecs.maxRetailValue = maxPrice;
-      }
-
-      if (categoriesArray.length > 0) {
-        aggregatedSpecs.categories = categoriesArray;
-      }
+    } else if (
+      auction.specifications &&
+      typeof auction.specifications === "object"
+    ) {
+      Object.entries(auction.specifications).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          finalSpecifications.set(key, value);
+        }
+      });
     }
 
-    // Convert aggregated specs to Map
-    const finalSpecifications = new Map(Object.entries(aggregatedSpecs));
-    // ========================================================================
-
-    // ========== PARCEL DATA HANDLING ==========
-    let parcelData = {};
-    if (req.body.parcel) {
+    // Parse and merge new specifications
+    if (specifications) {
       try {
-        parcelData =
-          typeof req.body.parcel === "string"
-            ? JSON.parse(req.body.parcel)
-            : req.body.parcel;
+        let newSpecs;
+        if (typeof specifications === "string") {
+          newSpecs = JSON.parse(specifications);
+        } else {
+          newSpecs = specifications;
+        }
 
-        console.log("Parcel data received:", parcelData);
-      } catch (e) {
-        console.error("Error parsing parcel data:", e);
+        if (typeof newSpecs === "object" && newSpecs !== null) {
+          Object.entries(newSpecs).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== "") {
+              finalSpecifications.set(key, value.toString());
+            } else {
+              finalSpecifications.delete(key);
+            }
+          });
+        }
+      } catch (parseError) {
+        console.error("Error parsing specifications:", parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid specifications format",
+        });
       }
     }
 
@@ -1398,6 +1356,7 @@ export const updateAuction = async (req, res) => {
             : removedPhotos;
 
         if (Array.isArray(removedPhotoIds)) {
+          // Remove photos from the array and delete from Cloudinary
           for (const photoId of removedPhotoIds) {
             const photoIndex = finalPhotos.findIndex(
               (photo) =>
@@ -1406,6 +1365,7 @@ export const updateAuction = async (req, res) => {
 
             if (photoIndex > -1) {
               const removedPhoto = finalPhotos[photoIndex];
+              // Delete from Cloudinary
               if (removedPhoto.publicId) {
                 await deleteFromCloudinary(removedPhoto.publicId);
               }
@@ -1435,6 +1395,7 @@ export const updateAuction = async (req, res) => {
 
             if (docIndex > -1) {
               const removedDoc = finalDocuments[docIndex];
+              // Delete from Cloudinary
               if (removedDoc.publicId) {
                 await deleteFromCloudinary(removedDoc.publicId);
               }
@@ -1448,6 +1409,8 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== CAPTION HANDLING ==========
+
+    // 1. Get photo captions from request body
     const photoCaptionsArray = [];
     if (req.body.photoCaptions) {
       if (Array.isArray(req.body.photoCaptions)) {
@@ -1457,6 +1420,7 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    // 2. Get existing document captions from request body
     const existingDocumentCaptions = [];
     if (req.body.existingDocumentCaptions) {
       if (Array.isArray(req.body.existingDocumentCaptions)) {
@@ -1466,6 +1430,7 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    // 3. Get new document captions from request body
     const newDocumentCaptions = [];
     if (req.body.newDocumentCaptions) {
       if (Array.isArray(req.body.newDocumentCaptions)) {
@@ -1475,6 +1440,7 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    // 4. Get service record captions from request body
     const serviceRecordCaptionsArray = [];
     if (req.body.serviceRecordCaptions) {
       if (Array.isArray(req.body.serviceRecordCaptions)) {
@@ -1485,8 +1451,11 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== SERVICE RECORD UPDATES ==========
+
+    // Initialize finalServiceRecords here
     let finalServiceRecords = [...(auction.serviceRecords || [])];
 
+    // Handle removed service records
     if (removedServiceRecords) {
       try {
         const removedServiceRecordIds =
@@ -1504,6 +1473,7 @@ export const updateAuction = async (req, res) => {
 
             if (recordIndex > -1) {
               const removedRecord = finalServiceRecords[recordIndex];
+              // Delete from Cloudinary
               if (removedRecord.publicId) {
                 await deleteFromCloudinary(removedRecord.publicId);
               }
@@ -1517,6 +1487,8 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== PHOTO UPDATES ==========
+
+    // Handle new photo uploads with captions
     const newPhotos = [];
     if (req.files && req.files.photos) {
       const photos = Array.isArray(req.files.photos)
@@ -1553,6 +1525,7 @@ export const updateAuction = async (req, res) => {
           typeof photoOrder === "string" ? JSON.parse(photoOrder) : photoOrder;
 
         if (Array.isArray(parsedPhotoOrder)) {
+          // Create a map of existing photos by their ID for quick lookup
           const existingPhotosMap = new Map();
           finalPhotos.forEach((photo) => {
             const photoId = photo.publicId || photo._id?.toString();
@@ -1561,17 +1534,21 @@ export const updateAuction = async (req, res) => {
             }
           });
 
+          // Track used new photos to prevent duplicates
           const usedNewPhotos = new Set();
           const reorderedPhotos = [];
 
           for (const orderItem of parsedPhotoOrder) {
             if (orderItem.isExisting) {
+              // Find existing photo by ID
               const existingPhoto = existingPhotosMap.get(orderItem.id);
               if (existingPhoto) {
                 reorderedPhotos.push(existingPhoto);
+                // Remove from map to avoid duplicates
                 existingPhotosMap.delete(orderItem.id);
               }
             } else {
+              // For new photos, find by the temporary ID from frontend
               let foundNewPhoto = null;
               for (let i = 0; i < newPhotos.length; i++) {
                 if (!usedNewPhotos.has(i)) {
@@ -1580,13 +1557,17 @@ export const updateAuction = async (req, res) => {
                   break;
                 }
               }
+
               if (foundNewPhoto) {
                 reorderedPhotos.push(foundNewPhoto);
               }
             }
           }
 
+          // Add any remaining existing photos that weren't in the photoOrder
           existingPhotosMap.forEach((photo) => reorderedPhotos.push(photo));
+
+          // Add any remaining new photos that weren't used
           newPhotos.forEach((photo, index) => {
             if (!usedNewPhotos.has(index)) {
               reorderedPhotos.push(photo);
@@ -1597,13 +1578,15 @@ export const updateAuction = async (req, res) => {
         }
       } catch (error) {
         console.error("Error processing photo order:", error);
+        // Fallback: append new photos at the end
         finalPhotos = [...finalPhotos, ...newPhotos];
       }
     } else {
+      // If no photoOrder is provided, just append new photos at the end
       finalPhotos = [...finalPhotos, ...newPhotos];
     }
 
-    // Update captions for existing photos
+    // Update captions for existing photos (if sent from frontend)
     const existingPhotoCaptions = req.body.existingPhotoCaptions || [];
     finalPhotos.forEach((photo, index) => {
       if (
@@ -1615,12 +1598,15 @@ export const updateAuction = async (req, res) => {
     });
 
     // ========== DOCUMENT UPDATES ==========
+
+    // Update captions for existing documents
     finalDocuments.forEach((doc, index) => {
       if (index < existingDocumentCaptions.length) {
         doc.caption = existingDocumentCaptions[index] || "";
       }
     });
 
+    // Handle new document uploads
     if (req.files && req.files.documents) {
       const documents = Array.isArray(req.files.documents)
         ? req.files.documents
@@ -1652,6 +1638,8 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== SERVICE RECORD UPDATES CONTINUED ==========
+
+    // Handle new service record uploads with captions
     const newServiceRecords = [];
     if (req.files && req.files.serviceRecords) {
       const serviceRecords = Array.isArray(req.files.serviceRecords)
@@ -1691,6 +1679,7 @@ export const updateAuction = async (req, res) => {
             : serviceRecordOrder;
 
         if (Array.isArray(parsedServiceRecordOrder)) {
+          // Create a map of existing service records by their ID for quick lookup
           const existingServiceRecordsMap = new Map();
           finalServiceRecords.forEach((record) => {
             const recordId = record.publicId || record._id?.toString();
@@ -1699,19 +1688,23 @@ export const updateAuction = async (req, res) => {
             }
           });
 
+          // Track used new service records to prevent duplicates
           const usedNewServiceRecords = new Set();
           const reorderedServiceRecords = [];
 
           for (const orderItem of parsedServiceRecordOrder) {
             if (orderItem.isExisting) {
+              // Find existing service record by ID
               const existingRecord = existingServiceRecordsMap.get(
                 orderItem.id,
               );
               if (existingRecord) {
                 reorderedServiceRecords.push(existingRecord);
+                // Remove from map to avoid duplicates
                 existingServiceRecordsMap.delete(orderItem.id);
               }
             } else {
+              // For new service records, find by the temporary ID from frontend
               let foundNewRecord = null;
               for (let i = 0; i < newServiceRecords.length; i++) {
                 if (!usedNewServiceRecords.has(i)) {
@@ -1720,15 +1713,19 @@ export const updateAuction = async (req, res) => {
                   break;
                 }
               }
+
               if (foundNewRecord) {
                 reorderedServiceRecords.push(foundNewRecord);
               }
             }
           }
 
+          // Add any remaining existing service records that weren't in the order
           existingServiceRecordsMap.forEach((record) =>
             reorderedServiceRecords.push(record),
           );
+
+          // Add any remaining new service records that weren't used
           newServiceRecords.forEach((record, index) => {
             if (!usedNewServiceRecords.has(index)) {
               reorderedServiceRecords.push(record);
@@ -1739,9 +1736,11 @@ export const updateAuction = async (req, res) => {
         }
       } catch (error) {
         console.error("Error processing service record order:", error);
+        // Fallback: append new service records at the end
         finalServiceRecords = [...finalServiceRecords, ...newServiceRecords];
       }
     } else {
+      // If no serviceRecordOrder is provided, just append new service records at the end
       finalServiceRecords = [...finalServiceRecords, ...newServiceRecords];
     }
 
@@ -1758,6 +1757,8 @@ export const updateAuction = async (req, res) => {
     });
 
     // ========== DATE VALIDATION ==========
+
+    // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
     const now = new Date();
@@ -1770,67 +1771,73 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== STATUS DETERMINATION ==========
+
+    // Determine status for always-available auctions (buy_now and giveaway)
     let newStatus;
 
     if (isSoldAuction) {
+      // For sold auctions being reset, determine status based on new dates
       const originalStart = auction.startDate;
       const originalEnd = auction.endDate;
       const startChanged = start.getTime() !== originalStart.getTime();
       const endChanged = end.getTime() !== originalEnd.getTime();
 
+      // If dates haven't changed, keep the original date logic but reset everything else
       if (!startChanged && !endChanged) {
+        // Use the original date logic but with reset status
         if (originalStart > now) {
-          newStatus = "draft";
+          newStatus = "draft"; // Future date, start as draft
         } else if (originalStart <= now && originalEnd > now) {
-          newStatus = "active";
+          newStatus = "active"; // Should be active now
         } else if (originalEnd <= now) {
-          newStatus = "ended";
+          newStatus = "ended"; // Already ended
         }
       } else {
+        // If dates have changed, use the new dates
         if (start > now) {
-          newStatus = "draft";
+          newStatus = "draft"; // Future date, start as draft
         } else if (start <= now && end > now) {
-          newStatus = "active";
+          newStatus = "active"; // Should be active now
         } else if (end <= now) {
-          newStatus = "ended";
+          newStatus = "ended"; // Already ended
         }
       }
     } else {
+      // For non-sold auctions, determine status based on auction type and dates
       if (auctionType === "buy_now" || auctionType === "giveaway") {
+        // Always-available auctions should be active if no winner
         newStatus = auction.winner ? auction.status : "active";
       } else {
+        // Timed auctions (standard/reserve) - use date-based logic
         if (start > now && end > now) {
+          // Dates are in future
           newStatus = "approved";
         } else if (end <= now) {
+          // Auction has ended
           newStatus = "ended";
         } else if (start <= now && end > now) {
+          // Auction should be active now
           newStatus = "active";
         } else {
-          newStatus = auction.status;
+          newStatus = auction.status; // Keep existing status as fallback
         }
       }
     }
 
     // ========== PREPARE UPDATE DATA ==========
+
+    // Prepare update data
     const updateData = {
       title,
       subTitle: subTitle || "",
       categories: categoriesArray,
       features: features || "",
       description,
-      specifications: finalSpecifications, // Use aggregated specs
-      bundleItems: bundleItems, // Use processed bundle items with Maps
-      parcel: {
-        weight: parcelData.weight ? parseFloat(parcelData.weight) : undefined,
-        length: parcelData.length ? parseFloat(parcelData.length) : undefined,
-        width: parcelData.width ? parseFloat(parcelData.width) : undefined,
-        height: parcelData.height ? parseFloat(parcelData.height) : undefined,
-        distanceUnit: parcelData.distanceUnit || "in",
-        massUnit: parcelData.massUnit || "lb",
-      },
+      specifications: finalSpecifications,
       location: location || "",
       videoLink: videoLink || "",
       startPrice: parseFloat(startPrice),
+      retailPrice: retailPrice ? parseFloat(retailPrice) : undefined,
       auctionType,
       allowOffers: allowOffers === "true" || allowOffers === true,
       startDate: start,
@@ -1845,6 +1852,7 @@ export const updateAuction = async (req, res) => {
     if (auctionType === "standard" || auctionType === "reserve") {
       updateData.bidIncrement = parseFloat(bidIncrement);
     } else {
+      // Clear bid increment for other auction types
       updateData.bidIncrement = undefined;
     }
 
@@ -1897,21 +1905,28 @@ export const updateAuction = async (req, res) => {
     }).populate("seller", "username firstName lastName");
 
     // ========== RESCHEDULE JOBS ==========
+
+    // Reschedule jobs if dates changed
     if (
       start.getTime() !== new Date(auction.startDate).getTime() ||
       end.getTime() !== new Date(auction.endDate).getTime()
     ) {
       await agendaService.cancelAuctionJobs(auction._id);
 
+      // Only schedule jobs for timed auctions (standard/reserve)
       if (auctionType === "standard" || auctionType === "reserve") {
+        // Schedule activation if start date is in future
         if (start > new Date()) {
           await agendaService.scheduleAuctionActivation(
             updatedAuction._id,
             start,
           );
         }
+
+        // Always schedule end job for timed auctions
         await agendaService.scheduleAuctionEnd(updatedAuction._id, end);
       } else {
+        // For buy_now and giveaway, no need to schedule jobs
         console.log(
           `🛒 ${auctionType} auction ${id} - no jobs scheduled (always available)`,
         );
@@ -2129,13 +2144,13 @@ export const updatePaymentStatus = async (req, res) => {
                 statusDetails: "Label purchased, awaiting carrier pickup",
                 estimatedDelivery: updatedBidPayment.rateEstimatedDays
                   ? new Date(
-                      Date.now() +
-                        updatedBidPayment.rateEstimatedDays *
-                          24 *
-                          60 *
-                          60 *
-                          1000,
-                    )
+                    Date.now() +
+                    updatedBidPayment.rateEstimatedDays *
+                    24 *
+                    60 *
+                    60 *
+                    1000,
+                  )
                   : null,
                 actualDelivery: null,
                 trackingHistory: [],
@@ -2183,18 +2198,18 @@ export const updatePaymentStatus = async (req, res) => {
 
             for (const admin of adminUsers) {
               sendShippingLabelToAdmin(admin, auction, {
-              labelUrl: transaction.labelUrl,
-              trackingNumber: transaction.trackingNumber,
-              trackingUrl: transaction.trackingUrlProvider,
-              carrier: updatedBidPayment.rateProvider,
-              service: updatedBidPayment.rateServiceLevel,
-              estimatedDays: updatedBidPayment.rateEstimatedDays,
-              rateAmount: parseFloat(updatedBidPayment.rateAmount) || 0,
-              currency: updatedBidPayment.rateCurrency || "USD",
-              purchasedAt: new Date(),
-            }).catch((error) =>
-              console.error(`Error in sending admin label email:`, error),
-            );
+                labelUrl: transaction.labelUrl,
+                trackingNumber: transaction.trackingNumber,
+                trackingUrl: transaction.trackingUrlProvider,
+                carrier: updatedBidPayment.rateProvider,
+                service: updatedBidPayment.rateServiceLevel,
+                estimatedDays: updatedBidPayment.rateEstimatedDays,
+                rateAmount: parseFloat(updatedBidPayment.rateAmount) || 0,
+                currency: updatedBidPayment.rateCurrency || "USD",
+                purchasedAt: new Date(),
+              }).catch((error) =>
+                console.error(`Error in sending admin label email:`, error),
+              );
             }
           } catch (shippingError) {
             console.error("Auto-label generation failed:", shippingError);
@@ -2213,7 +2228,7 @@ export const updatePaymentStatus = async (req, res) => {
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
       .populate("seller", "username firstName lastName email phone address")
-      .populate("winner", "username firstName lastName email phone address");
+      .populate("winner", "username firstName lastName email phone address preferences");
 
     res.status(200).json({
       success: true,
@@ -2224,7 +2239,7 @@ export const updatePaymentStatus = async (req, res) => {
       },
     });
 
-    if (paymentStatus === "completed" && updatedAuction.winner) {
+    if (paymentStatus === "completed" && updatedAuction.winner && updatedAuction?.preferences?.emailUpdates) {
       // Send payment success email to winner
       paymentCompletedEmail(
         updatedAuction?.winner,
@@ -2307,9 +2322,9 @@ export const generateShippingLabelManually = async (req, res) => {
         statusDetails: "Label purchased, awaiting carrier pickup",
         estimatedDelivery: transaction.rate?.estimated_days
           ? new Date(
-              Date.now() +
-                transaction.rate.estimated_days * 24 * 60 * 60 * 1000,
-            )
+            Date.now() +
+            transaction.rate.estimated_days * 24 * 60 * 60 * 1000,
+          )
           : null,
         actualDelivery: null,
         trackingHistory: [],
@@ -2523,6 +2538,305 @@ export const rejectUserIdentity = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * @desc    Create a new cashier (Admin only)
+ * @route   POST /api/v1/admin/cashiers/create
+ * @access  Private (Admin)
+ */
+export const createCashier = async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, password } = req.body;
+
+    // Validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "First name, last name, email, and password are required",
+      });
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ email: normalizedEmail }, { phone: phone }],
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User with this email or phone already exists",
+      });
+    }
+
+    // Generate username from email (before @)
+    let username = normalizedEmail.split("@")[0];
+    let usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      username = `${username}_${Date.now().toString().slice(-4)}`;
+    }
+
+    // Create cashier user
+    const cashier = await User.create({
+      firstName,
+      lastName,
+      username,
+      email: normalizedEmail,
+      phone: phone || "",
+      password,
+      userType: "cashier",
+      isVerified: true,
+      isEmailVerified: true,
+      isActive: true,
+    });
+
+    // Return safe user object (without password)
+    const cashierObject = cashier.toObject();
+    delete cashierObject.password;
+
+    res.status(201).json({
+      success: true,
+      message: "Cashier created successfully",
+      data: { cashier: cashierObject },
+    });
+  } catch (error) {
+    console.error("Create cashier error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while creating cashier",
+    });
+  }
+};
+
+/**
+ * @desc    Get all cashiers (Admin only)
+ * @route   GET /api/v1/admin/cashiers
+ * @access  Private (Admin)
+ */
+export const getCashiers = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const filter = { userType: "cashier" };
+
+    // Search filter
+    if (search && search.trim()) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Status filter
+    if (status === "active") {
+      filter.isActive = true;
+    } else if (status === "inactive") {
+      filter.isActive = false;
+    }
+
+    // Sort options
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const cashiers = await User.find(filter)
+      .select("-password -refreshToken -resetPasswordToken")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await User.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        cashiers,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalCashiers: total,
+          limit: parseInt(limit),
+          hasNextPage: skip + cashiers.length < total,
+          hasPrevPage: skip > 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get cashiers error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching cashiers",
+    });
+  }
+};
+
+/**
+ * @desc    Get single cashier by ID
+ * @route   GET /api/v1/admin/cashiers/:id
+ * @access  Private (Admin)
+ */
+export const getCashierById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cashier = await User.findOne({ _id: id, userType: "cashier" })
+      .select("-password -refreshToken -resetPasswordToken");
+
+    if (!cashier) {
+      return res.status(404).json({
+        success: false,
+        message: "Cashier not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { cashier },
+    });
+  } catch (error) {
+    console.error("Get cashier by ID error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching cashier",
+    });
+  }
+};
+
+/**
+ * @desc    Update cashier details
+ * @route   PUT /api/v1/admin/cashiers/:id
+ * @access  Private (Admin)
+ */
+export const updateCashier = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, phone } = req.body;
+
+    const cashier = await User.findOne({ _id: id, userType: "cashier" });
+
+    if (!cashier) {
+      return res.status(404).json({
+        success: false,
+        message: "Cashier not found",
+      });
+    }
+
+    // Check email uniqueness if changing
+    if (email && email !== cashier.email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existingEmail) {
+        return res.status(409).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+      cashier.email = email.toLowerCase().trim();
+    }
+
+    if (firstName) cashier.firstName = firstName;
+    if (lastName) cashier.lastName = lastName;
+    if (phone) cashier.phone = phone;
+
+    await cashier.save();
+
+    const cashierObject = cashier.toObject();
+    delete cashierObject.password;
+
+    res.status(200).json({
+      success: true,
+      message: "Cashier updated successfully",
+      data: { cashier: cashierObject },
+    });
+  } catch (error) {
+    console.error("Update cashier error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating cashier",
+    });
+  }
+};
+
+/**
+ * @desc    Update cashier status (activate/deactivate)
+ * @route   PATCH /api/v1/admin/cashiers/:id/status
+ * @access  Private (Admin)
+ */
+export const updateCashierStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const cashier = await User.findOne({ _id: id, userType: "cashier" });
+
+    if (!cashier) {
+      return res.status(404).json({
+        success: false,
+        message: "Cashier not found",
+      });
+    }
+
+    cashier.isActive = isActive;
+    await cashier.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Cashier ${isActive ? "activated" : "deactivated"} successfully`,
+      data: { cashier },
+    });
+  } catch (error) {
+    console.error("Update cashier status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating cashier status",
+    });
+  }
+};
+
+/**
+ * @desc    Delete cashier
+ * @route   DELETE /api/v1/admin/cashiers/:id
+ * @access  Private (Admin)
+ */
+export const deleteCashier = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cashier = await User.findOne({ _id: id, userType: "cashier" });
+
+    if (!cashier) {
+      return res.status(404).json({
+        success: false,
+        message: "Cashier not found",
+      });
+    }
+
+    await cashier.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Cashier deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete cashier error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while deleting cashier",
     });
   }
 };

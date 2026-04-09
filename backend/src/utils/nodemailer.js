@@ -4454,7 +4454,7 @@ const sendBulkAuctionNotifications = async (buyers, auction, seller) => {
     const notificationPromises = buyers?.map(async (buyer) => {
       try {
         // Check if buyer has notifications enabled for new listings
-        if (buyer?.preferences) {
+        if (buyer?.preferences?.emailUpdates) {
           await newAuctionNotificationEmail(buyer, auction, seller);
           return { success: true, email: buyer.email };
         }

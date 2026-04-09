@@ -24,6 +24,7 @@ const BuyerAgreement = lazy(() => import('./pages/BuyerAgreement'));
 const SingleAuction = lazy(() => import('./pages/SingleAuction'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const FAQs = lazy(() => import('./pages/FAQs'));
+const BargainDeals = lazy(() => import('./pages/BargainDeals'));
 
 {/* Seller Pages */ }
 const SellerLayout = lazy(() => import('./pages/seller/Layout'));
@@ -53,6 +54,11 @@ const BrokerProfile = lazy(() => import('./pages/broker/Profile'));
 const BrokerNotifications = lazy(() => import('./pages/broker/Notifications'));
 const BrokerBilling = lazy(() => import('./pages/broker/Billing'));
 
+{/* Cashier Pages */ }
+const CashierLayout = lazy(() => import('./pages/cashier/Layout'));
+const CashierDashboard = lazy(() => import('./pages/cashier/Dashboard'));
+const CashierProfile = lazy(() => import('./pages/cashier/Profile'));
+
 {/* Bidder Pages */ }
 const BidderLayout = lazy(() => import('./pages/bidder/Layout'));
 const BidderDashboard = lazy(() => import('./pages/bidder/Dashboard'));
@@ -65,11 +71,14 @@ const BidderProfile = lazy(() => import('./pages/bidder/Profile'));
 const BidderNotifications = lazy(() => import('./pages/bidder/Notifications'));
 const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
 const BidderSubscriptions = lazy(() => import('./pages/bidder/Subscriptions'));
+const BidderVideos = lazy(() => import('./pages/bidder/Videos'));
 
 {/* Admin Pages */ }
 const AdminLayout = lazy(() => import('./pages/admin/Layout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AllUsers = lazy(() => import('./pages/admin/AllUsers'));
+const AllCashiers = lazy(() => import('./pages/admin/AllCashiers'));
+const AddCashier = lazy(() => import('./pages/admin/AddCashier'));
 const AdminAllAuctions = lazy(() => import('./pages/admin/AllAuctions'));
 const AdminCreateAuction = lazy(() => import('./pages/admin/CreateAuction'));
 const AdminEditAuction = lazy(() => import('./pages/admin/EditAuction'));
@@ -86,6 +95,7 @@ const Categories = lazy(() => import('./pages/admin/Categories'));
 const Subscriptions = lazy(() => import('./pages/admin/Subscriptions'));
 const AdminPayouts = lazy(() => import('./pages/admin/Payouts'));
 const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
+const AdminVideos = lazy(() => import('./pages/admin/Videos'));
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>
@@ -126,6 +136,8 @@ createRoot(document.getElementById('root')).render(
                             <Route path='/buyer-agreement' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BuyerAgreement /></Suspense>} />
 
                             <Route path='/reset-password' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><ResetPassword /></Suspense>} />
+
+                            <Route path='/bargain-deals' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BargainDeals /></Suspense>} />
                         </Route>
 
                         {/* Seller Layout */}
@@ -440,6 +452,39 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             />
+
+                            {/* Bidder Videos */}
+                            <Route
+                                path='/bidder/videos'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderVideos />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
+
+                        {/* Cashier Layout */}
+                        <Route path='/cashier' element={<Protected authetication={true} userType='cashier'><CashierLayout /></Protected>}>
+                            {/* Cashier Dashboard */}
+                            <Route
+                                path='/cashier/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <CashierDashboard />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Cashier Profile */}
+                            <Route
+                                path='/cashier/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <CashierProfile />
+                                    </Suspense>
+                                }
+                            />
                         </Route>
 
                         {/* Admin Layout */}
@@ -461,6 +506,26 @@ createRoot(document.getElementById('root')).render(
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <AllUsers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin All Cashiers */}
+                            <Route
+                                path='/admin/cashiers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AllCashiers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin Add Cashier */}
+                            <Route
+                                path='/admin/cashiers/add'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AddCashier />
                                     </Suspense>
                                 }
                             />
@@ -621,6 +686,16 @@ createRoot(document.getElementById('root')).render(
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <AdminPayoutMethods />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin Videos */}
+                            <Route
+                                path='/admin/videos'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminVideos />
                                     </Suspense>
                                 }
                             />

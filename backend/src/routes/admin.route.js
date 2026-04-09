@@ -17,7 +17,13 @@ import {
     fetchDVLAData,
     verifyUserIdentity,
     rejectUserIdentity,
-    generateShippingLabelManually
+    generateShippingLabelManually,
+    createCashier,
+    getCashiers,
+    getCashierById,
+    updateCashier,
+    updateCashierStatus,
+    deleteCashier
 } from '../controllers/admin.controller.js';
 import { authAdmin } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/multer.middleware.js';
@@ -63,4 +69,12 @@ AdminRouter.post('/:id/generate-shipping-label',
     authAdmin, 
     generateShippingLabelManually
 );
+
+// Cashier Management Routes
+AdminRouter.post('/cashiers/create', authAdmin, createCashier);
+AdminRouter.get('/cashiers', authAdmin, getCashiers);
+AdminRouter.get('/cashiers/:id', authAdmin, getCashierById);
+AdminRouter.put('/cashiers/:id', authAdmin, updateCashier);
+AdminRouter.patch('/cashiers/:id/status', authAdmin, updateCashierStatus);
+AdminRouter.delete('/cashiers/:id', authAdmin, deleteCashier);
 export default AdminRouter;

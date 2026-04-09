@@ -1,18 +1,9 @@
 import {
     LayoutDashboard,
     LogOut,
-    Gavel,
-    Award,
-    TrendingUp,
     User,
-    Bell,
     X,
     Menu,
-    Bookmark,
-    CreditCard,
-    Hand,
-    DollarSign,
-    Video
 } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { logo } from "../../assets";
@@ -20,17 +11,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
 const navigation = [
-    { name: 'Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Active Auctions', path: '/bidder/auctions/active', icon: <Gavel size={20} /> },
-    { name: 'Auction Videos', path: '/bidder/videos', icon: <Video size={20} /> },
-    { name: 'Watchlist', path: '/bidder/watchlist', icon: <Bookmark size={20} /> },
-    { name: 'My Offers', path: '/bidder/offers', icon: <Hand size={20} /> },
-    { name: 'My Bids', path: '/bidder/bids', icon: <TrendingUp size={20} /> },
-    { name: 'Won Auctions', path: '/bidder/auctions/won', icon: <Award size={20} /> },
-    { name: 'Subscriptions', path: '/bidder/subscriptions', icon: <DollarSign size={20} /> },
-    { name: 'Billing', path: '/bidder/billing', icon: <CreditCard size={20} /> },
-    // { name: 'Notifications', path: '/bidder/notifications', icon: <Bell size={20} /> },
-    { name: 'Profile', path: '/bidder/profile', icon: <User size={20} /> },
+    { name: 'Dashboard', path: '/cashier/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Profile', path: '/cashier/profile', icon: <User size={20} /> },
 ];
 
 function Sidebar() {

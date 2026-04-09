@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AdminContainer, AdminHeader, AdminSidebar, LoadingSpinner } from "../../components";
-import { Search, Filter, Mail, Phone, MapPin, Calendar, Award, Gavel, Shield, User, Edit, MoreVertical, UserX, Trash2, TrendingUp, Eye, Hand, Building, Home, Banknote, FileText, CheckCircle, Clock, AlertCircle, RefreshCw, Download, X } from "lucide-react";
+import { Search, Filter, Mail, Phone, MapPin, Calendar, Award, Gavel, Shield, User, Edit, MoreVertical, UserX, Trash2, TrendingUp, Eye, Hand, Building, Home, Banknote, FileText, CheckCircle, Clock, AlertCircle, RefreshCw, Download, X, Tag, XCircle } from "lucide-react";
 import { about, dummyUserImg } from "../../assets";
 import toast from "react-hot-toast";
 import axiosInstance from "../../utils/axiosInstance";
@@ -322,10 +322,10 @@ function AllUsers() {
                             <div className="text-2xl font-bold text-purple-600">{stats.admins}</div>
                             <div className="text-sm text-gray-500">Admins</div>
                         </div>
-                        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        {/* <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                             <div className="text-2xl font-bold text-blue-600">{stats.sellers}</div>
                             <div className="text-sm text-gray-500">Sellers</div>
-                        </div>
+                        </div> */}
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                             <div className="text-2xl font-bold text-green-600">{stats.bidders}</div>
                             <div className="text-sm text-gray-500">Bidders</div>
@@ -383,11 +383,12 @@ function AllUsers() {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Status</th> */}
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
+                                            {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th> */}
+                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred By</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -413,7 +414,15 @@ function AllUsers() {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    {getUserTypeBadge(user.userType)}
+                                                    {user.activeSubscription ? (
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            {user.activeSubscription.title}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            No active subscription
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="text-sm text-gray-900">{user.email}</div>
@@ -440,8 +449,11 @@ function AllUsers() {
                                                         </span>
                                                     )}
                                                 </td> */}
-                                                <td className="py-4 px-6 text-sm text-gray-900">
+                                                {/* <td className="py-4 px-6 text-sm text-gray-900">
                                                     {formatDate(user.createdAt)}
+                                                </td> */}
+                                                <td className="py-4 px-6 text-sm text-gray-900">
+                                                    {user?.referredBy || 'Not referred'}
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center justify-center gap-2">
@@ -646,9 +658,9 @@ function AllUsers() {
                                     <div className="mb-6">
                                         <h5 className="font-semibold text-gray-900 mb-2">Current Status</h5>
                                         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${selectedUserForVerification.identificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
-                                                selectedUserForVerification.identificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    selectedUserForVerification.identificationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                            selectedUserForVerification.identificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                selectedUserForVerification.identificationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                    'bg-gray-100 text-gray-800'
                                             }`}>
                                             {selectedUserForVerification.identificationStatus === 'verified' && <CheckCircle size={16} />}
                                             {selectedUserForVerification.identificationStatus === 'pending' && <Clock size={16} />}
@@ -891,6 +903,46 @@ function AllUsers() {
                                                             <div className="font-medium">{selectedUser.username}</div>
                                                         </div>
                                                     </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Subscription Information */}
+                                        <div className="space-y-4">
+                                            <h5 className="font-semibold text-gray-900">Subscription Information</h5>
+                                            <div className="space-y-3">
+                                                {selectedUser.activeSubscription ? (
+                                                    <>
+                                                        <div className="flex items-center gap-3">
+                                                            <Tag size={18} className="text-green-500" />
+                                                            <div>
+                                                                <div className="text-sm text-gray-500">Plan</div>
+                                                                <div className="font-medium">{selectedUser.activeSubscription.title}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Calendar size={18} className="text-gray-400" />
+                                                            <div>
+                                                                <div className="text-sm text-gray-500">Expiry Date</div>
+                                                                <div className="font-medium">{formatDate(selectedUser.activeSubscription.expiry)}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            {selectedUser.activeSubscription.discountAvailed ? (
+                                                                <CheckCircle size={18} className="text-green-500" />
+                                                            ) : (
+                                                                <XCircle size={18} className="text-gray-400" />
+                                                            )}
+                                                            <div>
+                                                                <div className="text-sm text-gray-500">Discount Availed</div>
+                                                                <div className={`font-medium ${selectedUser.activeSubscription.discountAvailed ? 'text-green-600' : 'text-gray-500'}`}>
+                                                                    {selectedUser.activeSubscription.discountAvailed ? 'Yes' : 'No'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-gray-500">No active subscription</p>
                                                 )}
                                             </div>
                                         </div>

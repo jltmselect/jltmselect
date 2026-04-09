@@ -94,12 +94,23 @@ export const requireAdmin = (req, res, next) => {
     next();
 };
 
+export const requireCashier = (req, res, next) => {
+  if (req.user.userType !== "cashier") {
+    return res.status(403).json({
+      success: false,
+      message: "Cashier access required",
+    });
+  }
+  next();
+};
+
 // Combined middleware for specific user types
 // export const authSeller = [auth, requireSeller];
 // export const authBidder = [auth, requireBidder];
 export const authSeller = [auth];
 export const authBidder = [auth];
 export const authAdmin = [auth, requireAdmin];
+export const authCashier = [auth, requireCashier];
 
 // Optional: Soft auth middleware (attaches user if available, but doesn't require auth)
 export const optionalAuth = async (req, res, next) => {

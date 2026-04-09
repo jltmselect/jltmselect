@@ -23,12 +23,14 @@ import {
 import axiosInstance from "../../utils/axiosInstance";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import SubscriptionModal from "../../components/SubscriptionModal";
 
 function Subscriptions() {
     const [subscriptions, setSubscriptions] = useState([]);
     const [activeSubscription, setActiveSubscription] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
     const [statistics, setStatistics] = useState({
         totalSpent: 0,
         activePlans: 0,
@@ -351,12 +353,12 @@ function Subscriptions() {
                                 <p className="text-gray-500 mb-6">
                                     Purchase a subscription plan to start bidding on auctions
                                 </p>
-                                <Link
-                                    to="/pricing"
+                                <button
+                                    onClick={() => setShowSubscriptionModal(true)}
                                     className="inline-block bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold transition-all"
                                 >
                                     View Plans
-                                </Link>
+                                </button>
                             </div>
                         ) : (
                             <div className="divide-y divide-gray-200">
@@ -471,6 +473,15 @@ function Subscriptions() {
                     )}
                 </BidderContainer>
             </div>
+            {/* Subscription Modal */}
+            <SubscriptionModal
+                isOpen={showSubscriptionModal}
+                onClose={() => setShowSubscriptionModal(false)}
+                onSuccess={() => {
+                    fetchSubscriptions();
+                    fetchActiveSubscription();
+                }}
+            />
         </section>
     );
 }

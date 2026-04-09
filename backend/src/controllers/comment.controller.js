@@ -89,6 +89,7 @@ export const addComment = async (req, res) => {
 
         const commenterUsers = await User.find({
             _id: { $in: previousCommenters },
+            preferences: { emailUpdates: true }
         });
 
         console.log(`Found ${commenterUsers.length} commenters with alerts enabled`);

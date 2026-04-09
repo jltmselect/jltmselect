@@ -26,8 +26,8 @@ otpRouter.post("/send", async (req, res) => {
       expiresAt: Date.now() + 5 * 60 * 1000
     });
 
-    // await sendOTP(phone, otp);
-    console.log('OTP sent:', otp);
+    await sendOTP(phone, otp);
+    // console.log('OTP sent:', otp);
 
     res.json({ success: true });
 
@@ -52,7 +52,7 @@ otpRouter.post("/verify", async (req, res) => {
     return res.status(400).json({ error: "OTP expired" });
   }
 
-  await User.findOneAndUpdate({phone: phone}, {isVerified: true}, {new: true});
+  // await User.findOneAndUpdate({phone: phone}, {isVerified: true}, {new: true});
 
   await Otp.deleteMany({ phone });
 

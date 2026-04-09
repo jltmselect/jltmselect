@@ -1,12 +1,5 @@
 import Agenda from "agenda";
 import Auction from "../models/auction.model.js";
-import backendAxios from "../utils/backendAxios.js";
-import {
-  cancelAllBidderAuthorizations,
-  cancelLosingBidderAuthorizations,
-  chargeWinningBidder,
-  chargeWinningBidderDirect,
-} from "../controllers/bidPayment.controller.js";
 import {
   auctionEndedAdminEmail,
   auctionEndingSoonEmail,
@@ -47,7 +40,8 @@ class AgendaService {
           // Send bulk notifications to all users (except admin and auction seller)
           const allUsers = await User.find({
             _id: { $ne: auction.seller._id }, // Exclude auction owner
-            userType: { $ne: "admin" }, // Exclude admin users
+            userType: { $ne: "admin" },
+            "preferences.emailUpdates": { $ne: false }, // Exclude users who opted out
             isActive: true, // Only active users
           }).select("email username firstName preferences userType");
 
@@ -132,19 +126,20 @@ class AgendaService {
           if (result.wasSold) {
             auction = await Auction.findById(auctionId)
               .populate("seller", "email phone username firstName")
-              .populate("winner", "email phone username firstName address");
+              .populate("winner", "email phone username firstName address preferences");
           }
 
           // Send appropriate emails based on the result
           if (result.wasSold) {
             console.log(
-              `✅ Agenda: Auction ${auctionId} was SOLD to ${
-                auction.winner ? auction.winner.username : "unknown"
+              `✅ Agenda: Auction ${auctionId} was SOLD to ${auction.winner ? auction.winner.username : "unknown"
               }`,
             );
 
             // Send auction won email to buyer
-            await sendAuctionWonEmail(auction);
+            if (auction.winner?.preferences?.emailUpdates) {
+              await sendAuctionWonEmail(auction);
+            }
 
             // Send admin email for sold auction
             const adminUsers = await User.find({ userType: "admin" });
@@ -262,7 +257,7 @@ class AgendaService {
           const allUsers = await User.find({
             _id: { $ne: auction.seller._id }, // Exclude auction owner
             userType: { $nin: ["admin", "seller", "broker"] }, // Exclude admin, seller, and broker users
-            "preferences.bidAlerts": { $ne: false }, // Exclude users who opted out
+            "preferences.emailUpdates": { $ne: false }, // Exclude users who opted out
             isActive: true, // Only active users
           }).select("email username preferences userType");
 

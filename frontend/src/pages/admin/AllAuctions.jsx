@@ -933,6 +933,13 @@ function AllAuctions() {
                                                     <span className="font-medium">{formatCurrency(selectedAuction.startPrice)}</span>
                                                 </div>
 
+                                                {selectedAuction.retailPrice && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Retail Price</span>
+                                                        <span className="font-medium">{formatCurrency(selectedAuction.retailPrice)}</span>
+                                                    </div>
+                                                )}
+
                                                 {/* Buy Now Price (for buy_now auctions) */}
                                                 {/* {selectedAuction.auctionType === 'buy_now' && selectedAuction.buyNowPrice && (
                                                     <div className="flex justify-between">

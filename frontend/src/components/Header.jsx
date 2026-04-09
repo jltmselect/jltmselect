@@ -28,6 +28,10 @@ const navLinks = [
         name: 'Auctions',
         href: '/auctions'
     },
+    {
+        name: 'Deals',
+        href: '/bargain-deals'
+    },
 ];
 
 function Header() {

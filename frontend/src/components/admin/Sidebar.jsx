@@ -26,7 +26,9 @@ import {
     PoundSterling,
     Banknote,
     BanknoteArrowDown,
-    BanknoteArrowUp
+    BanknoteArrowUp,
+    Video,
+    UserPlus
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
@@ -43,6 +45,11 @@ const navigation = [
         name: 'Users',
         path: '/admin/users',
         icon: <Users size={20} />
+    },
+    {
+        name: "Cashiers",
+        icon: <UserPlus size={20} />,
+        path: "/admin/cashiers",
     },
     {
         name: 'Auctions',
@@ -83,6 +90,11 @@ const navigation = [
         name: 'Categories',
         path: '/admin/categories',
         icon: <Tags size={20} />
+    },
+    {
+        name: 'AuctionVideos',
+        path: '/admin/videos',
+        icon: <Video size={20} />
     },
     {
         name: 'Comments',
@@ -279,13 +291,13 @@ function Sidebar() {
                             </li>
                         ))}
                         {/* Logout Button */}
-                    <button
-                        onClick={logout}
-                        className="flex items-center w-full p-3 mt-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
-                    >
-                        <LogOut size={20} className="mr-3" />
-                        <span>Log Out</span>
-                    </button>
+                        <button
+                            onClick={logout}
+                            className="flex items-center w-full p-3 mt-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
+                        >
+                            <LogOut size={20} className="mr-3" />
+                            <span>Log Out</span>
+                        </button>
                     </ul>
                 </nav>
             </aside>

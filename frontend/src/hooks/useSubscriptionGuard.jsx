@@ -11,9 +11,32 @@ export const useSubscriptionGuard = () => {
     const [checking, setChecking] = useState(true);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
+    // Check if user is exempt from subscription requirement
+    const isExemptFromSubscription = () => {
+        if (!user) return false;
+        
+        // Admins are always exempt
+        if (user.userType === 'admin') return true;
+        
+        // Sellers are exempt (they can view auctions without subscription)
+        if (user.userType === 'seller') return true;
+        
+        // Brokers are exempt
+        if (user.userType === 'broker') return true;
+        
+        return false;
+    };
+
     const checkSubscription = async () => {
         if (!isAuthenticated || !user) {
             setHasActiveSubscription(false);
+            setChecking(false);
+            return;
+        }
+
+        // If user is exempt (admin/seller/broker), skip subscription check
+        if (isExemptFromSubscription()) {
+            setHasActiveSubscription(true); // Treat as having subscription
             setChecking(false);
             return;
         }
@@ -33,14 +56,38 @@ export const useSubscriptionGuard = () => {
         checkSubscription();
     }, [isAuthenticated, user]);
 
-    const guardAction = (action) => {
+    // For auction-specific access (seller of the auction should have access)
+    const canAccessAuction = (auctionSellerId) => {
+        if (!user) return false;
+        
+        // Admin can access any auction
+        if (user.userType === 'admin') return true;
+        
+        // Seller can access their own auction
+        if (user.userType === 'seller' && auctionSellerId && user._id === auctionSellerId) return true;
+        
+        // Broker can access auctions they're associated with (if needed)
+        if (user.userType === 'broker') return true;
+        
+        // Regular users need subscription
+        return hasActiveSubscription;
+    };
+
+    const guardAction = (action, auctionSellerId = null) => {
         if (!isAuthenticated || !user) {
             toast.error("Please login to view auctions");
             navigate("/login");
             return false;
         }
 
-        if (!hasActiveSubscription) {
+        // Check if user can access this specific auction
+        if (auctionSellerId && !canAccessAuction(auctionSellerId)) {
+            setShowSubscriptionModal(true);
+            return false;
+        }
+
+        // For non-auction specific actions, check general access
+        if (!auctionSellerId && !isExemptFromSubscription() && !hasActiveSubscription) {
             setShowSubscriptionModal(true);
             return false;
         }
@@ -57,6 +104,8 @@ export const useSubscriptionGuard = () => {
         showSubscriptionModal,
         setShowSubscriptionModal,
         guardAction,
-        checkSubscription
+        checkSubscription,
+        isExemptFromSubscription,
+        canAccessAuction
     };
 };

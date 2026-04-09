@@ -98,7 +98,7 @@ const TabSection = forwardRef(
                   ${
                     activeTab === tab.id
                       ? "border-primary text-primary"
-                      : "border-transparent text-secondary hover:text-primary hover:border-gray-300"
+                      : "border-transparent text-primary hover:text-primary hover:border-gray-300"
                   }
                 `}
               >

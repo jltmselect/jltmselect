@@ -526,7 +526,7 @@ const CreateAuction = () => {
     const nextStep = async () => {
         let isValid = true;
 
-        scrollTo({top: 0, behavior: 'smooth'});
+        scrollTo({ top: 0, behavior: 'smooth' });
 
         if (step === 1) {
             const fieldsToValidate = [
@@ -594,7 +594,7 @@ const CreateAuction = () => {
 
     const prevStep = () => {
         setStep(step - 1);
-        scrollTo({top: 0, behavior: 'smooth'});
+        scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePhotoUpload = (e) => {
@@ -666,6 +666,10 @@ const CreateAuction = () => {
             // Specifications - Convert to JSON string
             if (auctionData.specifications) {
                 formData.append('specifications', JSON.stringify(auctionData.specifications));
+            }
+
+            if (auctionData.retailPrice) {
+                formData.append('retailPrice', auctionData.retailPrice);
             }
 
             // Pricing - only add if not giveaway or buy now (both are always available)
@@ -801,55 +805,55 @@ const CreateAuction = () => {
                                             </div>
 
                                             {/* Category Selection - Two Level Dropdown */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                            <div>
-                                                <label htmlFor="parentCategory" className="block text-sm font-medium text-primary mb-1">
-                                                    Category *
-                                                </label>
-                                                <select
-                                                    {...register('parentCategory', {
-                                                        required: 'Please select a category'
-                                                    })}
-                                                    id="parentCategory"
-                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    disabled={loadingCategories}
-                                                >
-                                                    <option value="">Select a category</option>
-                                                    {parentCategories.map(cat => (
-                                                        <option key={cat._id} value={cat.slug}>
-                                                            {cat.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {errors.parentCategory && (
-                                                    <p className="text-red-500 text-sm mt-1">{errors.parentCategory.message}</p>
-                                                )}
-                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                                <div>
+                                                    <label htmlFor="parentCategory" className="block text-sm font-medium text-primary mb-1">
+                                                        Category *
+                                                    </label>
+                                                    <select
+                                                        {...register('parentCategory', {
+                                                            required: 'Please select a category'
+                                                        })}
+                                                        id="parentCategory"
+                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                        disabled={loadingCategories}
+                                                    >
+                                                        <option value="">Select a category</option>
+                                                        {parentCategories.map(cat => (
+                                                            <option key={cat._id} value={cat.slug}>
+                                                                {cat.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {errors.parentCategory && (
+                                                        <p className="text-red-500 text-sm mt-1">{errors.parentCategory.message}</p>
+                                                    )}
+                                                </div>
 
-                                            <div>
-                                                <label htmlFor="category" className="block text-sm font-medium text-primary mb-1">
-                                                    Subcategory *
-                                                </label>
-                                                <select
-                                                    {...register('category', {
-                                                        required: 'Please select a subcategory'
-                                                    })}
-                                                    id="category"
-                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    disabled={!selectedParentSlug || loadingCategories}
-                                                >
-                                                    <option value="">Select a subcategory</option>
-                                                    {subCategories.map(sub => (
-                                                        <option key={sub._id} value={sub.slug}>
-                                                            {sub.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {errors.category && (
-                                                    <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
-                                                )}
+                                                <div>
+                                                    <label htmlFor="category" className="block text-sm font-medium text-primary mb-1">
+                                                        Subcategory *
+                                                    </label>
+                                                    <select
+                                                        {...register('category', {
+                                                            required: 'Please select a subcategory'
+                                                        })}
+                                                        id="category"
+                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                        disabled={!selectedParentSlug || loadingCategories}
+                                                    >
+                                                        <option value="">Select a subcategory</option>
+                                                        {subCategories.map(sub => (
+                                                            <option key={sub._id} value={sub.slug}>
+                                                                {sub.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {errors.category && (
+                                                        <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
                                         </div>
 
                                         {/* Dynamic Fields for Selected Subcategory */}
@@ -1182,6 +1186,31 @@ const CreateAuction = () => {
                                                     </div>
                                                 )}
 
+                                                <div className="mb-4">
+                                                    <label htmlFor="retailPrice" className="block text-sm font-medium text-primary mb-1">
+                                                        Retail Price *
+                                                    </label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600">$</span>
+                                                        <input
+                                                            {...register('retailPrice', {
+                                                                required: false,
+                                                                min: { value: 0, message: 'Price must be positive' },
+                                                            })}
+                                                            id="retailPrice"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            className="w-full pl-8 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                    {errors.retailPrice && <p className="text-red-500 text-sm mt-1">{errors.retailPrice.message}</p>}
+                                                    <p className="text-sm text-primary mt-1">
+                                                        Retail price is for admin's reference only and will not be shown to buyers.
+                                                    </p>
+                                                </div>
+
                                                 {/* Allow Offers Toggle */}
                                                 <div className="mb-6">
                                                     <label className="flex items-center cursor-pointer">
@@ -1377,6 +1406,12 @@ const CreateAuction = () => {
                                                                 <div>
                                                                     <p className="text-xs text-primary">Bid Increment</p>
                                                                     <p className="font-medium">${watch('bidIncrement')}</p>
+                                                                </div>
+                                                            )}
+                                                            {watch('retailPrice') > 0 && (
+                                                                <div>
+                                                                    <p className="text-xs text-primary">Retail Price</p>
+                                                                    <p className="font-medium">${watch('retailPrice')}</p>
                                                                 </div>
                                                             )}
                                                         </div>

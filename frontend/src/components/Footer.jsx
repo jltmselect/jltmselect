@@ -49,6 +49,10 @@ function Footer() {
             url: '/auctions?status=approved'
         },
         {
+            title: 'Deals',
+            url: '/bargain-deals'
+        },
+        {
             title: 'Explore All',
             url: '/auctions'
         }

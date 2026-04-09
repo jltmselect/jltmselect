@@ -214,7 +214,7 @@ const Comments = () => {
                 <AdminContainer>
                     <div className="max-w-full pt-16 pb-7 md:pt-0">
                         <h2 className="text-3xl md:text-4xl font-bold my-5">Comment Moderation</h2>
-                        {/* <p className="text-secondary">Manage reported comments and user moderation</p> */}
+                        {/* <p className="text-primary">Manage reported comments and user moderation</p> */}
                     </div>
 
                     {/* Statistics Cards */}
@@ -223,7 +223,7 @@ const Comments = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 border-l-4 border-l-blue-500">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm font-medium text-secondary">Total Comments</p>
+                                        <p className="text-sm font-medium text-primary">Total Comments</p>
                                         <h3 className="text-2xl font-bold">{stats.totalComments?.toLocaleString('en-US')}</h3>
                                     </div>
                                     <div className="text-blue-500">
@@ -235,7 +235,7 @@ const Comments = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 border-l-4 border-l-yellow-500">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm font-medium text-secondary">Flagged Comments</p>
+                                        <p className="text-sm font-medium text-primary">Flagged Comments</p>
                                         <h3 className="text-2xl font-bold text-yellow-600">{stats.flaggedComments?.toLocaleString('en-US')}</h3>
                                     </div>
                                     <div className="text-yellow-500">
@@ -247,7 +247,7 @@ const Comments = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 border-l-4 border-l-green-500">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm font-medium text-secondary">Active Comments</p>
+                                        <p className="text-sm font-medium text-primary">Active Comments</p>
                                         <h3 className="text-2xl font-bold text-green-600">{stats.activeComments?.toLocaleString('en-US')}</h3>
                                     </div>
                                     <div className="text-green-500">
@@ -259,7 +259,7 @@ const Comments = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 border-l-4 border-l-purple-500">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm font-medium text-secondary">Flags This Week</p>
+                                        <p className="text-sm font-medium text-primary">Flags This Week</p>
                                         <h3 className="text-2xl font-bold text-purple-600">{stats.flagsThisWeek?.toLocaleString('en-US')}</h3>
                                     </div>
                                     <div className="text-purple-500">
@@ -274,7 +274,7 @@ const Comments = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-secondary mb-2">Status</label>
+                                <label className="block text-sm font-medium text-primary mb-2">Status</label>
                                 <select
                                     value={filters.status}
                                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -287,7 +287,7 @@ const Comments = () => {
                                 </select>
                             </div>
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-secondary mb-2">Sort By</label>
+                                <label className="block text-sm font-medium text-primary mb-2">Sort By</label>
                                 <select
                                     value={filters.sortBy}
                                     onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
@@ -320,15 +320,15 @@ const Comments = () => {
                                     <div className="space-y-6">
                                         {/* Comment Content */}
                                         <div>
-                                            <h4 className="font-medium text-secondary mb-2">Comment Content</h4>
+                                            <h4 className="font-medium text-primary mb-2">Comment Content</h4>
                                             <div className="bg-gray-50 rounded-lg p-4">
-                                                <p className="text-secondary whitespace-pre-wrap">{selectedCommentDetails.content}</p>
+                                                <p className="text-primary whitespace-pre-wrap">{selectedCommentDetails.content}</p>
                                             </div>
                                         </div>
 
                                         {/* User Information */}
                                         <div>
-                                            <h4 className="font-medium text-secondary mb-3">User Information</h4>
+                                            <h4 className="font-medium text-primary mb-3">User Information</h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="flex items-center gap-3">
                                                     {selectedCommentDetails.user?.avatar && (
@@ -361,16 +361,16 @@ const Comments = () => {
 
                                         {/* Auction Information */}
                                         <div>
-                                            <h4 className="font-medium text-secondary mb-3">Auction Information</h4>
+                                            <h4 className="font-medium text-primary mb-3">Auction Information</h4>
                                             <div className="bg-gray-50 rounded-lg p-4">
                                                 <p className="font-medium">{selectedCommentDetails.auction?.title || selectedCommentDetails.auction?.itemName || 'N/A'}</p>
-                                                <p className="text-sm text-secondary mt-1">Auction ID: {selectedCommentDetails.auction?._id || 'N/A'}</p>
+                                                <p className="text-sm text-primary mt-1">Auction ID: {selectedCommentDetails.auction?._id || 'N/A'}</p>
                                             </div>
                                         </div>
 
                                         {/* Comment Metadata */}
                                         <div>
-                                            <h4 className="font-medium text-secondary mb-3">Comment Metadata</h4>
+                                            <h4 className="font-medium text-primary mb-3">Comment Metadata</h4>
                                             <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div>
                                                     <p className="font-medium">Status</p>
@@ -401,7 +401,7 @@ const Comments = () => {
                                         {/* Flags Details */}
                                         {selectedCommentDetails.flags.length > 0 && (
                                             <div>
-                                                <h4 className="font-medium text-secondary mb-3">Flag Details</h4>
+                                                <h4 className="font-medium text-primary mb-3">Flag Details</h4>
                                                 <div className="space-y-2">
                                                     {selectedCommentDetails.flags.map((flag, index) => (
                                                         <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -451,7 +451,7 @@ const Comments = () => {
                             ) : comments.length === 0 ? (
                                 <div className="text-center py-12">
                                     <MessageCircleMore />
-                                    <p className="text-secondary">No comments found with the current filters.</p>
+                                    <p className="text-primary">No comments found with the current filters.</p>
                                 </div>
                             ) : (
                                 <>
@@ -459,13 +459,13 @@ const Comments = () => {
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="border-b border-gray-200">
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Comment</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">User</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Auction</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Flags</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Status</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Date</th>
-                                                    <th className="text-left py-3 px-4 font-medium text-secondary">Actions</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Comment</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">User</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Auction</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Flags</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Status</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Date</th>
+                                                    <th className="text-left py-3 px-4 font-medium text-primary">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -473,7 +473,7 @@ const Comments = () => {
                                                     <tr key={comment._id} className="border-b border-gray-100 hover:bg-gray-50">
                                                         <td className="py-3 px-4">
                                                             <div className="max-w-xs">
-                                                                <p className="text-sm text-secondary line-clamp-2">
+                                                                <p className="text-sm text-primary line-clamp-2">
                                                                     {comment.content.length > 100
                                                                         ? `${comment.content.substring(0, 100)}...`
                                                                         : comment.content
@@ -515,7 +515,7 @@ const Comments = () => {
                                                             </div>
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <p className="text-sm text-secondary">
+                                                            <p className="text-sm text-primary">
                                                                 {comment.auction?.title || comment.auction?.itemName || 'N/A'}
                                                             </p>
                                                         </td>
@@ -546,7 +546,7 @@ const Comments = () => {
                                                             </div>
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <p className="text-sm text-secondary">
+                                                            <p className="text-sm text-primary">
                                                                 {new Date(comment.createdAt).toLocaleDateString('en-US', {
                                                                     month: 'short',
                                                                     day: 'numeric',
@@ -581,7 +581,7 @@ const Comments = () => {
                                                                                 setShowDetailsModal(true);
                                                                                 setActionMenuOpen(null);
                                                                             }}
-                                                                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-secondary hover:bg-gray-50 transition-colors"
+                                                                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-primary hover:bg-gray-50 transition-colors"
                                                                         >
                                                                             <Info size={18} />
                                                                             View Details
@@ -739,7 +739,7 @@ const Comments = () => {
                         <div className="p-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-secondary mb-2">
+                                    <label className="block text-sm font-medium text-primary mb-2">
                                         Reason for deletion (optional)
                                     </label>
                                     <textarea

@@ -63,12 +63,13 @@ const generateTokensAndRespond = async (user, req, res, message) => {
 // user.controller.js - Updated registerUser function
 export const registerUser = async (req, res) => {
   let createdUser = null; // Track for potential rollback
-  
+
   try {
     const {
       firstName,
       lastName,
       username,
+      referredBy,
       email,
       password,
       userType,
@@ -83,7 +84,8 @@ export const registerUser = async (req, res) => {
       county = "",
       state = "",
       postCode = "",
-      country
+      country,
+      preferences
     } = req.body;
 
     // Get uploaded file from multer
@@ -214,7 +216,7 @@ export const registerUser = async (req, res) => {
 
     // ============ STEP 2: Process Subscription Payment ============
     const amountInDollars = subscription.price.amount; // $50
-    
+
     try {
       paymentIntent = await StripeService.createImmediateCharge(
         stripeCustomerId,
@@ -241,6 +243,7 @@ export const registerUser = async (req, res) => {
         firstName,
         lastName,
         username: normalizedUsername,
+        referredBy,
         email: normalizedEmail,
         password,
         userType: userType || "bidder",
@@ -260,6 +263,10 @@ export const registerUser = async (req, res) => {
           state,
           postCode,
           country
+        },
+        preferences: {
+          emailUpdates: preferences,
+          smsUpdates: preferences,
         },
         // Payment details
         paymentMethodId: paymentMethodDetails.id,
@@ -345,7 +352,7 @@ export const registerUser = async (req, res) => {
 
     // Send emails in background (don't await)
     welcomeEmail(createdUser, null).catch(error => console.error("Welcome email error:", error));
-    
+
     try {
       const adminUsers = await User.find({ userType: "admin" });
       for (const admin of adminUsers) {
@@ -357,7 +364,7 @@ export const registerUser = async (req, res) => {
 
   } catch (error) {
     console.error("Registration error:", error);
-    
+
     // Final catch-all error handling
     res.status(500).json({
       success: false,
@@ -1028,3 +1035,47 @@ export const deleteIdentification = async (req, res) => {
     });
   }
 };
+
+// export const updatePreferences = async (req, res) => {
+//   try {
+//     const { preferences } = req.body;
+//     const userId = req.user._id;
+
+//     if (!preferences) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Preferences are required",
+//       });
+//     }
+
+//     const user = await User.findById(userId);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found",
+//       });
+//     }
+
+//     user.preferences = {
+//       ...user.preferences,
+//       ...preferences,
+//     };
+
+//     await user.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Preferences updated successfully",
+//       data: {
+//         preferences: user.preferences,
+//       }
+//     });
+//   } catch (error) {
+//     console.error("Update preferences error:", error);
+//     res.status(400).json({
+//       success: false,
+//       message: error.message || "Failed to update preferences",
+//     });
+//   }
+// };

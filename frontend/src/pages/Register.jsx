@@ -114,6 +114,10 @@ const PlanSelectionStep = ({ selectedPlan, onPlanSelect, isLoading }) => {
             const { data } = await axios.get(`${import.meta.env.VITE_DOMAIN_URL}/api/v1/subscriptions/public/active`);
             if (data.success) {
                 setPlans(data.data);
+                scrollTo({ top: 0, behavior: 'smooth' });
+                if(data.data.length > 0) {
+                    onPlanSelect(data.data[1]);
+                }
             }
         } catch (err) {
             setError('Failed to load subscription plans');
@@ -495,6 +499,7 @@ const Register = () => {
             password: '',
             username: '',
             firstName: '',
+            referredBy: '',
             lastName: '',
             country: '',
             userType: 'bidder',
@@ -578,12 +583,14 @@ const Register = () => {
             'firstName',
             'lastName',
             'username',
+            'referredBy',
             'country',
             'street',
             'city',
             'state',
             'postCode',
-            'termsConditions'
+            'termsConditions',
+            'preferences'
         ]);
 
         if (isValid) {
@@ -659,11 +666,13 @@ const Register = () => {
             formData.append('lastName', registrationData.lastName);
             formData.append('email', registrationData.email);
             formData.append('phone', verifiedPhone);
+            formData.append('referredBy', registrationData.referredBy || '');
             formData.append('password', registrationData.password);
             formData.append('username', registrationData.username);
             formData.append('countryCode', registrationData.country);
             formData.append('countryName', countries.find(c => c.code === registrationData.country)?.name || registrationData.country);
             formData.append('userType', registrationData.userType);
+            formData.append('preferences', registrationData.preferences);
             formData.append('street', registrationData.street);
             formData.append('city', registrationData.city);
             formData.append('postCode', registrationData.postCode);
@@ -1030,6 +1039,28 @@ const Register = () => {
                                 </div>
                             </div>
 
+                            {/* Referred By Information */}
+                            <div className="space-y-4 border-t border-gray-200 dark:border-bg-primary-light pt-6">
+                                <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Referred By</h3>
+
+                                <div className="grid grid-cols-1">
+                                        <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
+                                            Full name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            {...register('referredBy', {
+                                                minLength: { value: 2, message: 'Referred by name must be at least 2 characters' }
+                                            })}
+                                            className="w-full p-3 border border-gray-300 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-secondary-darktext-bg-secondary-dark dark:focus:ring-gray-500 focus:border-transparent"
+                                            placeholder="Full name"
+                                        />
+                                        {errors.referredBy && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.referredBy.message}</p>
+                                        )}
+                                </div>
+                            </div>
+
                             {/* User Type Selection - Commented */}
                             {/* <div className="border-t border-gray-200 dark:border-bg-primary-light pt-6">
                                 <label className="text-sm font-medium leading-none text-text-secondary dark:text-text-secondary-dark flex items-center gap-2 mb-4">
@@ -1156,6 +1187,22 @@ const Register = () => {
                                     </div>
                                 </div>
                             </div> */}
+
+                            <div>
+                                <label className='flex items-center gap-2'>
+                                    <input
+                                        type="checkbox"
+                                        {...register('preferences')}
+                                        className="accent-primary dark:accent-primary-dark"
+                                    />
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                        By checking this box, I agree to receive Email and SMS updates from {otherData?.brandName}.
+                                    </p>
+                                </label>
+                                {errors.preferences && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.preferences.message}</p>
+                                )}
+                            </div>
 
                             <div>
                                 <label className='flex items-center gap-2'>

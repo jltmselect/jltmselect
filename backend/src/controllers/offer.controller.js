@@ -2,12 +2,6 @@ import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";
 import DepositSettings from '../models/depositSettings.model.js';
 import BidDeposit from '../models/bidDeposit.model.js';
-import //   offerMadeEmail,
-//   offerAcceptedEmail,
-//   offerRejectedEmail,
-//   offerCounteredEmail,
-//   offerWithdrawnEmail,
-"../utils/nodemailer.js";
 import {
   auctionWonAdminEmail,
   newOfferNotificationEmail,
@@ -24,167 +18,6 @@ import {
  * @route   POST /api/v1/auctions/offer/:id
  * @access  Private
  */
-// export const makeOffer = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { amount, message } = req.body;
-//     const buyer = req.user;
-
-//     // Check if user is a bidder
-//     if (buyer.userType !== 'bidder') {
-//         return res.status(403).json({
-//             success: false,
-//             message: 'Only bidders can make offers'
-//         });
-//     }
-
-//     // only active buyers can make offers
-//     if (!buyer.isActive) {
-//       return res.status(403).json({
-//         success: false,
-//         message: "Only active buyers can make offers",
-//       });
-//     }
-
-//     // only active buyers can make offers
-//     if (!buyer.isVerified) {
-//       return res.status(403).json({
-//         success: false,
-//         message: "Only verified buyers can make offers",
-//       });
-//     }
-
-//     // only active buyers can make offers
-//     if (buyer.identificationStatus !== 'verified') {
-//       return res.status(403).json({
-//         success: false,
-//         message: "Only buyers with verified ID can make offers",
-//       });
-//     }
-
-//     // Find auction
-//     const auction = await Auction.findById(id)
-//       .populate("seller", "username firstName lastName email")
-//       .populate("offers.buyer", "username firstName lastName email");
-
-//     if (!auction) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Auction not found",
-//       });
-//     }
-
-//     // Check if user is seller
-//     if (auction.seller._id.toString() === buyer._id.toString()) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "You cannot make an offer on your own auction",
-//       });
-//     }
-
-//     // Validate auction allows offers
-//     if (!auction.allowOffers) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "This auction does not accept offers",
-//       });
-//     }
-
-//     // Validate auction status
-//     if (auction.status !== "active") {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Cannot make offer. Auction status: ${auction.status}`,
-//       });
-//     }
-
-//     // Check if auction has ended
-//     if (new Date() > auction.endDate) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Auction has ended",
-//       });
-//     }
-
-//     // Validate offer amount
-//     const offerAmount = parseFloat(amount);
-//     if (isNaN(offerAmount) || offerAmount <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Invalid offer amount",
-//       });
-//     }
-
-//     // Check minimum offer
-//     if (offerAmount < auction.startPrice) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Offer must be at least $${auction.startPrice.toLocaleString()}`,
-//       });
-//     }
-
-//     // Check if buy now price exists and offer is higher
-//     if (auction.buyNowPrice && offerAmount >= auction.buyNowPrice) {
-//       return res.status(400).json({
-//         success: false,
-//         message: `Your offer is higher than the Buy Now price ($${auction.buyNowPrice.toLocaleString()}). Consider using Buy Now instead.`,
-//       });
-//     }
-
-//     // Check for existing pending offer from same buyer
-//     const existingPendingOffer = auction.offers.find(
-//       (offer) =>
-//         offer.buyer._id.toString() === buyer._id.toString() &&
-//         offer.status === "pending"
-//     );
-
-//     if (existingPendingOffer) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "You already have a pending offer on this auction",
-//       });
-//     }
-
-//     // Make the offer
-//     await auction.makeOffer(
-//       buyer._id,
-//       buyer.username,
-//       offerAmount,
-//       message || ""
-//     );
-
-//     // Save auction
-//     await auction.save();
-
-//     // Populate updated auction
-//     const updatedAuction = await Auction.findById(id)
-//       .populate("offers.buyer", "email username firstName lastName")
-//       .populate("seller", "email username firstName lastName");
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Offer submitted successfully",
-//       data: {
-//         auction: updatedAuction,
-//       },
-//     });
-
-//     offerConfirmationEmail(buyer?.email, buyer?.firstName || buyer?.username, updatedAuction, offerAmount, updatedAuction?.buyNowPrice || updatedAuction?.startPrice, updatedAuction?._id).catch((error) => console.error("Failed to send buyer email:", error));
-
-//     newOfferNotificationEmail(
-//       updatedAuction?.seller,
-//       updatedAuction,
-//       offerAmount,
-//       buyer
-//     ).catch((error) => console.error("Failed to send seller email:", error));
-//   } catch (error) {
-//     console.error("Make offer error:", error);
-//     res.status(400).json({
-//       success: false,
-//       message: error.message || "Failed to submit offer",
-//     });
-//   }
-// };
 
 export const makeOffer = async (req, res) => {
   try {
@@ -227,7 +60,7 @@ export const makeOffer = async (req, res) => {
     // Find auction
     const auction = await Auction.findById(id)
       .populate("seller", "username firstName lastName email")
-      .populate("offers.buyer", "username firstName lastName email");
+      .populate("offers.buyer", "username firstName lastName email preferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -384,7 +217,7 @@ export const makeOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
-      .populate("offers.buyer", "email username firstName lastName")
+      .populate("offers.buyer", "email username firstName lastName preferences")
       .populate("seller", "email username firstName lastName");
 
     res.status(201).json({
@@ -396,14 +229,16 @@ export const makeOffer = async (req, res) => {
     });
 
     // Send emails (keep your existing email code)
-    offerConfirmationEmail(
-      buyer?.email,
-      buyer?.firstName || buyer?.username,
-      updatedAuction,
-      offerAmount,
-      updatedAuction?.buyNowPrice || updatedAuction?.startPrice,
-      updatedAuction?._id,
-    ).catch((error) => console.error("Failed to send buyer email:", error));
+    if (buyer.preferences?.emailUpdates) {
+      offerConfirmationEmail(
+        buyer?.email,
+        buyer?.firstName || buyer?.username,
+        updatedAuction,
+        offerAmount,
+        updatedAuction?.buyNowPrice || updatedAuction?.startPrice,
+        updatedAuction?._id,
+      ).catch((error) => console.error("Failed to send buyer email:", error));
+    }
 
     newOfferNotificationEmail(
       updatedAuction?.seller,
@@ -1212,7 +1047,7 @@ export const getAdminAllOffers = async (req, res) => {
       avgOfferAmount:
         allOffers.length > 0
           ? allOffers.reduce((sum, offer) => sum + offer.amount, 0) /
-            allOffers.length
+          allOffers.length
           : 0,
     };
 
@@ -1344,7 +1179,7 @@ export const adminRespondToOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
+      .populate("offers.buyer", "username firstName lastName email phone preferences")
       .populate("seller", "username firstName lastName email phone");
 
     if (!auction) {
@@ -1390,9 +1225,9 @@ export const adminRespondToOffer = async (req, res) => {
 
     // Populate updated data
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
+      .populate("offers.buyer", "username firstName lastName email phone preferences")
       .populate("seller", "username firstName lastName email phone")
-      .populate("winner", "username firstName lastName email phone address");
+      .populate("winner", "username firstName lastName email phone address preferences");
 
     res.status(200).json({
       success: true,
@@ -1406,41 +1241,47 @@ export const adminRespondToOffer = async (req, res) => {
 
     // Send appropriate email based on response
     if (response === "accept") {
-      offerAcceptedEmail(
-        offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        updatedAuction.seller,
-        updatedAuction,
-        offer.amount,
-        offerId,
-      ).catch((error) =>
-        console.error("Failed to send offer accepted email:", error),
-      );
+      if (offer.buyer.preferences?.emailUpdates) {
+        offerAcceptedEmail(
+          offer.buyer.email,
+          offer.buyer.firstName || offer.buyer.username,
+          updatedAuction.seller,
+          updatedAuction,
+          offer.amount,
+          offerId,
+        ).catch((error) =>
+          console.error("Failed to send offer accepted email:", error),
+        );
+      }
 
       sendAuctionEndedSellerEmail(updatedAuction).catch((error) =>
         console.error("Failed to send seller ended auction email:", error),
       );
 
-      sendAuctionWonEmail(updatedAuction).catch((error) =>
-        console.error("Failed to send buyer won auction email:", error),
-      );
+      if (updatedAuction.winner?.preferences?.emailUpdates) {
+        sendAuctionWonEmail(updatedAuction).catch((error) =>
+          console.error("Failed to send buyer won auction email:", error),
+        );
+      }
 
       auctionWonAdminEmail(admin?.email, updatedAuction, offer?.buyer).catch(
         (error) =>
           console.error("Failed to send admin auction won email:", error),
       );
     } else {
-      offerRejectedEmail(
-        offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        auction.seller,
-        auction,
-        offer.amount,
-        offerId,
-        offer.sellerResponse || "No reason provided",
-      ).catch((error) =>
-        console.error("Failed to send offer accepted email:", error),
-      );
+      if (offer.buyer.preferences?.emailUpdates) {
+        offerRejectedEmail(
+          offer.buyer.email,
+          offer.buyer.firstName || offer.buyer.username,
+          auction.seller,
+          auction,
+          offer.amount,
+          offerId,
+          offer.sellerResponse || "No reason provided",
+        ).catch((error) =>
+          console.error("Failed to send offer accepted email:", error),
+        );
+      }
     }
   } catch (error) {
     console.error("Admin respond to offer error:", error);
@@ -1462,7 +1303,7 @@ export const adminCancelOffer = async (req, res) => {
     const { auctionId, reason } = req.body;
 
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "email username firstName lastName email")
+      .populate("offers.buyer", "email username firstName lastName email preferences")
       .populate("seller", "email username firstName lastName email");
 
     if (!auction) {
@@ -1485,9 +1326,8 @@ export const adminCancelOffer = async (req, res) => {
 
     // Cancel the offer
     offer.status = "withdrawn";
-    offer.sellerResponse = `Offer cancelled by administrator: ${
-      reason || "Violation of terms"
-    }`;
+    offer.sellerResponse = `Offer cancelled by administrator: ${reason || "Violation of terms"
+      }`;
     offer.updatedAt = new Date();
 
     await auction.save();
@@ -1503,16 +1343,18 @@ export const adminCancelOffer = async (req, res) => {
     });
 
     // Send email to buyer in background
-    offerCanceledEmail(
-      offer.buyer.email,
-      offer.buyer.firstName || offer.buyer.username,
-      auction.seller,
-      auction,
-      offer.amount,
-      offerId,
-    ).catch((error) =>
-      console.error("Failed to send offer canceled email:", error),
-    );
+    if (offer.buyer.preferences?.emailUpdates) {
+      offerCanceledEmail(
+        offer.buyer.email,
+        offer.buyer.firstName || offer.buyer.username,
+        auction.seller,
+        auction,
+        offer.amount,
+        offerId,
+      ).catch((error) =>
+        console.error("Failed to send offer canceled email:", error),
+      );
+    }
   } catch (error) {
     console.error("Admin cancel offer error:", error);
     res.status(500).json({
@@ -1800,7 +1642,7 @@ export const reactivateOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
+      .populate("offers.buyer", "username firstName lastName email phone preferences")
       .populate("seller", "username firstName lastName email phone");
 
     if (!auction) {
@@ -1826,9 +1668,9 @@ export const reactivateOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
+      .populate("offers.buyer", "username firstName lastName email phone preferences")
       .populate("seller", "username firstName lastName email phone")
-      .populate("winner", "username firstName lastName email phone");
+      .populate("winner", "username firstName lastName email phone preferences");
 
     res.status(200).json({
       success: true,
@@ -1845,16 +1687,18 @@ export const reactivateOffer = async (req, res) => {
     const offer = updatedAuction.offers.id(offerId);
     try {
       // Notify buyer
-      offerAcceptedEmail(
-        offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        updatedAuction.seller,
-        updatedAuction,
-        offer.amount,
-        offerId,
-      ).catch((error) =>
-        console.error("Failed to send offer accepted email:", error),
-      );
+      if (offer.buyer.preferences?.emailUpdates) {
+        offerAcceptedEmail(
+          offer.buyer.email,
+          offer.buyer.firstName || offer.buyer.username,
+          updatedAuction.seller,
+          updatedAuction,
+          offer.amount,
+          offerId,
+        ).catch((error) =>
+          console.error("Failed to send offer accepted email:", error),
+        );
+      }
 
       // Notify seller (if admin did it)
       if (isAdmin) {
@@ -1863,9 +1707,11 @@ export const reactivateOffer = async (req, res) => {
         );
       }
 
-      sendAuctionWonEmail(updatedAuction).catch((error) =>
-        console.error("Failed to send buyer won auction email:", error),
-      );
+      if (updatedAuction.winner?.preferences?.emailUpdates) {
+        sendAuctionWonEmail(updatedAuction).catch((error) =>
+          console.error("Failed to send buyer won auction email:", error),
+        );
+      }
 
       // Notify admin (if seller did it)
       if (!isAdmin) {
@@ -1941,9 +1787,9 @@ export const getSellerOfferStats = async (req, res) => {
       avgOfferAmount:
         allOffers.length > 0
           ? Math.round(
-              allOffers.reduce((sum, offer) => sum + offer.amount, 0) /
-                allOffers.length,
-            )
+            allOffers.reduce((sum, offer) => sum + offer.amount, 0) /
+            allOffers.length,
+          )
           : 0,
 
       // Success rate (accepted vs total responded)

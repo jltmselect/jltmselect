@@ -27,6 +27,8 @@ import shippingRouter from "./routes/shipping.route.js";
 import checkoutRouter from "./routes/checkout.route.js";
 import subscriptionRouter from "./routes/subscription.route.js";
 import userSubscriptionRouter from "./routes/userSubscription.route.js";
+import videoRouter from "./routes/video.route.js";
+import cashierRouter from "./routes/cashier.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,6 +73,7 @@ app.use('/api/v1/watchlist', watchlistRouter);
 app.use('/api/v1/comments', commentRouter);
 app.use('/api/v1/bids', bidRouter);
 app.use('/api/v1/admin', AdminRouter);
+app.use("/api/v1/cashier", cashierRouter);
 app.use('/api/v1/commissions', commissionRouter);
 app.use('/api/v1/deposit-settings', depositSettingsRouter);
 app.use('/api/v1/bid-payments', bidPaymentRouter);
@@ -87,6 +90,7 @@ app.use("/api/v1/buy-now-payment", buyNowPaymentRouter);
 app.use("/api/v1/shipping", shippingRouter);
 app.use("/api/v1/checkout", checkoutRouter);
 app.use("/api/v1/user-subscription", userSubscriptionRouter);
+app.use("/api/v1/videos", videoRouter);
 
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {

@@ -10,15 +10,6 @@ import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
 import useCountryStates from "../../hooks/useCountryStates";
 
-// Default preferences
-const defaultPreferences = {
-    bidAlerts: true,
-    outbidNotifications: true,
-    newsletter: true,
-    smsUpdates: false,
-    favoriteCategories: []
-};
-
 function Profile() {
     const [userData, setUserData] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -208,6 +199,7 @@ function Profile() {
             const { data } = await axiosInstance.put('/api/v1/users/preferences', { preferences });
             if (data.success) {
                 setUserData(data.data.user);
+                toast.success('Preferences updated successfully!');
                 return true;
             }
         } catch (err) {
@@ -338,7 +330,7 @@ function Profile() {
         { id: "personal", label: "Personal Info", icon: <User size={18} /> },
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "verification", label: "ID Verification", icon: <FileText size={18} /> },
-        // { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
+        { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 
@@ -899,6 +891,81 @@ function Profile() {
                                                 </div>
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Preferences Section */}
+                                {activeSection === "preferences" && (
+                                    <div className="space-y-6">
+                                        <div className="space-y-4">
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <Mail size={20} className="text-blue-500" />
+                                                        <div>
+                                                            <p className="font-medium">Email Updates</p>
+                                                            <p className="text-sm text-gray-500">Receive important updates via Email.</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => togglePreference('emailUpdates')}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                            userData.preferences?.emailUpdates ? 'bg-blue-600' : 'bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                                userData.preferences?.emailUpdates ? 'translate-x-6' : 'translate-x-1'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div>
+
+                                                {/* <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <Newspaper size={20} className="text-green-500" />
+                                                        <div>
+                                                            <p className="font-medium">Newsletter</p>
+                                                            <p className="text-sm text-gray-500">Receive weekly updates and featured auctions</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => togglePreference('newsletter')}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                            userData.preferences?.newsletter ? 'bg-blue-600' : 'bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                                userData.preferences?.newsletter ? 'translate-x-6' : 'translate-x-1'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div> */}
+
+                                                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <Phone size={20} className="text-purple-500" />
+                                                        <div>
+                                                            <p className="font-medium">SMS Updates</p>
+                                                            <p className="text-sm text-gray-500">Receive new auction and payment updates via SMS</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => togglePreference('smsUpdates')}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                            userData.preferences?.smsUpdates ? 'bg-blue-600' : 'bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                                userData.preferences?.smsUpdates ? 'translate-x-6' : 'translate-x-1'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

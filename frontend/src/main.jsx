@@ -73,6 +73,33 @@ const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
 const BidderSubscriptions = lazy(() => import('./pages/bidder/Subscriptions'));
 const BidderVideos = lazy(() => import('./pages/bidder/Videos'));
 
+{/* Staff Pages */ }
+const StaffLayout = lazy(() => import('./pages/staff/Layout'));
+const StaffDashboard = lazy(() => import('./pages/staff/Dashboard'));
+const StaffAllUsers = lazy(() => import('./pages/staff/AllUsers'));
+const StaffAllCashiers = lazy(() => import('./pages/staff/AllCashiers'));
+const StaffAddCashier = lazy(() => import('./pages/staff/AddCashier'));
+const StaffAllAuctions = lazy(() => import('./pages/staff/AllAuctions'));
+const StaffCreateAuction = lazy(() => import('./pages/staff/CreateAuction'));
+const StaffEditAuction = lazy(() => import('./pages/staff/EditAuction'));
+const StaffUserQueries = lazy(() => import('./pages/staff/UserQueries'));
+const StaffNotifications = lazy(() => import('./pages/staff/Notifications'));
+const StaffProfile = lazy(() => import('./pages/staff/Profile'));
+const StaffComments = lazy(() => import('./pages/staff/Comments'));
+const StaffCommissions = lazy(() => import('./pages/staff/Commissions'));
+// const StaffDepositSettings = lazy(() => import('./pages/staff/DepositSettings'));
+const StaffBidHistory = lazy(() => import('./pages/staff/BidHistory'));
+const StaffAllOffers = lazy(() => import('./pages/staff/AllOffers'));
+const StaffTransactions = lazy(() => import('./pages/staff/Transactions'));
+const StaffCategories = lazy(() => import('./pages/staff/Categories'));
+const StaffSubscriptions = lazy(() => import('./pages/staff/Subscriptions'));
+// const StaffPayouts = lazy(() => import('./pages/staff/Payouts'));
+// const StaffPayoutMethods = lazy(() => import('./pages/staff/PayoutMethods'));
+const StaffVideos = lazy(() => import('./pages/staff/Videos'));
+const StaffAddStaff = lazy(() => import('./pages/staff/AddStaff'));
+const StaffAllStaff = lazy(() => import('./pages/staff/AllStaff'));
+const StaffEditStaff = lazy(() => import('./pages/staff/EditStaff'));
+
 {/* Admin Pages */ }
 const AdminLayout = lazy(() => import('./pages/admin/Layout'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -96,6 +123,9 @@ const Subscriptions = lazy(() => import('./pages/admin/Subscriptions'));
 // const AdminPayouts = lazy(() => import('./pages/admin/Payouts'));
 // const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
 const AdminVideos = lazy(() => import('./pages/admin/Videos'));
+const AddStaff = lazy(() => import('./pages/admin/AddStaff'));
+const AllStaff = lazy(() => import('./pages/admin/AllStaff'));
+const EditStaff = lazy(() => import('./pages/admin/EditStaff'));
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>
@@ -530,6 +560,36 @@ createRoot(document.getElementById('root')).render(
                                 }
                             />
 
+                            {/* Admin All Staff */}
+                            <Route
+                                path='/admin/staff'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AllStaff />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin Add Staff */}
+                            <Route
+                                path='/admin/staff/add'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AddStaff />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin Edit Staff */}
+                            <Route
+                                path='/admin/staff/edit/:id'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <EditStaff />
+                                    </Suspense>
+                                }
+                            />
+
                             {/* Admin Subscriptions */}
                             <Route
                                 path='/admin/subscriptions'
@@ -696,6 +756,250 @@ createRoot(document.getElementById('root')).render(
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <AdminVideos />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
+
+                        {/* Staff Layout */}
+                        <Route path='/staff' element={<Protected authetication={true} userType='staff'><StaffLayout /></Protected>} >
+                            {/* Staff Dashboard */}
+                            <Route
+                                path='/staff/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffDashboard />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff All Users */}
+                            <Route
+                                path='/staff/users'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllUsers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff All Cashiers */}
+                            <Route
+                                path='/staff/cashiers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllCashiers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Add Cashier */}
+                            <Route
+                                path='/staff/cashiers/add'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAddCashier />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff All Staff */}
+                            <Route
+                                path='/staff/staff'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllStaff />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Add Staff */}
+                            <Route
+                                path='/staff/staff/add'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAddStaff />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Edit Staff */}
+                            <Route
+                                path='/staff/staff/edit/:id'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffEditStaff />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Subscriptions */}
+                            <Route
+                                path='/staff/subscriptions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffSubscriptions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff All Auctions */}
+                            <Route
+                                path='/staff/auctions/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllAuctions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Create Auction */}
+                            <Route
+                                path='/staff/auctions/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCreateAuction />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Edit Auction */}
+                            <Route
+                                path='/staff/auctions/edit/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffEditAuction />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Categories */}
+                            <Route
+                                path='/staff/categories'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCategories />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Support */}
+                            <Route
+                                path='/staff/support/inquiries'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffUserQueries />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Notifications */}
+                            {/* <Route
+                                path='/staff/notifications'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffNotifications />
+                                    </Suspense>
+                                }
+                            /> */}
+
+                            {/* Staff Profile */}
+                            <Route
+                                path='/staff/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffProfile />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Comments */}
+                            <Route
+                                path='/staff/comments'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffComments />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Commissions */}
+                            <Route
+                                path='/staff/commissions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCommissions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Deposit Settings */}
+                            {/* <Route
+                                path='/staff/deposit-settings'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffDepositSettings />
+                                    </Suspense>
+                                }
+                            /> */}
+
+                            {/* Staff Bids */}
+                            <Route
+                                path='/staff/bids'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffBidHistory />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Offers */}
+                            <Route
+                                path='/staff/offers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllOffers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Transactions */}
+                            <Route
+                                path='/staff/transactions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffTransactions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Payouts */}
+                            {/* <Route
+                                path='/staff/payouts'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffPayouts />
+                                    </Suspense>
+                                }
+                            /> */}
+
+                            {/* Staff Payout Methods */}
+                            {/* <Route
+                                path='/staff/payout-methods'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffPayoutMethods />
+                                    </Suspense>
+                                }
+                            /> */}
+
+                            {/* Staff Videos */}
+                            <Route
+                                path='/staff/videos'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffVideos />
                                     </Suspense>
                                 }
                             />

@@ -9,6 +9,7 @@ import {
   setCurrentSubscription,
   getAllUserSubscriptions,
 } from "../controllers/userSubscription.controller.js";
+import { requirePermission } from "../middlewares/permission.middleware.js";
 
 const userSubscriptionRouter = Router();
 
@@ -34,6 +35,6 @@ userSubscriptionRouter.patch("/:subscriptionId/cancel", cancelSubscription);
 userSubscriptionRouter.patch('/:subscriptionId/set-current', setCurrentSubscription);
 
 // Get all subscription purchased for admin
-userSubscriptionRouter.get('/admin/all-user-subscriptions', authAdmin, getAllUserSubscriptions);
+userSubscriptionRouter.get('/admin/all-user-subscriptions', authAdmin, requirePermission("manage_subscriptions"), getAllUserSubscriptions);
 
 export default userSubscriptionRouter;

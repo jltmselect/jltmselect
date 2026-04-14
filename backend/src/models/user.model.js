@@ -48,7 +48,7 @@ const userSchema = new Schema(
     // User Type
     userType: {
       type: String,
-      enum: ["bidder", "seller", "broker", "admin", "cashier"],
+      enum: ["bidder", "seller", "broker", "admin", "cashier", "staff"],
       required: true,
     },
 
@@ -67,6 +67,8 @@ const userSchema = new Schema(
       type: String,
       trim: true,
       unique: true,
+      sparse: true,
+      default: null,
     },
     image: {
       type: String,
@@ -93,6 +95,31 @@ const userSchema = new Schema(
       smsUpdates: { type: Boolean, default: true },
       newsletter: { type: Boolean, default: true },
       favoriteCategories: [{ type: String }],
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    permissions: {
+      type: [String],
+      default: [],
+      enum: [
+        "view_dashboard",
+        "manage_users",
+        "manage_cashiers",
+        "manage_auctions",
+        "manage_bids",
+        "manage_offers",
+        "manage_transactions",
+        "manage_subscriptions",
+        "manage_categories",
+        "manage_videos",
+        "manage_inquiries",
+        "manage_commissions",
+        "manage_admins",
+      ],
     },
 
     // Stripe Payment Info (For Bidders Only)

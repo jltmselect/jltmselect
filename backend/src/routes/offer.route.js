@@ -19,6 +19,7 @@ import {
   getSellerOfferStats
 } from "../controllers/offer.controller.js";
 import { auth, authAdmin } from "../middlewares/auth.middleware.js";
+import { requirePermission } from "../middlewares/permission.middleware.js";
 
 const offerRouter = express.Router();
 
@@ -67,11 +68,11 @@ offerRouter.post('/:offerId/reactivate', auth, reactivateOffer);
 // Add this with your other offer routes
 offerRouter.get('/seller/stats', auth, getSellerOfferStats);
 
-offerRouter.get('/admin/all', auth, authAdmin, getAdminAllOffers);
-offerRouter.get('/admin/auction/:auctionId', auth, authAdmin, getAdminAuctionOffers);
-offerRouter.post('/admin/:offerId/respond', auth, authAdmin, adminRespondToOffer);
-offerRouter.post('/admin/:offerId/cancel', auth, authAdmin, adminCancelOffer);
-offerRouter.get('/admin/stats', auth, authAdmin, getAdminOfferStats);
-offerRouter.post('/admin/:offerId/end-auction', auth, authAdmin, adminEndAuctionWithOffer);
+offerRouter.get('/admin/all', auth, authAdmin, requirePermission("manage_offers"), getAdminAllOffers);
+offerRouter.get('/admin/auction/:auctionId', auth, authAdmin, requirePermission("manage_offers"), getAdminAuctionOffers);
+offerRouter.post('/admin/:offerId/respond', auth, authAdmin, requirePermission("manage_offers"), adminRespondToOffer);
+offerRouter.post('/admin/:offerId/cancel', auth, authAdmin, requirePermission("manage_offers"), adminCancelOffer);
+offerRouter.get('/admin/stats', auth, authAdmin, requirePermission("manage_offers"), getAdminOfferStats);
+offerRouter.post('/admin/:offerId/end-auction', auth, authAdmin, requirePermission("manage_offers"), adminEndAuctionWithOffer);
 
 export default offerRouter;

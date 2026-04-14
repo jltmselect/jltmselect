@@ -11,6 +11,7 @@ import {
     getSubscriptionBySlug,
 } from '../controllers/subscription.controller.js';
 import { auth, authAdmin } from '../middlewares/auth.middleware.js';
+import { requirePermission } from '../middlewares/permission.middleware.js';
 
 const subscriptionRouter = express.Router();
 
@@ -29,7 +30,7 @@ subscriptionRouter.get('/public/:slug', getSubscriptionBySlug);
 // =============================================
 
 // All admin routes require authentication and admin privileges
-subscriptionRouter.use(auth, authAdmin);
+subscriptionRouter.use(auth, authAdmin, requirePermission("manage_subscriptions"));
 
 // Subscription management
 subscriptionRouter.post('/', createSubscription);

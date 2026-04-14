@@ -18,7 +18,7 @@ const Login = () => {
 
     useEffect(() => {
         if (user) {
-            navigate(`/${user.userType}/dashboard`);
+            navigate(`/${user.userType}/profile`);
         }
     }, [user]);
 
@@ -43,7 +43,7 @@ const Login = () => {
 
             if (data && data.success) {
                 toast.success(data.message);
-                navigate(`/${data.userType}/dashboard`);
+                navigate(`/${data.userType}/profile`);
             }
         } catch (error) {
             toast.error(error?.response?.data?.message);

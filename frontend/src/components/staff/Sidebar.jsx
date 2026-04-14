@@ -34,90 +34,91 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { usePermissions } from "../../hooks/usePermissions";
 
 // Define navigation with permissions
 const allNavigation = [
     {
         name: 'Dashboard',
-        path: '/admin/dashboard',
+        path: '/staff/dashboard',
         icon: <LayoutDashboard size={20} />,
         permission: 'view_dashboard'
     },
     {
         name: 'Users',
-        path: '/admin/users',
+        path: '/staff/users',
         icon: <Users size={20} />,
         permission: 'manage_users'
     },
     {
         name: "Cashiers",
         icon: <UserPlus size={20} />,
-        path: "/admin/cashiers",
+        path: "/staff/cashiers",
         permission: 'manage_cashiers'
     },
     {
         name: 'Auctions',
-        path: '/admin/auctions/all',
+        path: '/staff/auctions/all',
         icon: <Gavel size={20} />,
         permission: 'manage_auctions'
     },
     {
         name: 'Bids',
-        path: '/admin/bids',
+        path: '/staff/bids',
         icon: <Hand size={20} />,
         permission: 'manage_bids'
     },
     {
         name: 'Offers',
-        path: '/admin/offers',
+        path: '/staff/offers',
         icon: <Hand size={20} />,
         permission: 'manage_offers'
     },
     {
         name: 'Transactions',
-        path: '/admin/transactions',
+        path: '/staff/transactions',
         icon: <Banknote size={20} />,
         permission: 'manage_transactions'
     },
     {
         name: 'Subscriptions',
-        path: '/admin/subscriptions',
+        path: '/staff/subscriptions',
         icon: <DollarSign size={20} />,
         permission: 'manage_subscriptions'
     },
     {
         name: 'Categories',
-        path: '/admin/categories',
+        path: '/staff/categories',
         icon: <Tags size={20} />,
         permission: 'manage_categories'
     },
     {
         name: 'Benefits Videos',
-        path: '/admin/videos',
+        path: '/staff/videos',
         icon: <Video size={20} />,
         permission: 'manage_videos'
     },
     {
         name: 'User Inquiries',
-        path: '/admin/support/inquiries',
+        path: '/staff/support/inquiries',
         icon: <MessageSquare size={20} />,
         permission: 'manage_inquiries'
     },
     {
         name: 'Commissions',
-        path: '/admin/commissions',
+        path: '/staff/commissions',
         icon: <Settings size={20} />,
         permission: 'manage_commissions'
     },
     {
         name: 'Staff',
-        path: '/admin/staff',
+        path: '/staff/staff',
         icon: <Shield size={20} />,
         permission: 'manage_admins'
     },
     {
         name: 'Profile',
-        path: '/admin/profile',
+        path: '/staff/profile',
         icon: <UserCircle size={20} />,
         permission: null // Always show
     }
@@ -129,21 +130,14 @@ function Sidebar() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [expandedMenus, setExpandedMenus] = useState([]);
     const { logout, user } = useAuth();
+    const { permissions, loading: permissionsLoading, isAdmin } = usePermissions();
 
-    // Get user permissions
-    const userPermissions = user?.permissions || [];
-    const isAdmin = user?.userType === 'admin';
-
-    // Filter navigation based on permissions
+    // Filter navigation based on permissions (use permissions from hook, not user)
     const navigation = allNavigation.filter(item => {
-        // Profile always visible
-        if (item.path === '/admin/profile') return true;
-        // No permission required
+        if (item.path === '/staff/profile') return true;
         if (!item.permission) return true;
-        // Admin sees everything
         if (isAdmin) return true;
-        // Check if user has the required permission
-        return userPermissions.includes(item.permission);
+        return permissions.includes(item.permission);
     });
 
     // Handle window resize
@@ -195,6 +189,17 @@ function Sidebar() {
     };
 
     const role = getRoleDisplay();
+
+    // Show loading state while fetching permissions
+    // if (permissionsLoading) {
+    //     return (
+    //         <aside className="fixed md:relative w-64 bg-bg-primary h-screen p-4">
+    //             <div className="flex items-center justify-center h-32">
+    //                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+    //             </div>
+    //         </aside>
+    //     );
+    // }
 
     return (
         <>

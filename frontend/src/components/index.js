@@ -39,6 +39,9 @@ import BidderHeader from "./bidder/Header";
 import AdminHeader from "./admin/Header";
 import AdminSidebar from "./admin/Sidebar";
 import AdminContainer from "./admin/Container";
+import StaffHeader from "./staff/Header";
+import StaffSidebar from "./staff/Sidebar";
+import StaffContainer from "./staff/Container";
 import TimerDisplay from "./TimerDisplay";
 import WatchlistButton from "./WatchlistButton";
 import SpecificationsSection from "./SpecificationsSection";
@@ -111,6 +114,9 @@ export {
     AdminContainer,
     AdminHeader,
     AdminSidebar,
+    StaffContainer,
+    StaffHeader,
+    StaffSidebar,
     TimerDisplay,
     WatchlistButton,
     SpecificationsSection,

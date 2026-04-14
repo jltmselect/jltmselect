@@ -23,6 +23,7 @@ import {
 } from '../controllers/category.controller.js';
 import { auth, authAdmin } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/multer.middleware.js';
+import { requirePermission } from '../middlewares/permission.middleware.js';
 
 const categoryRouter = express.Router();
 
@@ -56,7 +57,7 @@ categoryRouter.get('/public/parents/with-images', getParentCategoriesWithImages)
 // =============================================
 
 // All admin routes require authentication and admin privileges
-categoryRouter.use(auth, authAdmin);
+categoryRouter.use(auth, authAdmin, requirePermission("manage_categories"));
 
 // Category management
 categoryRouter.post('/', 

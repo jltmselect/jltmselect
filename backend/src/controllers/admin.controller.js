@@ -2368,7 +2368,7 @@ export const rejectUserIdentity = async (req, res) => {
  */
 export const createCashier = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // Validation
     if (!firstName || !lastName || !email || !password) {
@@ -2383,13 +2383,13 @@ export const createCashier = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email: normalizedEmail }, { phone: phone }],
+      $or: [{ email: normalizedEmail }],
     });
 
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "User with this email or phone already exists",
+        message: "User with this email already exists",
       });
     }
 
@@ -2406,7 +2406,7 @@ export const createCashier = async (req, res) => {
       lastName,
       username,
       email: normalizedEmail,
-      phone: phone || "",
+      // phone: phone || "",
       password,
       userType: "cashier",
       isVerified: true,
@@ -2667,7 +2667,7 @@ export const deleteCashier = async (req, res) => {
  */
 export const createStaff = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, permissions } = req.body;
+    const { firstName, lastName, email, password, permissions } = req.body;
 
     // Validation
     if (!firstName || !lastName || !email || !password) {
@@ -2682,13 +2682,13 @@ export const createStaff = async (req, res) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email: normalizedEmail }, { phone: phone }],
+      $or: [{ email: normalizedEmail }],
     });
 
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "User with this email or phone already exists",
+        message: "User with this email already exists",
       });
     }
 
@@ -2705,7 +2705,7 @@ export const createStaff = async (req, res) => {
       lastName,
       username,
       email: normalizedEmail,
-      phone: phone && phone.trim() !== "" ? phone : null,
+      // phone: phone && phone.trim() !== "" ? phone : null,
       password,
       userType: "staff",
       isVerified: true,
@@ -2848,7 +2848,7 @@ export const getStaffById = async (req, res) => {
 export const updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, email, phone, permissions, isActive } = req.body;
+    const { firstName, lastName, email, permissions, isActive } = req.body;
 
     const staff = await User.findOne({ _id: id, userType: "staff" });
 
@@ -2873,7 +2873,7 @@ export const updateStaff = async (req, res) => {
 
     if (firstName) staff.firstName = firstName;
     if (lastName) staff.lastName = lastName;
-    if (phone !== undefined) staff.phone = phone || null;
+    // if (phone !== undefined) staff.phone = phone || null;
     if (permissions) staff.permissions = permissions;
     if (isActive !== undefined) staff.isActive = isActive;
 

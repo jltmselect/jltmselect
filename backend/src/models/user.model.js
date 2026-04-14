@@ -66,7 +66,7 @@ const userSchema = new Schema(
     phone: {
       type: String,
       trim: true,
-      unique: true,
+      // unique: true,
       sparse: true,
       default: null,
     },
@@ -305,7 +305,7 @@ const userSchema = new Schema(
 );
 
 // Index for better query performance
-userSchema.index({ userType: 1, email: 1, phone: 1 });
+userSchema.index({ userType: 1, email: 1 });
 
 // Pre-save middleware for password hashing
 userSchema.pre("save", async function (next) {

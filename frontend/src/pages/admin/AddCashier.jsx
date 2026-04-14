@@ -20,7 +20,7 @@ const AddCashier = () => {
             firstName: "",
             lastName: "",
             email: "",
-            phone: "",
+            // phone: "",
             password: "",
             confirmPassword: "",
         },
@@ -40,7 +40,7 @@ const AddCashier = () => {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 email: data.email,
-                phone: data.phone || "",
+                // phone: data.phone || "",
                 password: data.password,
             };
 
@@ -130,7 +130,7 @@ const AddCashier = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                                         {/* Email */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -157,7 +157,7 @@ const AddCashier = () => {
                                         </div>
 
                                         {/* Phone (Optional) */}
-                                        <div>
+                                        {/* <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Phone (Optional)
                                             </label>
@@ -170,7 +170,7 @@ const AddCashier = () => {
                                                     placeholder="+1 234 567 8900"
                                                 />
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

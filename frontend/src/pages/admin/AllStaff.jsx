@@ -260,12 +260,12 @@ const AllStaff = () => {
                                                             >
                                                                 <Edit size={16} />
                                                             </button>
-                                                            <button
+                                                            {/* <button
                                                                 onClick={() => handleStatusToggle(member._id, member.isActive)}
                                                                 className={`flex items-center gap-3 w-full py-2 text-sm ${member.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'} transition-colors`}
                                                             >
                                                                 {member.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                            </button>
+                                                            </button> */}
                                                             <button
                                                                 onClick={() => handleDelete(member._id, `${member.firstName} ${member.lastName}`)}
                                                                 className="flex items-center gap-3 w-full py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

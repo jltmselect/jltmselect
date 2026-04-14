@@ -50,6 +50,12 @@ const allNavigation = [
         permission: 'manage_users'
     },
     {
+        name: 'Staff',
+        path: '/admin/staff',
+        icon: <Shield size={20} />,
+        permission: 'manage_admins'
+    },
+    {
         name: "Cashiers",
         icon: <UserPlus size={20} />,
         path: "/admin/cashiers",
@@ -108,12 +114,6 @@ const allNavigation = [
         path: '/admin/commissions',
         icon: <Settings size={20} />,
         permission: 'manage_commissions'
-    },
-    {
-        name: 'Staff',
-        path: '/admin/staff',
-        icon: <Shield size={20} />,
-        permission: 'manage_admins'
     },
     {
         name: 'Profile',

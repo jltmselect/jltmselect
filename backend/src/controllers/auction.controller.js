@@ -282,7 +282,7 @@ export const createAuction = async (req, res) => {
       status: (() => {
         const now = new Date();
         const startDateObj = new Date(start);
-        const isAdmin = seller?.userType === "admin";
+        const isAdmin = seller?.userType === "admin" || seller?.userType === "staff";
         const isBuyNowOrGiveaway = auctionType === "buy_now" || auctionType === "giveaway";
 
         if (isAdmin && startDateObj <= now) {

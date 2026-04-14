@@ -21,7 +21,7 @@ const AddStaff = () => {
             firstName: "",
             lastName: "",
             email: "",
-            phone: "",
+            // phone: "",
             password: "",
             confirmPassword: "",
         },
@@ -40,7 +40,7 @@ const AddStaff = () => {
         { value: "manage_videos", label: "Manage Videos", icon: <Video size={16} /> },
         { value: "manage_inquiries", label: "Manage Inquiries", icon: <MessageSquare size={16} /> },
         { value: "manage_commissions", label: "Manage Commissions", icon: <Settings size={16} /> },
-        { value: "manage_admins", label: "Manage Staff (Create/Edit)", icon: <Shield size={16} /> },
+        { value: "manage_admins", label: "Manage Staff", icon: <Shield size={16} /> },
     ];
 
     const togglePermission = (permission) => {
@@ -64,7 +64,7 @@ const AddStaff = () => {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 email: data.email,
-                phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
+                // phone: data.phone && data.phone.trim() !== "" ? data.phone : null,
                 password: data.password,
                 permissions: selectedPermissions,
             };
@@ -180,7 +180,7 @@ const AddStaff = () => {
                                     </div>
 
                                     {/* Phone (Optional) */}
-                                    <div className="md:col-span-2">
+                                    {/* <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Phone (Optional)
                                         </label>
@@ -193,7 +193,7 @@ const AddStaff = () => {
                                                 placeholder="+1 234 567 8900"
                                             />
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Password */}
                                     <div>

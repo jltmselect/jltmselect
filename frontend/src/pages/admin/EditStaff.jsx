@@ -23,7 +23,7 @@ const EditStaff = () => {
             firstName: "",
             lastName: "",
             email: "",
-            phone: "",
+            // phone: "",
         },
     });
 
@@ -40,7 +40,7 @@ const EditStaff = () => {
         { value: "manage_videos", label: "Manage Videos", icon: <Video size={16} /> },
         { value: "manage_inquiries", label: "Manage Inquiries", icon: <MessageSquare size={16} /> },
         { value: "manage_commissions", label: "Manage Commissions", icon: <Settings size={16} /> },
-        { value: "manage_admins", label: "Manage Staff (Create/Edit)", icon: <Shield size={16} /> },
+        { value: "manage_admins", label: "Manage Staff", icon: <Shield size={16} /> },
     ];
 
     // Fetch staff data
@@ -55,7 +55,7 @@ const EditStaff = () => {
                         firstName: staff.firstName,
                         lastName: staff.lastName,
                         email: staff.email,
-                        phone: staff.phone || "",
+                        // phone: staff.phone || "",
                     });
                     setSelectedPermissions(staff.permissions || []);
                 }
@@ -87,7 +87,7 @@ const EditStaff = () => {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 email: data.email,
-                phone: data.phone || "",
+                // phone: data.phone || "",
                 permissions: selectedPermissions,
             };
 
@@ -216,7 +216,7 @@ const EditStaff = () => {
                                     </div>
 
                                     {/* Phone (Optional) */}
-                                    <div className="md:col-span-2">
+                                    {/* <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Phone (Optional)
                                         </label>
@@ -229,7 +229,7 @@ const EditStaff = () => {
                                                 placeholder="+1 234 567 8900"
                                             />
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 {/* Permissions Section */}

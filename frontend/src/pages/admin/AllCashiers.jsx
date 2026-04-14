@@ -217,19 +217,19 @@ const AllCashiers = () => {
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center gap-5 justify-center">
-                                                            <button
-                                                            onClick={() => handleStatusToggle(cashier._id, cashier.isActive)}
-                                                            className={`flex items-center gap-3 text-sm ${cashier.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'} transition-colors`}
-                                                        >
-                                                            {cashier.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                        </button>
+                                                            {/* <button
+                                                                onClick={() => handleStatusToggle(cashier._id, cashier.isActive)}
+                                                                className={`flex items-center gap-3 text-sm ${cashier.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'} transition-colors`}
+                                                            >
+                                                                {cashier.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                            </button> */}
 
-                                                        <button
-                                                            onClick={() => handleDelete(cashier._id, `${cashier.firstName} ${cashier.lastName}`)}
-                                                            className="flex items-center gap-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                            <button
+                                                                onClick={() => handleDelete(cashier._id, `${cashier.firstName} ${cashier.lastName}`)}
+                                                                className="flex items-center gap-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>

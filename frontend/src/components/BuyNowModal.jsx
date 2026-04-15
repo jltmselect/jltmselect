@@ -202,7 +202,7 @@ const BuyNowModal = ({ isOpen, onClose, auction, loading: externalLoading, isGiv
                             </div>
 
                             <div className="flex justify-between text-gray-700 text-sm">
-                                <span>Service Fee</span>
+                                <span>Sales Tax</span>
                                 <span className="font-semibold">
                                     {formatCurrency(serviceFee)}
                                 </span>

@@ -137,6 +137,7 @@ function Profile() {
             formData.append('firstName', userData.firstName || '');
             formData.append('lastName', userData.lastName || '');
             formData.append('phone', userData.phone || '');
+            formData.append('username', userData.username || '');
 
             // Add address if it exists
             if (userData.address) {
@@ -172,6 +173,7 @@ function Profile() {
         } catch (err) {
             setError('Failed to update profile');
             console.error('Update profile error:', err);
+            toast.error(err?.response?.data?.message || 'Failed to update profile');
         } finally {
             setSaving(false);
         }
@@ -384,7 +386,7 @@ function Profile() {
                 <BidderContainer>
                     <AccountInactiveBanner />
                     <div className="max-w-full pt-16 pb-7 md:pt-0">
-                        <h2 className="text-3xl md:text-4xl font-bold my-5">Bidder Profile</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold my-5">Profile</h2>
                         {/* <p className="text-bg-primary-light">Manage your account settings and bidding preferences</p> */}
                     </div>
 
@@ -530,17 +532,18 @@ function Profile() {
                                                     <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
                                                 </div>
                                                 <div className="space-y-1 md:col-span-2">
-                                                    <label className="block text-sm font-medium text-bg-primary-light">Username</label>
+                                                    <label className="block text-sm font-medium text-bg-primary-light">Public Auction Display Name</label>
                                                     <div className="flex items-center gap-2">
                                                         <User size={18} className="text-gray-400" />
                                                         <input
                                                             type="text"
                                                             value={userData.username || ''}
-                                                            disabled
-                                                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                                            disabled={!isEditing}
+                                                            onChange={(e) => handleInputChange('username', e.target.value)}
+                                                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                         />
                                                     </div>
-                                                    <p className="text-sm text-gray-500 mt-1">Username cannot be changed</p>
+                                                    {/* <p className="text-sm text-gray-500 mt-1">This name cannot be changed</p> */}
                                                 </div>
                                                 <div className="space-y-1 md:col-span-2">
                                                     <label className="block text-sm font-medium text-bg-primary-light">Phone</label>
@@ -911,14 +914,12 @@ function Profile() {
                                                     </div>
                                                     <button
                                                         onClick={() => togglePreference('emailUpdates')}
-                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                                            userData.preferences?.emailUpdates ? 'bg-blue-600' : 'bg-gray-200'
-                                                        }`}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${userData.preferences?.emailUpdates ? 'bg-blue-600' : 'bg-gray-200'
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                                                userData.preferences?.emailUpdates ? 'translate-x-6' : 'translate-x-1'
-                                                            }`}
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${userData.preferences?.emailUpdates ? 'translate-x-6' : 'translate-x-1'
+                                                                }`}
                                                         />
                                                     </button>
                                                 </div>
@@ -955,14 +956,12 @@ function Profile() {
                                                     </div>
                                                     <button
                                                         onClick={() => togglePreference('smsUpdates')}
-                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                                            userData.preferences?.smsUpdates ? 'bg-blue-600' : 'bg-gray-200'
-                                                        }`}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${userData.preferences?.smsUpdates ? 'bg-blue-600' : 'bg-gray-200'
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                                                userData.preferences?.smsUpdates ? 'translate-x-6' : 'translate-x-1'
-                                                            }`}
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${userData.preferences?.smsUpdates ? 'translate-x-6' : 'translate-x-1'
+                                                                }`}
                                                         />
                                                     </button>
                                                 </div>

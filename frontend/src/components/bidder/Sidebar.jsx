@@ -20,15 +20,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
 const navigation = [
-    { name: 'Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Active Auctions', path: '/bidder/auctions/active', icon: <Gavel size={20} /> },
-    { name: 'Past Auctions', path: '/bargain-deals', icon: <Bookmark size={20} /> },
-    { name: 'Benefits', path: '/bidder/videos', icon: <Video size={20} /> },
-    { name: 'My Offers', path: '/bidder/offers', icon: <Hand size={20} /> },
+    { name: 'Showroom Video', path: '/bidder/videos', icon: <Video size={20} /> },
+    // { name: 'My Offers', path: '/bidder/offers', icon: <Hand size={20} /> },
     { name: 'My Bids', path: '/bidder/bids', icon: <TrendingUp size={20} /> },
     { name: 'Won Auctions', path: '/bidder/auctions/won', icon: <Award size={20} /> },
-    { name: 'Subscriptions', path: '/bidder/subscriptions', icon: <DollarSign size={20} /> },
+    { name: 'Past Auctions', path: '/bidder/auctions/past', icon: <Bookmark size={20} /> },
+    { name: 'Membership', path: '/bidder/subscriptions', icon: <DollarSign size={20} /> },
     { name: 'Billing', path: '/bidder/billing', icon: <CreditCard size={20} /> },
+    { name: 'My Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
     // { name: 'Notifications', path: '/bidder/notifications', icon: <Bell size={20} /> },
     { name: 'Profile', path: '/bidder/profile', icon: <User size={20} /> },
 ];
@@ -96,8 +96,8 @@ function Sidebar() {
                 {/* Logo/Brand */}
                 <div className="px-4 mb-8 flex items-center justify-between pb-2">
                     <Link to='/' className="z-50 mb-4 flex items-center gap-2">
-                        <img src={logo} alt="logo" className="h-8 md:h-10" />
-                        <span className={`text-xl font-bold text-pure-white`}>JLTM</span>
+                        <img src={logo} alt="logo" className="h-7 md:h-8" />
+                        {/* <span className={`text-xl font-bold text-pure-white`}>JLTM</span> */}
                     </Link>
                     <button
                         onClick={() => setIsOpen(false)}

@@ -98,7 +98,7 @@ const allNavigation = [
         permission: 'manage_categories'
     },
     {
-        name: 'Benefits Videos',
+        name: 'Showroom Videos',
         path: '/admin/videos',
         icon: <Video size={20} />,
         permission: 'manage_videos'
@@ -110,7 +110,7 @@ const allNavigation = [
         permission: 'manage_inquiries'
     },
     {
-        name: 'Commissions',
+        name: 'Sales Tax',
         path: '/admin/commissions',
         icon: <Settings size={20} />,
         permission: 'manage_commissions'
@@ -223,8 +223,8 @@ function Sidebar() {
                 {/* Logo/Brand */}
                 <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-gray-700">
                     <Link to='/' className="z-50 mb-4 flex items-center gap-2">
-                        <img src={logo} alt="logo" className="h-8 md:h-10" />
-                        <span className={`text-xl font-bold text-pure-white`}>JLTM</span>
+                        <img src={logo} alt="logo" className="h-7 md:h-8" />
+                        {/* <span className={`text-xl font-bold text-pure-white`}>JLTM</span> */}
                     </Link>
                     <button
                         onClick={() => setIsOpen(false)}

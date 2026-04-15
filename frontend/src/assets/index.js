@@ -1,5 +1,6 @@
 import darkLogo from './darkLogo.webp';
 import logo from './logo.webp';
+import logoWithBg from './logoWithBg.webp';
 import heroImg from './heroImg.webp';
 import contactUs from './contactUs.webp';
 import menuIcon from './menuIcon.svg';
@@ -20,10 +21,10 @@ function formatPhone(phone) {
 // (202) 555-0125
 
 const otherData = {
-    phone: '4082500904',
+    phone: '7149689888',
     phoneCode: '+1',
-    email: 'tech@jltmselect.com',
-    address: 'Costa Mesa, CA 92626, USA',
+    email: 'help@jltmselect.com',
+    address: '1585 Sunland Lane, Costa Mesa, CA 92626, USA',
     brandName: 'JLTM',
     formatPhone,
     hours: [
@@ -38,6 +39,7 @@ export {
     about2,
     darkLogo,
     logo,
+    logoWithBg,
     heroImg,
     menuIcon,
     closeMenu,

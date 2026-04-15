@@ -141,15 +141,15 @@ function Dashboard() {
                             {/* Quick Actions for Bidders */}
                             <div className="mt-8">
                                 <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                     <Link to="/bidder/auctions/active" className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-shadow">
                                         <Gavel size={24} className="mx-auto mb-2 text-[#1e2d3b] hover:text-[#edcd1f]" />
                                         <p className="text-sm font-medium">Browse Auctions</p>
                                     </Link>
-                                    <Link to="/bidder/watchlist" className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-shadow">
+                                    {/* <Link to="/bidder/watchlist" className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-shadow">
                                         <Bookmark size={24} className="mx-auto mb-2 text-[#1e2d3b] hover:text-[#edcd1f]" />
                                         <p className="text-sm font-medium">View Watchlist</p>
-                                    </Link>
+                                    </Link> */}
                                     <Link to="/bidder/offers" className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-shadow">
                                         <TrendingUp size={24} className="mx-auto mb-2 text-[#1e2d3b] hover:text-[#edcd1f]" />
                                         <p className="text-sm font-medium">My Offers</p>

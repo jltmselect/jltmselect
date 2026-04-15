@@ -14,11 +14,7 @@ const faqs = [
         questions: [
             {
                 question: "How does JLTM Membership work?",
-                answer: "JLTM Membership gives you access to exclusive daily auctions on luxury furniture, a one-time 20% in-store discount, and our members-only 'In The Store' video gallery. Choose a 6-month or 12-month plan to get started."
-            },
-            {
-                question: "What membership plans are available?",
-                answer: "We offer three plans: Basic (1 month for $50), Standard (3 months for $125), and Premium (6 months for $250). All plans include access to all mentioned benefits."
+                answer: "JLTM Select Membership gives you access to exclusive auctions on items we sell in our showroom, 15% discounts in-store, 7 days of free storage, a weekly inventory walk-through video and more."
             },
             {
                 question: "Can I cancel my membership?",
@@ -26,7 +22,7 @@ const faqs = [
             },
             {
                 question: "What happens when my membership expires?",
-                answer: "When your membership expires, you immediately lose access to auctions, In The Store gallery, and other member benefits. You can log in to purchase a new membership at any time to regain access."
+                answer: "When your membership expires, you will immediately lose access to auctions, and other perks that come with being a member.  You can log in at any time to purchase a new membership and regain access when your membership expires."
             }
         ]
     },
@@ -36,7 +32,9 @@ const faqs = [
         questions: [
             {
                 question: "How does billing work?",
-                answer: "You'll be charged at signup for your selected plan duration. All payments are processed securely through Stripe."
+                answer: `Membership: You'll be charged at sign-up for the duration of your selected plan. There are no refunds for any subscription plans. Your membership is valid for the duration of time you purchased. At the end of your membership you would need to renew.
+                
+                Auctions: When you win a bid, you will be required to log in and pay for your winning. If you do not pay within 24 hours of your winning you will forfeit your win. All payments are processed securely through Stripe.`
             }
         ]
     },
@@ -46,11 +44,11 @@ const faqs = [
         questions: [
             {
                 question: "How do auctions work?",
-                answer: "Each day, one luxury furniture piece is listed for auction exclusively for members. Bidding starts at $1 with $1 minimum increments. The highest bidder when the auction closes wins the item."
+                answer: "Every week we will have multiple hand-picked furniture and accessory pieces up for bid. All items up for bid start at a bid price of 95 - 85% off MSRP. The highest bidder prior to the bid closing wins the auction. Upon winning the bid, you must log back in and pay for your item. All items up for bid can be viewed in person at our showroom in Costa Mesa, California. All items must be picked up at the Costa Mesa showroom. We do not ship items."
             },
             {
                 question: "Can I bid multiple times?",
-                answer: "Yes! You can place as many bids as you'd like on any auction. Each new bid must be at least $1 more than the current highest bid."
+                answer: "Yes! You can place as many bids as you'd like on any auction. The highest bidder wins. Check back often to ensure you are the highest bidder, or bid the highest amount you are willing to pay to improve your chances of winning."
             },
             {
                 question: "What happens if I'm outbid?",
@@ -59,6 +57,10 @@ const faqs = [
             {
                 question: "How is payment handled after winning?",
                 answer: "The winning bidder will be notified to make payment within 8 hours. If payment is not received within this timeframe, you will lose the auction and this may lead to account suspension."
+            },
+            {
+                question: "Can my auction-winning item be shipped to me?",
+                answer: "No, we do not ship auction winnings. You must pick up your auction-winning at the Costa Mesa showroom within 5 days of winning or additional charges will be applied for storage."
             }
         ]
     },
@@ -81,8 +83,8 @@ const faqs = [
         icon: <BadgeDollarSign size={20} />,
         questions: [
             {
-                question: "How does the 20% discount work?",
-                answer: "Every new member gets a one-time 20% discount valid on any in-store purchase. Simply show your Member ID at checkout. The discount is valid for 30 days from your signup date and has no exclusions. It is not valid for online purchases."
+                question: "How does the 15% in-store discount work?",
+                answer: "All have to do is provide the cashier your phone number to verify you are a JLTM Select member and double check that with your ID. Once that is verified your in-store purchase will be discounted 15% of the list price."
             }
         ]
     }
@@ -102,7 +104,7 @@ function FAQsPage() {
     );
 
     return (
-        <section className="pt-10 md:pt-20 bg-bg-secondary dark:bg-bg-primary max-w-full">
+        <section className="pt-10 md:pt-16 bg-bg-secondary dark:bg-bg-primary max-w-full">
             {/* Hero Section */}
             <div className="">
                     <div className="max-w-full mx-auto text-center">

@@ -140,7 +140,7 @@ const BidConfirmationModal = forwardRef((props, ref) => {
                                 </td>
                             </tr>
                             <tr>
-                                <td className="py-2 text-gray-600">Service Fee:</td>
+                                <td className="py-2 text-gray-600">Sales Tax:</td>
                                 <td className="py-2 text-right text-gray-900">
                                     {formatCurrency(serviceFee)}
                                 </td>

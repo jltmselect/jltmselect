@@ -2,246 +2,295 @@ import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email, address, brandName } = otherData;
 
 const TermsOfUse = () => {
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
+    // Fixed dates as provided in the content
+    const effectiveDate = "April 15 2026";
+    const lastUpdated = "April 15 2026";
 
     return (
-        <section className="pt-10 md:pt-20 bg-bg-secondary dark:bg-primary">
+        <section className="pt-10 md:pt-16 bg-bg-secondary dark:bg-primary">
             <div className="max-w-full mx-auto text-center px-6 py-16 bg-primary">
-
-                <div className="flex items-center justify-center gap-3 mb-4"><div className="h-px w-8 bg-secondary"></div><span className="text-secondary text-xs font-medium uppercase tracking-[0.2em]">Legal Policy</span><div className="h-px w-8 bg-secondary"></div></div>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="h-px w-8 bg-secondary"></div>
+                    <span className="text-secondary text-xs font-medium uppercase tracking-[0.2em]">Legal Policy</span>
+                    <div className="h-px w-8 bg-secondary"></div>
+                </div>
 
                 {/* headline */}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-pure-white dark:text-text-primary-dark leading-tight">
-                    Terms & Conditions
+                    Terms of Use
                 </h1>
             </div>
-            <Container className={`my-14`}>
-                {/* Header */}
-                <div className="max-w-full mx-auto my-10">
-                    <p className="text-text-secondary dark:text-text-secondary-dark mb-6">{otherData?.brandName} | Last Updated: {formattedDate}</p>
 
-                    <div className="bg-primary dark:bg-bg-secondary border-l-4 border-text-primary dark:border-text-primary-dark p-4 mb-6">
-                        <p className="text-text-primary-dark dark:text-text-primary font-semibold mb-2">IMPORTANT – PLEASE READ</p>
-                        <p className="text-text-primary-dark/80 dark:text-text-primary/80 text-sm">
-                            These Terms govern your use of {otherData?.brandName}. By purchasing a membership or participating in our auctions,
-                            you confirm your agreement to these Terms. All furniture items are sold on an "as-is" basis without warranties.
-                        </p>
-                    </div>
-                </div>
-
+            <Container className="my-14">
                 {/* Main Content */}
                 <div className="max-w-full mx-auto">
                     <div className="space-y-8">
+                        {/* Header Info */}
+                        <div className="mb-8 text-left">
+                            <p className="text-text-primary text-xl dark:text-text-primary-dark font-medium">
+                                <strong>{brandName} Select Terms of Use</strong>
+                            </p>
+                            <p className="text-text-secondary dark:text-text-secondary-dark text-sm mt-1">
+                                Effective Date: {effectiveDate} | Last Updated: {lastUpdated}
+                            </p>
+                        </div>
+
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-text-primary dark:text-text-primary-dark mb-4">
-                                <strong>{otherData?.brandName}</strong> ("we", "our", "us") operates an exclusive furniture auction platform for members. 
-                                We offer luxury furniture pieces through daily auctions available only to {otherData?.brandName} Members. These Terms of Use ("Terms") 
-                                govern your access to and use of our website, platform, and services.
+                                These Terms of Use (“Terms”) constitute a legally binding agreement between you (“User,” “you,” or “your”) and JLTM, Inc dba Just Like the Model (“{brandName} Select,” “Company,” “we,” “us,” or “our”) governing your access to and use of JLTMSelect.com (the “Platform”).
                             </p>
-                            <p className="text-text-primary dark:text-text-primary-dark">
-                                By purchasing a membership, registering for, accessing, or using the Platform, you agree to be bound by these Terms. We use buyer's email and phone number to send transactional emails and SMS updates. User can always opt out of emails and SMS updates in their account settings.
-                            </p>
-                        </div>
-
-                        {/* Section 1 - Membership Agreement */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">1. Membership Agreement</h2>
-                            <p className="text-text-secondary dark:text-text-secondary-dark mb-3">
-                                By purchasing a {otherData?.brandName} Membership, you agree to the terms outlined herein. Memberships are non-refundable and non-transferable. 
-                                Access to member benefits is contingent upon active membership status.
-                            </p>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Memberships cannot be canceled for a refund</li>
-                                <li>Membership benefits are for the named member only and cannot be shared</li>
-                                <li>Active membership is required to participate in auctions and access member-only content</li>
-                                <li>We reserve the right to terminate memberships for violation of these Terms</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 2 - Eligibility */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">2. Eligibility</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Membership is restricted to individuals aged 18 and older</li>
-                                <li>You must provide accurate and complete personal information during registration</li>
-                                <li>Duplicate accounts are not permitted</li>
-                                <li>We reserve the right to verify identity and eligibility</li>
-                                <li>False information may result in immediate membership termination</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 3 - Membership Plans & Billing */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">3. Membership Plans & Billing</h2>
-                            <p className="text-text-secondary dark:text-text-secondary-dark mb-3">
-                                We offer three membership plans: Basic (1 month for $50), Standard (3 months for $125), and Premium (6 months for $250).
-                                Membership fees are charged at signup and are non-refundable.
-                            </p>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Memberships do not auto-renew. You will be notified when your membership expires</li>
-                                <li>To continue membership benefits, you must purchase a new membership plan</li>
-                                <li>All payments are processed securely through Stripe</li>
-                                <li>Membership fees are subject to change with prior notice</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 4 - Auctions */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">4. Auctions</h2>
-                            <div className="bg-primary dark:bg-bg-secondary p-4 rounded mb-3">
-                                <p className="text-text-primary-dark dark:text-text-primary font-semibold mb-2">LEGALLY BINDING COMMITMENTS</p>
-                                <ul className="text-text-primary-dark/90 dark:text-text-primary/90 space-y-1 list-disc pl-5">
-                                    <li>Auctions are available to active members only</li>
-                                    <li>All bids are legally binding and cannot be retracted</li>
-                                    <li>Each auction runs for a specified duration with the highest bidder winning at close</li>
-                                    <li>Bidding starts at $1 with $1 minimum increments</li>
-                                    <li>Outbid notifications are sent via email</li>
-                                </ul>
-                            </div>
-                            <div className="bg-primary dark:bg-bg-secondary p-4 rounded mt-3">
-                                <p className="text-text-primary-dark dark:text-text-primary font-semibold mb-2">PAYMENT REQUIREMENT</p>
-                                <ul className="text-text-primary-dark/90 dark:text-text-primary/90 space-y-1 list-disc pl-5">
-                                    <li>Winning bidders have 6-8 hours to complete payment</li>
-                                    <li>Failure to pay within the required timeframe will result in:</li>
-                                    <ul className="list-disc pl-5 mt-1">
-                                        <li>Loss of the auction win</li>
-                                        <li>Account suspension</li>
-                                        <li>Potential permanent account termination for repeat violations</li>
-                                    </ul>
-                                </ul>
+                            <div className="bg-primary dark:bg-bg-secondary border-l-4 border-secondary p-4 rounded">
+                                <p className="text-text-primary-dark dark:text-text-primary text-sm">
+                                    By accessing or using the Platform, you agree to these Terms. If you do not agree, you must not use the Platform.
+                                </p>
                             </div>
                         </div>
 
-                        {/* Section 5 - In-Store Pickup */}
+                        {/* Section 1 - Eligibility */}
                         <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">5. In-Store Pickup</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>All won items must be picked up in-store at {address}</li>
-                                <li>Winners have 5 days to pick up their items after winning the auction</li>
-                                <li>A valid ID is required at pickup</li>
-                                <li>Our staff will coordinate pickup scheduling with you</li>
-                                <li>We do not offer shipping or delivery services</li>
-                                <li>Storage fees of $5 per day apply after the 5-day pickup deadline</li>
-                                <li>Items not picked up within 30 days may be forfeited and resold</li>
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">1. Eligibility</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">You must:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Be at least 18 years old</li>
+                                <li>Have the legal capacity to enter into binding contracts</li>
+                                <li>Provide accurate and complete registration information</li>
                             </ul>
-                        </div>
-
-                        {/* Section 6 - Discount Benefit */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">6. Discount Benefit</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Every new member receives a one-time 20% in-store discount</li>
-                                <li>Discount is valid for 30 days from membership activation date</li>
-                                <li>Must present Member ID at checkout to receive discount</li>
-                                <li>Discount is non-transferable and cannot be combined with other offers</li>
-                                <li>Not valid for online or auction purchases</li>
-                                <li>No exclusions apply to eligible in-store items</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 7 - Sold As Is – No Returns */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">7. Sold As Is – No Returns</h2>
-                            <div className="bg-primary dark:bg-bg-secondary p-4 rounded mb-3">
-                                <p className="text-text-primary-dark dark:text-text-primary font-bold text-center mb-2">ALL ITEMS ARE SOLD:</p>
-                                <div className="text-center space-y-1">
-                                    <p className="text-text-primary-dark dark:text-text-primary">As-is / "Final Sale"</p>
-                                    <p className="text-text-primary-dark dark:text-text-primary">Without any warranty</p>
-                                    <p className="text-text-primary-dark dark:text-text-primary">No returns or exchanges accepted</p>
-                                </div>
-                            </div>
                             <p className="text-text-secondary dark:text-text-secondary-dark">
-                                All furniture pieces are described accurately with photos before auction. Members are encouraged to review all details carefully before bidding. All sales are final upon payment.
+                                We reserve the right to verify identity at any time and suspend accounts that fail verification.
                             </p>
                         </div>
 
-                        {/* Section 8 - Account Suspension & Termination */}
+                        {/* Section 2 - Membership Requirement */}
                         <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">8. Account Suspension & Termination</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Failure to pay for won auctions may result in account suspension</li>
-                                <li>Multiple violations may lead to permanent account termination</li>
-                                <li>Violation of these Terms may result in immediate membership termination without refund</li>
-                                <li>We reserve the right to suspend accounts suspected of fraudulent activity</li>
-                                <li>Suspended accounts lose access to all member benefits and active auctions</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 9 - Platform Access & Account Security */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">9. Platform Access & Account Security</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>You are responsible for maintaining the security of your account credentials</li>
-                                <li>Notify us immediately of any unauthorized account access</li>
-                                <li>Account sharing is prohibited</li>
-                                <li>We reserve the right to refuse or terminate access at our discretion</li>
-                                <li>Users must comply with all applicable US federal and state laws</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 10 - Inspections */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">10. Inspections</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>Items are displayed in-store and through detailed photos online</li>
-                                <li>Members are encouraged to inspect items in person before bidding</li>
-                                <li>Contact us to schedule an in-store viewing appointment</li>
-                                <li>All items are sold based on described condition with no additional warranties</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 11 - Limitation of Liability */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">11. Limitation of Liability</h2>
-                            <p className="text-text-secondary dark:text-text-secondary-dark mb-3">
-                                To the extent permitted by law, {otherData?.brandName} is not liable for any indirect, incidental, or consequential damages 
-                                arising from the use of the {otherData?.brandName} Membership platform or participation in auctions.
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">2. Membership Requirement</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                Access to auctions is restricted to active members.
                             </p>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>All items sold through auctions are sold as-is without warranties</li>
-                                <li>Our total liability is limited to the purchase price of the item in question</li>
-                                <li>We are not responsible for damages during pickup or transport</li>
-                                <li>This does not limit liability for fraud, death, or personal injury caused by negligence</li>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">By purchasing a membership, you agree:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Membership fees are non-refundable once the billing cycle begins</li>
+                                <li>Access continues through the paid term even if canceled</li>
+                                <li>Failure to renew results in immediate loss of access</li>
                             </ul>
-                        </div>
-
-                        {/* Section 12 - Governing Law */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">12. Governing Law & Disputes</h2>
-                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
-                                <li>These Terms are governed by the laws of the United States</li>
-                                <li>Disputes shall be resolved by the courts of the United States</li>
-                                <li>{otherData?.brandName} is located at {address}</li>
-                                <li>You agree to submit to the exclusive jurisdiction of these courts</li>
-                            </ul>
-                        </div>
-
-                        {/* Section 13 - Changes to Terms */}
-                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">13. Changes to These Terms</h2>
                             <p className="text-text-secondary dark:text-text-secondary-dark">
-                                We may update these Terms from time to time. The "Last Updated" date indicates the most recent version. 
-                                Material changes will be communicated via email or platform notice. Continued use after changes constitutes acceptance.
+                                We reserve the right to modify membership pricing and features with notice.
                             </p>
                         </div>
 
-                        {/* Contact */}
+                        {/* Section 3 - Account Responsibility */}
                         <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Contact Information</h2>
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">3. Account Responsibility</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">You are responsible for:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Maintaining the confidentiality of your account credentials</li>
+                                <li>All activity conducted under your account</li>
+                                <li>Ensuring your payment method is valid and up to date</li>
+                            </ul>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">We may suspend or terminate accounts for:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Fraudulent activity</li>
+                                <li>Non-payment</li>
+                                <li>Violation of these Terms</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 4 - Auction Rules and Binding Bids */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">4. Auction Rules and Binding Bids</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                {brandName} Select operates a real-time auction platform.
+                            </p>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">By placing a bid, you agree:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>All bids are legally binding offers to purchase</li>
+                                <li>You may not retract or cancel a bid once placed</li>
+                                <li>The highest valid bid at auction close wins</li>
+                                <li>{brandName} has sole authority to resolve disputes, errors, or irregularities</li>
+                            </ul>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">We reserve the right to:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Cancel or modify auctions</li>
+                                <li>Remove bids suspected of fraud or manipulation</li>
+                                <li>Disqualify users at our sole discretion</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 5 - Payment Terms and Immediate Charges */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">5. Payment Terms and Immediate Charges</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                Participation in auctions requires you to pay manually upon winning your bid.
+                            </p>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">By placing a bid, you expressly agree to the following:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Payment of all winnings within 12 hours of winning the item</li>
+                                <li>You agree not to initiate chargebacks except in cases of verified fraud</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 6 - Pricing, Fees, and Taxes */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">6. Pricing, Fees, and Taxes</h2>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>All bids are in U.S. dollars</li>
+                                <li>Prices do not include applicable taxes</li>
+                                <li>We DO NOT ship items to you. All items must be picked up</li>
+                                <li>You are responsible for all applicable taxes</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 7 - Item Condition and Sales Finality */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">7. Item Condition and Sales Finality</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">All items sold through the Platform are:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Sold “as is” and “as available”</li>
+                                <li>Final sale, with no returns or exchanges unless required by law</li>
+                            </ul>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">We do not guarantee:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Condition beyond what is described</li>
+                                <li>Availability or uninterrupted auctions</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 8 - Pickup, Storage, and Delivery */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">8. Pickup, Storage, and Delivery</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">For items won:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>You are responsible for timely pickup or delivery arrangements</li>
+                                <li>Storage fees may apply after a specified period</li>
+                                <li>Failure to collect items may result in forfeiture without refund</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 9 - Prohibited Conduct */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">9. Prohibited Conduct</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">You agree not to:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Manipulate auctions or artificially inflate bids</li>
+                                <li>Use multiple accounts to gain unfair advantage</li>
+                                <li>Engage in fraud, abuse, or unlawful activity</li>
+                                <li>Attempt to interfere with platform operations</li>
+                            </ul>
+                            <p className="text-text-secondary dark:text-text-secondary-dark">
+                                Violation may result in immediate termination.
+                            </p>
+                        </div>
+
+                        {/* Section 10 - Intellectual Property */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">10. Intellectual Property</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                All content on the Platform, including text, images, and branding, is owned by {brandName} Select or its licensors.
+                            </p>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">You may not:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Copy, reproduce, or distribute content without permission</li>
+                                <li>Use the Platform for unauthorized commercial purposes</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 11 - Privacy */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">11. Privacy</h2>
+                            <p className="text-text-secondary dark:text-text-secondary-dark">
+                                Your use of the Platform is subject to our Privacy Policy. The Privacy Policy explains how we collect, use, and protect your data, including auction behavior and payment processing.
+                            </p>
+                        </div>
+
+                        {/* Section 12 - Disclaimers */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">12. Disclaimers</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                The Platform is provided on an “as is” and “as available” basis.
+                            </p>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">We make no warranties regarding:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Platform availability or performance</li>
+                                <li>Accuracy of listings</li>
+                                <li>Suitability of items</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 13 - Limitation of Liability */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">13. Limitation of Liability</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">To the maximum extent permitted by law:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>{brandName} Select shall not be liable for indirect, incidental, or consequential damages</li>
+                                <li>Our total liability shall not exceed the amount paid by you in the transaction giving rise to the claim</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 14 - Indemnification */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">14. Indemnification</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">You agree to indemnify and hold harmless {brandName} Select from any claims, damages, or losses arising from:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>Your use of the Platform</li>
+                                <li>Your violation of these Terms</li>
+                                <li>Your breach of applicable laws</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 15 - Termination */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">15. Termination</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">We may suspend or terminate your account at any time for:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
+                                <li>Violation of these Terms</li>
+                                <li>Fraud or abuse</li>
+                                <li>Failure to complete payments</li>
+                            </ul>
+                            <p className="text-text-secondary dark:text-text-secondary-dark">
+                                Termination does not relieve you of outstanding obligations.
+                            </p>
+                        </div>
+
+                        {/* Section 16 - Dispute Resolution and Governing Law */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">16. Dispute Resolution and Governing Law</h2>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">
+                                These Terms are governed by the laws of the State of California.
+                            </p>
+                            <p className="text-text-primary dark:text-text-primary-dark mb-2">Any disputes shall be resolved:</p>
+                            <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
+                                <li>First, through good faith negotiation</li>
+                                <li>Then, through binding arbitration or courts located in California</li>
+                            </ul>
+                        </div>
+
+                        {/* Section 17 - Modifications to Terms */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">17. Modifications to Terms</h2>
+                            <p className="text-text-secondary dark:text-text-secondary-dark">
+                                We may update these Terms at any time. Continued use of the Platform constitutes acceptance of updated Terms.
+                            </p>
+                        </div>
+
+                        {/* Section 18 - Entire Agreement */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">18. Entire Agreement</h2>
+                            <p className="text-text-secondary dark:text-text-secondary-dark">
+                                These Terms, together with the Privacy Policy, constitute the entire agreement between you and {brandName} Select.
+                            </p>
+                        </div>
+
+                        {/* Section 19 - Contact Information */}
+                        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">19. Contact Information</h2>
                             <div className="bg-primary dark:bg-bg-secondary p-4 rounded">
-                                <p className="font-semibold text-text-primary-dark dark:text-text-primary mb-2">{otherData?.brandName}</p>
+                                <p className="font-semibold text-text-primary-dark dark:text-text-primary mb-2">Just Like The Model</p>
                                 <p className="text-text-primary-dark dark:text-text-primary text-sm mb-1 whitespace-pre-line">{address}</p>
                                 <p className="text-text-primary-dark dark:text-text-primary text-sm mb-1">
-                                    Email: <a href={`mailto:${email}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all">{email}</a>
+                                    Email: <a href={`mailto:${email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{email}</a>
                                 </p>
                                 <p className="text-text-primary-dark dark:text-text-primary text-sm">
                                     Phone: <a href={`tel:${phone}`} className="text-blue-600 dark:text-blue-400 hover:underline">{otherData?.phoneCode} {otherData?.formatPhone(phone)}</a>
@@ -252,8 +301,7 @@ const TermsOfUse = () => {
                         {/* Footer Note */}
                         <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-8">
                             <p className="text-text-secondary dark:text-text-secondary-dark text-sm">
-                                These Terms were last updated on {formattedDate}. If you have questions about these Terms,
-                                please contact us at <a href={`mailto:${email}`} className="text-text-primary dark:text-text-primary-dark hover:underline">{email}</a>.
+                                These Terms were last updated on {lastUpdated}. If you have questions about these Terms, please contact us at <a href={`mailto:${email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{email}</a>.
                             </p>
                         </div>
                     </div>
@@ -263,13 +311,13 @@ const TermsOfUse = () => {
                         <div className="flex flex-wrap gap-3">
                             <Link
                                 to="/privacy-policy"
-                                className="px-4 py-2 bg-secondary dark:bg-bg-secondary border border-gray-200 dark:border-gray-700 hover:bg-gray-800 dark:hover:bg-gray-200 text-text-primary-dark dark:text-text-primary rounded text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-primary dark:bg-bg-secondary border border-gray-200 dark:border-gray-700 hover:bg-gray-800 dark:hover:bg-gray-200 text-text-primary-dark dark:text-text-primary rounded text-sm font-medium transition-colors"
                             >
                                 Privacy Policy
                             </Link>
                             <Link
                                 to="/buyer-agreement"
-                                className="px-4 py-2 bg-secondary dark:bg-bg-secondary border border-gray-200 dark:border-gray-700 hover:bg-gray-800 dark:hover:bg-gray-200 text-text-primary-dark dark:text-text-primary rounded text-sm font-medium transition-colors"
+                                className="px-4 py-2 bg-primary dark:bg-bg-secondary border border-gray-200 dark:border-gray-700 hover:bg-gray-800 dark:hover:bg-gray-200 text-text-primary-dark dark:text-text-primary rounded text-sm font-medium transition-colors"
                             >
                                 Buyer Agreement
                             </Link>

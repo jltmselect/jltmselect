@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Gavel, Store, Phone, ChevronDown, Upload, AlertCircle, FileText, X, ArrowLeft, CreditCard, Calendar, Clock, Check } from 'lucide-react';
-import { darkLogo, otherData } from '../assets';
+import { darkLogo, logoWithBg, otherData } from '../assets';
 import { loadStripe } from '@stripe/stripe-js';
 import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import axios from "axios";
@@ -713,7 +713,7 @@ const Register = () => {
 
                 const redirectPath = data.data.user.userType === 'seller'
                     ? '/seller/dashboard'
-                    : '/bidder/dashboard';
+                    : '/bidder/auctions/active';
 
                 navigate(redirectPath);
                 toast.success(data.message);
@@ -758,8 +758,8 @@ const Register = () => {
             <div className="bg-gradient-to-b from-secondary/[0.03] to-transparent dark:from-white/[0.03] dark:to-transparent rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden border border-gray-200 dark:border-bg-primary-light">
                 <div className="pt-8 text-center flex flex-col items-center justify-center gap-3">
                     <Link to='/' className="mb-4 flex items-center gap-2">
-                        <img src={darkLogo} alt="logo" className="h-8 md:h-10" />
-                        <span className={`text-xl font-bold text-primary`}>JLTM</span>
+                        <img src={logoWithBg} alt="logo" className="h-8 md:h-8" />
+                        {/* <span className={`text-xl font-bold text-primary`}>JLTM</span> */}
                     </Link>
                     <p className="text-text-primary dark:text-text-primary-dark text-lg">Create your account</p>
                 </div>
@@ -1194,7 +1194,7 @@ const Register = () => {
                                 <label className='flex items-center gap-2'>
                                     <input
                                         type="checkbox"
-                                        {...register('preferences')}
+                                        {...register('preferences', { required: 'Accepting email and SMS updates is required for registration.' })}
                                         className="accent-primary dark:accent-primary-dark"
                                     />
                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">

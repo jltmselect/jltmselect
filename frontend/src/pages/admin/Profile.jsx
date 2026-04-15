@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import useCountryStates from "../../hooks/useCountryStates";
+import toast from "react-hot-toast";
 
 // Default preferences
 const defaultPreferences = {
@@ -129,6 +130,7 @@ function Profile() {
             formData.append('firstName', userData.firstName || '');
             formData.append('lastName', userData.lastName || '');
             formData.append('phone', userData.phone || '');
+            formData.append('username', userData.username || '');
 
             // Add address if it exists
             if (userData.address) {
@@ -159,11 +161,13 @@ function Profile() {
                 setIsEditing(false);
                 setImagePreview(null);
                 setImageFile(null);
+                toast.success('Profile updated successfully');
                 // You can add a toast notification here
             }
         } catch (err) {
             setError('Failed to update profile');
             console.error('Update profile error:', err);
+            toast.error(err?.response?.data?.message || 'Failed to update profile');
         } finally {
             setSaving(false);
         }
@@ -175,11 +179,13 @@ function Profile() {
             const { data } = await axiosInstance.put('/api/v1/users/change-password', passwords);
             if (data.success) {
                 // You can add a toast notification here
+                toast.success('Password changed successfully');
                 return true;
             }
         } catch (err) {
             setError('Failed to change password');
             console.error('Change password error:', err);
+            toast.error(err?.response?.data?.message || 'Failed to change password');
             return false;
         } finally {
             setSaving(false);
@@ -442,18 +448,20 @@ function Profile() {
                                                         <input
                                                             type="tel"
                                                             value={userData.phone || ''}
+                                                            disabled={!isEditing}
                                                             onChange={(e) => handleInputChange('phone', e.target.value)}
                                                             className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                         />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="block text-sm font-medium text-bg-primary-light">Username</label>
+                                                    <label className="block text-sm font-medium text-bg-primary-light">Display Name</label>
                                                     <input
                                                         type="text"
                                                         value={userData.username || ''}
-                                                        disabled
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                                        disabled={!isEditing}
+                                                        onChange={(e) => handleInputChange('username', e.target.value)}
+                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">

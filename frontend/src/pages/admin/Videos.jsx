@@ -154,8 +154,8 @@ const AdminVideos = () => {
                     <div className="pt-16 md:py-7">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-bold">Auction Videos</h1>
-                                <p className="text-gray-600 mt-1">Manage auction video content for bidders</p>
+                                <h1 className="text-3xl md:text-4xl font-bold">Showroom Videos</h1>
+                                <p className="text-gray-600 mt-1">Manage video content for bidders</p>
                             </div>
                             <button
                                 onClick={() => setShowAddModal(true)}
@@ -278,7 +278,7 @@ const AdminVideos = () => {
                                 <p className="text-gray-500 mb-6">
                                     {searchTerm
                                         ? "No videos match your search criteria"
-                                        : "Start by adding your first auction video"}
+                                        : "Start by adding your first showroom video"}
                                 </p>
                                 {!searchTerm && (
                                     <button
@@ -310,7 +310,7 @@ const AdminVideos = () => {
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                     <Youtube size={24} className="text-red-500" />
-                                    <h3 className="text-xl font-semibold text-gray-900">Add Auction Video</h3>
+                                    <h3 className="text-xl font-semibold text-gray-900">Add Showroom Video</h3>
                                 </div>
                                 <button
                                     onClick={() => {

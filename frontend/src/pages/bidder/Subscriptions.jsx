@@ -220,7 +220,7 @@ function Subscriptions() {
                                 <div className="flex items-center gap-3 mb-2">
                                     <CreditCard className="text-primary" size={32} />
                                     <h2 className="text-3xl md:text-4xl font-bold bg-primary bg-clip-text text-transparent">
-                                        My Subscriptions
+                                        My Membership
                                     </h2>
                                 </div>
                             </div>
@@ -280,7 +280,7 @@ function Subscriptions() {
                                             <p className="text-white text-2xl font-bold">
                                                 {formatCurrency(activeSubscription.amountPaid)}
                                             </p>
-                                            <p className="text-emerald-100 text-sm">Total Investment</p>
+                                            <p className="text-emerald-100 text-sm">Subscription Paid</p>
                                         </div>
                                     </div>
                                 </div>
@@ -332,6 +332,26 @@ function Subscriptions() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Features Included Section */}
+                    {activeSubscription && activeSubscription.features && activeSubscription.features.length > 0 && (
+                        <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
+                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                <Star size={18} className="text-primary" />
+                                Features Included in Your Plan
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {activeSubscription.features.map((feature, idx) => (
+                                    feature.included !== false && (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <CheckCircle size={14} className="text-green-500" />
+                                            <span className="text-sm text-gray-700">{feature.text}</span>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Subscription History */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -451,26 +471,6 @@ function Subscriptions() {
                             </div>
                         )}
                     </div>
-
-                    {/* Features Included Section */}
-                    {activeSubscription && activeSubscription.features && activeSubscription.features.length > 0 && (
-                        <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
-                            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                <Star size={18} className="text-primary" />
-                                Features Included in Your Plan
-                            </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {activeSubscription.features.map((feature, idx) => (
-                                    feature.included !== false && (
-                                        <div key={idx} className="flex items-center gap-2">
-                                            <CheckCircle size={14} className="text-green-500" />
-                                            <span className="text-sm text-gray-700">{feature.text}</span>
-                                        </div>
-                                    )
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </BidderContainer>
             </div>
             {/* Subscription Modal */}

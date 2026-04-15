@@ -182,11 +182,8 @@ function Videos() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold my-5">
-                                    Auction Videos
+                                    Showroom Videos
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-400">
-                                    Watch video content about auctions and more.
-                                </p>
                             </div>
                             <div className="mt-4 md:mt-0">
                                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -332,7 +329,7 @@ function Videos() {
                             <p className="text-gray-500 dark:text-gray-400 mb-6">
                                 {searchTerm
                                     ? "No videos match your search criteria"
-                                    : "No auction videos are available at the moment"}
+                                    : "No showroom videos are available at the moment"}
                             </p>
                             {searchTerm && (
                                 <button

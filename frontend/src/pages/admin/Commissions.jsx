@@ -22,7 +22,7 @@ const Commissions = () => {
             }
         } catch (err) {
             console.error('Fetch commission error:', err);
-            toast.error(err.response?.data?.message || "Failed to fetch commission settings");
+            toast.error(err.response?.data?.message || "Failed to fetch sales tax settings");
         } finally {
             setLoading(false);
         }
@@ -68,12 +68,12 @@ const Commissions = () => {
             });
 
             if (data.success) {
-                toast.success('Commission settings updated successfully');
+                toast.success('Tax settings updated successfully');
                 setCommission(data.data.commission);
             }
         } catch (err) {
-            console.error('Update commission error:', err);
-            toast.error(err.response?.data?.message || "Failed to update commission settings");
+            console.error('Update tax settings error:', err);
+            toast.error(err.response?.data?.message || "Failed to update tax settings");
         } finally {
             setSaving(false);
         }
@@ -96,9 +96,9 @@ const Commissions = () => {
                     <div className="max-w-full pt-16 pb-7 md:pt-0">
                         <div className="flex items-center gap-3 mb-2">
                             <Settings size={32} className="text-green-600" />
-                            <h2 className="text-3xl md:text-4xl font-bold">Commission Settings</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold">Sales Tax Settings</h2>
                         </div>
-                        <p className="text-gray-600">Configure global commission rate for all auctions</p>
+                        <p className="text-gray-600">Configure global sales tax rates for all auctions</p>
                     </div>
 
                     {loading ? (
@@ -111,7 +111,7 @@ const Commissions = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                                 {/* Header */}
                                 <div className="bg-gradient-to-r from-slate-900 to-slate-950 px-6 py-4">
-                                    <h3 className="text-lg font-semibold text-white">Global Commission Rate</h3>
+                                    <h3 className="text-lg font-semibold text-white">Sales Tax Rate</h3>
                                     <p className="text-gray-300 text-sm">This rate applies to all auction categories</p>
                                 </div>
 
@@ -119,7 +119,7 @@ const Commissions = () => {
                                 <div className="p-6 border-b border-gray-200 bg-gray-50">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <p className="text-sm text-gray-500 mb-1">Current Commission</p>
+                                            <p className="text-sm text-gray-500 mb-1">Current Sales Tax</p>
                                             <div className="flex items-baseline gap-2">
                                                 <span className="text-4xl font-bold">{getDisplayValue()}</span>
                                                 <span className="text-gray-500 text-sm">
@@ -145,7 +145,7 @@ const Commissions = () => {
                                     {/* Commission Type Selector */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            Commission Type
+                                            Type
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
@@ -227,7 +227,7 @@ const Commissions = () => {
                                         ) : (
                                             <>
                                                 <Save size={20} />
-                                                Save Commission Settings
+                                                Save Sales Tax Settings
                                             </>
                                         )}
                                     </button>
@@ -241,13 +241,13 @@ const Commissions = () => {
                                         <Crown size={24} className="text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-blue-800 mb-2">About Commission Settings</h3>
+                                        <h3 className="text-lg font-semibold text-blue-800 mb-2">About Sales Tax Settings</h3>
                                         <div className="space-y-2 text-sm text-blue-700">
-                                            <p>• <span className="font-medium">Fixed commission ($):</span> A fixed amount charged per transaction regardless of the sale price</p>
-                                            <p>• <span className="font-medium">Percentage commission (%):</span> A percentage of the final sale price (cannot exceed 100%)</p>
+                                            <p>• <span className="font-medium">Fixed tax ($):</span> A fixed amount charged per transaction regardless of the sale price</p>
+                                            <p>• <span className="font-medium">Percentage tax (%):</span> A percentage of the final sale price</p>
                                             <p>• This is a <span className="font-medium">global setting</span> that applies to all auction categories</p>
                                             <p>• Changes take effect immediately for all new auctions</p>
-                                            <p>• Existing auctions will use the commission rate that was set when they were created</p>
+                                            <p>• Existing auctions will use the sales tax rate that was set when they were created</p>
                                         </div>
                                     </div>
                                 </div>

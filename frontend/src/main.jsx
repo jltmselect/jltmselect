@@ -72,6 +72,7 @@ const BidderNotifications = lazy(() => import('./pages/bidder/Notifications'));
 const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
 const BidderSubscriptions = lazy(() => import('./pages/bidder/Subscriptions'));
 const BidderVideos = lazy(() => import('./pages/bidder/Videos'));
+const BidderPastAuctions = lazy(() => import('./pages/bidder/PastAuctions'));
 
 {/* Staff Pages */ }
 const StaffLayout = lazy(() => import('./pages/staff/Layout'));
@@ -444,6 +445,17 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             />
+
+                            {/* Bidder Past Auctions */}
+                            <Route
+                                path='/bidder/auctions/past'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderPastAuctions />
+                                    </Suspense>
+                                }
+                            />
+
                             {/* Bidder Profile */}
                             <Route
                                 path='/bidder/profile'

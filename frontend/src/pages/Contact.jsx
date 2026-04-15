@@ -79,7 +79,7 @@ function Contact() {
 
     return (
         <section
-            className="pt-10 md:pt-20 bg-bg-secondary dark:bg-bg-primary overflow-hidden"
+            className="pt-10 md:pt-16 bg-bg-secondary dark:bg-bg-primary overflow-hidden"
         >
             <div className="max-w-full mx-auto text-center px-6 py-16 bg-primary">
 

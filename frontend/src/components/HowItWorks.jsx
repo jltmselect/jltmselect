@@ -1,4 +1,4 @@
-import { UserCheck, Car, DollarSign, Tractor, Sofa } from "lucide-react";
+import { UserCheck, Car, DollarSign, Tractor, Sofa, Truck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 function HowItWorks() {
@@ -18,18 +18,18 @@ function HowItWorks() {
     const steps = [
         {
             icon: UserCheck,
-            title: "Create Your Account",
-            desc: "Register and purchase a subscription in minutes to access all auctions — and start bidding and make offers."
+            title: "Subscribe to JLTM Select",
+            desc: "Subscribe and instantly access 15% discounts, auctions, free storage, and much more."
         },
         {
             icon: Sofa,
-            title: "Find Your Furniture",
-            desc: "Browse thousands of listings across different categories. Filter by price, category, and auction type."
+            title: "Bid on Items",
+            desc: "Bid on items starting at 85% or more off retail price."
         },
         {
-            icon: DollarSign,
-            title: "Choose How to Buy",
-            desc: "Place a bid or make an offer, make the furniture yours in a way that works best for you."
+            icon: Truck,
+            title: "Pickup Winning Bids",
+            desc: "Pay Online, Free 5-day storage, Pickup items at the JLTM Costa Mesa showroom."
         }
     ];
 

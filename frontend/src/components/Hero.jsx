@@ -1,9 +1,11 @@
 import { heroImg, otherData } from "../assets";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRightIcon } from "lucide-react";
 import Container from "./Container";
 
 function Hero() {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center justify-start text-left text-pure-white">
 
@@ -27,28 +29,26 @@ function Hero() {
         <div className="flex items-center gap-2 mb-6"><div className="h-px w-6 md:w-12 bg-secondary"></div><span className="text-secondary text-xs md:text-sm font-medium uppercase tracking-[0.2em]">Exclusive Membership</span></div>
 
         {/* Main Heading */}
-        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide mb-6 font-medium">
-          Welcome to <span className="text-secondary">{otherData?.brandName}</span> Membership
+        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide mb-6 font-medium flex flex-col">
+          <span>Welcome to</span>
+          <span className="mt-1 md:mt-2">
+            <span className="text-secondary">{otherData?.brandName}</span> Select
+          </span>
         </h2>
 
         {/* Description */}
         <p className="text-lg text-pure-white font-light max-w-2xl leading-relaxed mb-6">
-          Your gateway to luxury furniture at extraordinary value. Enjoy exclusive daily auctions, premium in-store discounts, and behind-the-scenes content.
+          Your gateway to elegant furniture at extraordinary value. Enjoy exclusive auctions, 15% off unlimited in-store purchase, shorroom inventory videos and more.
         </p>
 
         <div className="flex items-center justify-start gap-5 uppercase">
-          <p className="inline-block">
-            <Link to="/register" className="text-pure-white font-medium transition duration-300 flex items-center gap-2 group relative text-sm md:text-base hover:underline">
-              <span className="">Join Now</span>
-              <ArrowRightIcon className="group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-          </p>
+          <button onClick={() => navigate('/register')} className="text-pure-black bg-pure-white py-2 px-5 rounded-md font-medium transition duration-200 flex items-center gap-2 group relative text-sm md:text-base hover:bg-pure-white/95">
+            Join Now / Login
+          </button>
 
-          <p className="inline-block">
-            <Link to="/auctions" className="text-pure-white font-medium transition duration-300 flex items-center gap-2 group relative text-sm md:text-base hover:underline">
-              <span className="">View Auctions</span>
-            </Link>
-          </p>
+          <a href="#benefits-section" className="text-pure-black bg-pure-white py-2 px-5 rounded-md font-medium transition duration-200 flex items-center gap-2 group relative text-sm md:text-base hover:bg-pure-white/95">
+            Benefits
+          </a>
         </div>
 
       </Container>

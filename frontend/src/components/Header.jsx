@@ -122,9 +122,9 @@ function Header() {
                     <img
                         src={logo}
                         alt="Logo"
-                        className={`h-10 md:h-12 z-10`}
+                        className={`h-8 md:h-10 z-10`}
                     />
-                    <span className={`text-xl font-bold text-pure-white ${!isScrolled && pathname === '/' ? '' : ''}`}>JLTM</span>
+                    {/* <span className={`text-xl font-bold text-pure-white ${!isScrolled && pathname === '/' ? '' : ''}`}>JLTM</span> */}
                 </Link>
 
                 {/* Navlinks for larger screens */}

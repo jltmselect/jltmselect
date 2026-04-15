@@ -42,6 +42,7 @@ export const updateProfile = async (req, res) => {
     const {
       firstName,
       lastName,
+      username,
       phone,
       countryCode,
       countryName,
@@ -52,9 +53,22 @@ export const updateProfile = async (req, res) => {
       country,
     } = req.body;
 
+    const existingUser = await User.findOne({
+      _id: { $ne: userId },
+      username: username,
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "This public auction display name is already taken",
+      });
+    }
+
     const updateData = {
       ...(firstName && { firstName }),
       ...(lastName && { lastName }),
+      ...(username && { username }),
       ...(phone && { phone }),
       ...(countryCode && { countryCode }),
       ...(countryName && { countryName }),

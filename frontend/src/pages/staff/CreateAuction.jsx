@@ -1207,9 +1207,9 @@ const CreateAuction = () => {
                                                         />
                                                     </div>
                                                     {errors.retailPrice && <p className="text-red-500 text-sm mt-1">{errors.retailPrice.message}</p>}
-                                                    <p className="text-sm text-primary mt-1">
+                                                    {/* <p className="text-sm text-primary mt-1">
                                                         Retail price is for staff's reference only and will not be shown to buyers.
-                                                    </p>
+                                                    </p> */}
                                                 </div>
 
                                                 {/* Allow Offers Toggle */}

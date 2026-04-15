@@ -129,6 +129,7 @@ function Profile() {
             formData.append('firstName', userData.firstName || '');
             formData.append('lastName', userData.lastName || '');
             formData.append('phone', userData.phone || '');
+            formData.append('username', userData.username || '');
 
             // Add address if it exists
             if (userData.address) {
@@ -452,8 +453,9 @@ function Profile() {
                                                     <input
                                                         type="text"
                                                         value={userData.username || ''}
-                                                        disabled
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                                                        disabled={!isEditing}
+                                                        onChange={(e) => handleInputChange('username', e.target.value)}
+                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                     />
                                                 </div>
                                                 <div className="space-y-1">

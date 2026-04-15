@@ -1,4 +1,4 @@
-import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare } from "lucide-react";
+import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare, DollarSign, CreditCard } from "lucide-react";
 import { BidConfirmationModal, BundleManifest, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lazy, Suspense, useRef, useState, useEffect } from "react";
@@ -582,6 +582,8 @@ function SingleAuction() {
                 {/* Image section */}
                 <ImageLightBox images={auction.photos} auctionType={auction?.auctionType} isReserveMet={auction.currentPrice >= auction.reservePrice} discountBadge={discountBadge} />
 
+                <h3 className="my-5 text-text-primary dark:text-text-primary-dark text-xl font-semibold">Retail Price: ${auction.retailPrice?.toLocaleString()}</h3>
+
                 <hr className="my-8 border-gray-200 dark:border-bg-primary-light" />
 
                 {/* Info section */}
@@ -604,7 +606,7 @@ function SingleAuction() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        {/* <div className="flex items-center gap-3">
                             <CalendarDays className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 text-text-secondary dark:text-text-secondary-dark" strokeWidth={1} />
                             <div>
                                 <p className="text-text-secondary dark:text-text-secondary-dark text-sm">Start Date</p>
@@ -612,19 +614,19 @@ function SingleAuction() {
                                     {new Date(auction.startDate).toLocaleDateString()}
                                 </p>
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className="flex items-center gap-3">
                             <Clock className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 text-text-secondary dark:text-text-secondary-dark" strokeWidth={1} />
                             <div>
                                 <p className="text-text-secondary dark:text-text-secondary-dark text-sm">End Date</p>
                                 <p className="text-base">
-                                    {new Date(auction.endDate).toLocaleDateString()}
+                                    {new Date(auction.endDate).toLocaleString()}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        {/* <div className="flex items-center gap-3">
                             <User className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 text-text-secondary dark:text-text-secondary-dark" strokeWidth={1} />
                             <div>
                                 <p className="text-text-secondary dark:text-text-secondary-dark text-sm">Seller</p>
@@ -640,7 +642,7 @@ function SingleAuction() {
                                     {auction.auctionType === 'reserve' ? 'Reserve Price' : 'Standard'}
                                 </p>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
@@ -1047,6 +1049,25 @@ function SingleAuction() {
                             )}
                         </>
                     )}
+
+                    {
+                        auction.status === 'sold' && auction?.winner?._id === user?._id && auction?.paymentStatus !== 'completed' && (
+                            <div className="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                                <button
+                                    onClick={() => navigate(`/checkout/${auction._id}`)}
+                                    className={`flex-1 flex items-center justify-center gap-2
+                                            bg-green-600 hover:bg-green-700 w-full text-white py-3 rounded-lg font-semibold transition-all`}
+                                >
+                                    <CreditCard size={18} />
+                                    {auction.paymentStatus === "failed" ? "Retry Payment" : "Pay Now"}
+
+                                </button>
+                                <p className="text-xs text-green-600 dark:text-green-400 mt-2.5">
+                                    Congratulations! You won. Please pay online now to secure your win. Your item is ready for pickup.
+                                </p>
+                            </div>
+                        )
+                    }
 
                     {/* Watchlist Count */}
                     {auction.watchlistCount > 0 && (

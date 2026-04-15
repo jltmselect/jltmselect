@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { Sparkles, ArrowRight, Crown } from "lucide-react";
+import { Sparkles, ArrowRight, Crown, Gavel } from "lucide-react";
 import Container from "./Container";
 import { useRef, useEffect, useState } from "react";
 
@@ -58,7 +58,7 @@ function CTA() {
                             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
                         }`}
                     >
-                        <Crown size={40} />
+                        <Gavel size={40} />
                     </span>
 
                     {/* Heading */}
@@ -76,7 +76,7 @@ function CTA() {
                             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
                         }`}
                     >
-                        Every day, a new luxury furniture piece goes up for auction — exclusively for JLTM members. Starting bids from just $1.
+                         Enjoy magnificent auction deals. Bidding starts at 85% or more off. Visit the store to view items in person. Subscribe to JLTM Select to bid online.
                     </p>
 
                     {/* CTA Button */}

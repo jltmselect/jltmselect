@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Building, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { darkLogo, otherData } from '../assets';
+import { darkLogo, logoWithBg, otherData } from '../assets';
 import { ForgotPasswordModal } from '../components';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -18,7 +18,11 @@ const Login = () => {
 
     useEffect(() => {
         if (user) {
-            navigate(`/${user.userType}/profile`);
+            if(user?.userType === 'bidder'){
+                navigate(`/${user.userType}/auctions/active`);
+            }else{
+                navigate(`/${user.userType}/profile`);
+            }
         }
     }, [user]);
 
@@ -43,7 +47,11 @@ const Login = () => {
 
             if (data && data.success) {
                 toast.success(data.message);
-                navigate(`/${data.userType}/profile`);
+                if(data?.userType === 'bidder'){
+                    navigate(`/bidder/auctions/active`);
+                }else{
+                    navigate(`/${data.userType}/profile`);
+                }
             }
         } catch (error) {
             toast.error(error?.response?.data?.message);
@@ -60,8 +68,8 @@ const Login = () => {
                 {/* Header */}
                 <div className="pt-8 text-center flex flex-col items-center justify-center gap-3">
                     <Link to='/' className="mb-4 flex items-center gap-2">
-                        <img src={darkLogo} alt="logo" className="h-8 md:h-10" />
-                        <span className={`text-xl font-bold text-primary`}>JLTM</span>
+                        <img src={logoWithBg} alt="logo" className="h-8 md:h-8" />
+                        {/* <span className={`text-xl font-bold text-primary`}>JLTM</span> */}
                     </Link>
                     <p className="text-text-primary dark:text-text-primary-dark text-lg">Sign in to continue</p>
                 </div>

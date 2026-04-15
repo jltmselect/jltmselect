@@ -220,7 +220,7 @@ const MakeOfferModal = ({
                             </div>
 
                             <div className="flex justify-between text-gray-700">
-                                <span>Service Fee</span>
+                                <span>Sales Tax</span>
                                 <span>{formatCurrency(serviceFee)}</span>
                             </div>
 

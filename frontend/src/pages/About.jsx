@@ -1,4 +1,4 @@
-import { Verified, Gavel, BadgeCheck, UserPlus, Clock, Heart, Shield, Users, Calendar, Cpu, CheckCircle, TrendingUp, Search, ShieldCheck, Wallet, Globe, BarChart3, Smile, Handshake, BadgeDollarSign, HandHelping, PackageCheck, UserCheck, Award } from "lucide-react";
+import { Verified, Gavel, BadgeCheck, UserPlus, Clock, Heart, Shield, Users, Calendar, Cpu, CheckCircle, TrendingUp, Search, ShieldCheck, Wallet, Globe, BarChart3, Smile, Handshake, BadgeDollarSign, HandHelping, PackageCheck, UserCheck, Award, Percent, Video, PackageCheckIcon, DollarSign, Mail, Warehouse } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Container, HowItWorksCard } from "../components";
 import { useEffect, useRef, useState } from "react";
@@ -7,39 +7,39 @@ import { about, about2, otherData } from "../assets";
 const features = [
     {
         number: "01",
-        icon: ShieldCheck,
-        title: "Verified Listings",
-        desc: "Every furniture piece is thoroughly inspected to ensure quality and authenticity. Bid with confidence knowing exactly what you're getting.",
+        icon: Percent,
+        title: "15% Instant Discounts",
+        desc: "Get 15% off every time you shop in-store.",
     },
     {
         number: "02",
         icon: Gavel,
-        title: "Live Auctions",
-        desc: "Experience the thrill of real-time bidding with instant outbid alerts and countdown timers — the excitement of the auction floor from anywhere.",
+        title: "Auctions",
+        desc: "Experience the thrill of real-time bidding. Each item bidding starts at 85% off MSRP or more. The highest bidder wins. Winning bid pays as soon as the auction is over. Preview and pick up winning bid items at our Costa Mesa showroom.",
     },
     {
         number: "03",
-        icon: Wallet,
-        title: "No Commission Fees",
-        desc: "Unlike traditional auction houses, we don't charge any commission. What you bid is what you pay — simple, transparent, and fair.",
+        icon: Video,
+        title: "Exclusive Showroom Videos",
+        desc: "Exclusive online weekly video updates. See exactly what is on the floor in our showroom each week with exclusive access to our showroom floor inventory video.",
     },
     {
         number: "04",
-        icon: Globe,
-        title: "Nationwide Service",
-        desc: "Serving furniture enthusiasts across all 50 states. Find premium pieces and pick them up in-store with white-glove service.",
+        icon: Warehouse,
+        title: "7 Days Free Storage",
+        desc: "Get 7 days of free storage on items purchased or won during an auction.",
     },
     {
         number: "05",
-        icon: Award,
-        title: "Membership Perks",
-        desc: "Join our exclusive membership to access daily auctions, in-store discounts, and behind-the-scenes content. Your key to luxury furniture.",
+        icon: DollarSign,
+        title: "$5 Storage Fees",
+        desc: "After your 7 days of free storage get $5 storage fee per item per day.",
     },
     {
         number: "06",
-        icon: Smile,
-        title: "Customer Satisfaction",
-        desc: "From auction win to in-store pickup, our dedicated team ensures every detail is handled with care. Your satisfaction is our priority.",
+        icon: Mail,
+        title: "Special Delivery",
+        desc: "Get special, exclusive insight into some of JLTM's deliveries sent to your email.",
     },
 ];
 
@@ -119,7 +119,7 @@ function About() {
     }, []);
 
     return (
-        <section className="pt-10 md:pt-12 max-w-full bg-bg-secondary dark:bg-bg-primary">
+        <section className="pt-10 md:pt-10 max-w-full bg-bg-secondary dark:bg-bg-primary">
             <div className="bg-gray-50 dark:bg-bg-primary">
                 <section
                     ref={heroRef}
@@ -163,11 +163,11 @@ function About() {
 
                         {/* Description */}
                         <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-                            {otherData?.brandName || "Just Like the Models"} is more than a furniture store — it's a destination for those who appreciate exceptional design and craftsmanship. Our JLTM Membership brings this luxury experience into an exclusive community.
+                            {otherData?.brandName || "Just Like the Model"} is more than a furniture store, it's a destination for those who appreciate exceptional design and craftsmanship. Our {otherData?.brandName} Select subscription membership brings our luxury experience into an exclusive community.
                         </p>
 
                         <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-                            As a member, you gain access to daily auctions featuring premium furniture pieces, a one-time in-store discount, and exclusive behind-the-scenes content through our "In The Store" gallery.
+                            As a member, you gain access to exclusive auctions featuring premium pieces, 15% in-store discounts, and exclusive weekly previews of what is on the showroom floor.
                         </p>
                     </div>
 
@@ -228,11 +228,11 @@ function About() {
 
                         {/* Description */}
                         <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-                            Every day, we curate a single luxury furniture piece and list it for auction exclusively for our members. Bidding starts at just $1, and the highest bidder at close wins.
+                            We curate a single auction piece and list it for auction exclusively for our {otherData?.brandName || "Just Like the Model"} Select members. Bidding always starts at 85% or more off MSRP, and the highest bidder at close wins.
                         </p>
 
                         <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-                            Winners pick up their items in-store, where our team ensures every detail of the experience is handled with care. It's luxury, made accessible.
+                            Winners pay online and pick up their items in-store, where our team ensures every detail of the experience is handled with care. It's luxury, made accessible.
                         </p>
                     </div>
                 </div>
@@ -248,11 +248,11 @@ function About() {
                     <div className="max-w-full mx-auto">
                         {/* Heading */}
                         <div className="text-left mb-8">
-                            <p className="text-text-secondary dark:text-text-secondary-dark font-semibold tracking-widest uppercase text-sm">
+                            {/* <p className="text-text-secondary dark:text-text-secondary-dark font-semibold tracking-widest uppercase text-sm">
                                 Why Choose Us
-                            </p>
+                            </p> */}
                             <h2 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-text-primary-dark mt-2">
-                                Trade Smarter, Not Harder
+                                {otherData?.brandName || "Just Like the Model"} Select
                             </h2>
                         </div>
 

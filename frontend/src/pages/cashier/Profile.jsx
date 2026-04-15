@@ -61,6 +61,7 @@ function Profile() {
             formData.append('firstName', userData.firstName || '');
             formData.append('lastName', userData.lastName || '');
             formData.append('phone', userData.phone || '');
+            formData.append('username', userData.username || '');
             if (imageFile) formData.append('image', imageFile);
 
             const { data } = await axiosInstance.put('/api/v1/users/profile', formData, {
@@ -347,8 +348,9 @@ function Profile() {
                                         <input
                                             type="text"
                                             value={userData?.username || ""}
-                                            disabled
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                                            onChange={(e) => handleInputChange("username", e.target.value)}
+                                            disabled={!isEditing}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                         />
                                     </div>
 

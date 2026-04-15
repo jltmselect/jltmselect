@@ -271,12 +271,22 @@ function Home() {
                                     )}
 
                                     {/* View More button section */}
-                                    {auctions.length > 0 && (
+                                    {/* {auctions.length > 0 && (
                                         <button
+                                            id="benefits-section"
                                             onClick={handleLoadByStatus}
                                             className="px-8 py-3 bg-bg-primary dark:bg-bg-secondary text-pure-white dark:text-pure-black font-medium rounded-lg hover:bg-bg-primary/90 dark:hover:bg-bg-secondary/90 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 mt-10 mx-auto"
                                         >
                                             View More
+                                        </button>
+                                    )} */}
+                                    {auctions.length > 0 && (
+                                        <button
+                                            id="benefits-section"
+                                            onClick={handleLoadByStatus}
+                                            className=" bg-bg-primary dark:bg-bg-secondary text-pure-white dark:text-pure-black font-medium rounded-lg hover:bg-bg-primary/90 dark:hover:bg-bg-secondary/90 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 mt-10 mx-auto"
+                                        >
+                                            {/* View More */}
                                         </button>
                                     )}
                                 </>
@@ -349,6 +359,7 @@ function Home() {
                                     Purchase a subscription plan to start viewing/bidding on auctions
                                 </p>
                                 <button
+                                    id="benefits-section"
                                     onClick={() => setShowSubscriptionModal(true)}
                                     className="inline-block bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold transition-all"
                                 >
@@ -366,16 +377,6 @@ function Home() {
                 />
             )}
 
-            {/* Who we are section */}
-            {/* <Suspense fallback={<LoadingSpinner />}>
-                <About />
-            </Suspense> */}
-
-            {/* Core platform features */}
-            {/* <Suspense fallback={<LoadingSpinner />}>
-                <CorePlatformFeatures />
-            </Suspense> */}
-
             {/* Auction work flow */}
             <Suspense fallback={<LoadingSpinner />}>
                 <AuctionWorkflow />
@@ -392,11 +393,9 @@ function Home() {
             </Suspense>
 
             {/* Testimonials */}
-            {/* <Container> */}
-            <Suspense fallback={<LoadingSpinner />}>
+            {/* <Suspense fallback={<LoadingSpinner />}>
                 <TestimonialSection />
-            </Suspense>
-            {/* </Container> */}
+            </Suspense> */}
 
             <CTA />
         </>

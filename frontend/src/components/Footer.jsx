@@ -94,17 +94,17 @@ function Footer() {
                 <div className='flex flex-wrap justify-between gap-12 md:gap-6'>
                     <div className='max-w-80 relative z-20'>
                         <Link to='/' className="z-50 mb-4 flex items-center gap-2">
-                            <img src={logo} alt="logo" className="h-10 md:h-12" />
-                            <span className={`text-xl font-bold text-pure-white`}>{otherData?.brandName}</span>
+                            <img src={logo} alt="logo" className="h-8 md:h-10" />
+                            {/* <span className={`text-xl font-bold text-pure-white`}>{otherData?.brandName}</span> */}
                         </Link>
                         <p className='text-bg-secondary-dark/80'>
                             Premium membership for luxury furniture enthusiasts. Experience exclusive auctions and in-store benefits.
                         </p>
                         <div className='flex items-center gap-3 mt-4'>
-                            <Link to="#" target="_blank" className="text-bg-secondary-dark/80 hover:text-white transition-colors">
+                            <Link to="https://www.instagram.com/justlikethemodel" target="_blank" className="text-bg-secondary-dark/80 hover:text-white transition-colors">
                                 <Instagram strokeWidth={1.25} />
                             </Link>
-                            <Link to="#" target="_blank" className="text-bg-secondary-dark/80 hover:text-white transition-colors">
+                            <Link to="https://www.facebook.com/JustLikeTheModel" target="_blank" className="text-bg-secondary-dark/80 hover:text-white transition-colors">
                                 <Facebook strokeWidth={1.25} />
                             </Link>
                         </div>
@@ -174,7 +174,7 @@ function Footer() {
                         </p>
                         <ul className='mt-3 flex flex-col gap-2'>
                             <li className="flex items-center gap-2">
-                                <MapPin size={18} className="text-bg-secondary-dark/80" />
+                                <MapPin size={18} className="text-bg-secondary-dark/80 flex-shrink-0" />
                                 <p
                                     className="text-bg-secondary-dark/80 hover:text-white transition-colors"
                                 >

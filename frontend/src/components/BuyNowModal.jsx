@@ -140,9 +140,13 @@ const BuyNowModal = ({ isOpen, onClose, auction, loading: externalLoading, isGiv
         }).format(amount);
     };
 
+    // const total = isGiveaway
+    //     ? 0
+    //     : Number(auction?.buyNowPrice || 0) + Number(serviceFee);
+    
     const total = isGiveaway
         ? 0
-        : Number(auction?.buyNowPrice || 0) + Number(serviceFee);
+        : Number(auction?.buyNowPrice || 0);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
@@ -201,12 +205,12 @@ const BuyNowModal = ({ isOpen, onClose, auction, loading: externalLoading, isGiv
                                 </span>
                             </div>
 
-                            <div className="flex justify-between text-gray-700 text-sm">
+                            {/* <div className="flex justify-between text-gray-700 text-sm">
                                 <span>Sales Tax</span>
                                 <span className="font-semibold">
                                     {formatCurrency(serviceFee)}
                                 </span>
-                            </div>
+                            </div> */}
 
                             <div className="border-t pt-2 flex justify-between text-base font-bold text-green-600">
                                 <span>Total to Pay</span>

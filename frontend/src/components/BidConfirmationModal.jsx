@@ -80,7 +80,8 @@ const BidConfirmationModal = forwardRef((props, ref) => {
         }).format(amount);
     };
 
-    const total = Number(bidAmount) + Number(serviceFee);
+    // const total = Number(bidAmount) + Number(serviceFee);
+    const total = Number(bidAmount);
 
     // Calculate deposit amount if needed
     const getDepositAmount = () => {
@@ -139,12 +140,12 @@ const BidConfirmationModal = forwardRef((props, ref) => {
                                     {formatCurrency(bidAmount)}
                                 </td>
                             </tr>
-                            <tr>
+                            {/* <tr>
                                 <td className="py-2 text-gray-600">Sales Tax:</td>
                                 <td className="py-2 text-right text-gray-900">
                                     {formatCurrency(serviceFee)}
                                 </td>
-                            </tr>
+                            </tr> */}
 
                             {/* ===== NEW: Show deposit row if needed ===== */}
                             {needsDeposit && (

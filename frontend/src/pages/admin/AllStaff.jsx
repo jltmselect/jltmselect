@@ -121,7 +121,7 @@ const AllStaff = () => {
             manage_categories: "Categories",
             manage_videos: "Videos",
             manage_inquiries: "Inquiries",
-            manage_commissions: "Commissions",
+            manage_commissions: "Sales Tax",
             manage_admins: "Staff",
         };
 

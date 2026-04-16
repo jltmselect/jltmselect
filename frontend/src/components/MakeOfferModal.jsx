@@ -71,7 +71,8 @@ const MakeOfferModal = ({
         }).format(amount);
     };
 
-    const total = Number(offerAmount || 0) + Number(serviceFee);
+    // const total = Number(offerAmount || 0) + Number(serviceFee);
+    const total = Number(offerAmount || 0);
     const isInvalidOffer = !offerAmount || parseFloat(offerAmount) < auction?.startPrice;
 
     // Calculate deposit amount if needed
@@ -219,10 +220,10 @@ const MakeOfferModal = ({
                                 <span>{formatCurrency(offerAmount)}</span>
                             </div>
 
-                            <div className="flex justify-between text-gray-700">
+                            {/* <div className="flex justify-between text-gray-700">
                                 <span>Sales Tax</span>
                                 <span>{formatCurrency(serviceFee)}</span>
-                            </div>
+                            </div> */}
 
                             {needsDeposit && depositAmount > 0 && (
                                 <div className="flex justify-between text-purple-700">

@@ -39,7 +39,7 @@ const EditStaff = () => {
         { value: "manage_categories", label: "Manage Categories", icon: <Tags size={16} /> },
         { value: "manage_videos", label: "Manage Videos", icon: <Video size={16} /> },
         { value: "manage_inquiries", label: "Manage Inquiries", icon: <MessageSquare size={16} /> },
-        { value: "manage_commissions", label: "Manage Commissions", icon: <Settings size={16} /> },
+        { value: "manage_commissions", label: "Manage Sales Tax", icon: <Settings size={16} /> },
         { value: "manage_admins", label: "Manage Staff (Create/Edit)", icon: <Shield size={16} /> },
     ];
 

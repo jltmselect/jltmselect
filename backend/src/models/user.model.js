@@ -251,7 +251,7 @@ const userSchema = new Schema(
     },
     isEmailVerified: {
       type: Boolean,
-      default: true, //changed
+      default: false, //changed
     },
     isActive: {
       type: Boolean,

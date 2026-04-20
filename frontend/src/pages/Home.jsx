@@ -24,7 +24,7 @@ function Home() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('active'); // 'sold', 'active', 'approved'
-    const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+    const [viewMode, setViewMode] = useState("list"); // "grid" or "list"
 
     const {
         hasActiveSubscription,
@@ -162,19 +162,6 @@ function Home() {
                                                 <input
                                                     type="radio"
                                                     name="options"
-                                                    id="sold"
-                                                    className="hidden peer"
-                                                    checked={activeTab === 'sold'}
-                                                    onChange={() => handleTabChange('sold')}
-                                                />
-                                                <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-text-secondary-dark dark:text-text-secondary transition-colors duration-200 peer-checked:bg-secondary peer-checked:text-pure-white">
-                                                    Closed
-                                                </label>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="options"
                                                     id="approved"
                                                     className="hidden peer"
                                                     checked={activeTab === 'approved'}
@@ -182,6 +169,19 @@ function Home() {
                                                 />
                                                 <label htmlFor="approved" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-text-secondary-dark dark:text-text-secondary transition-colors duration-200 peer-checked:bg-secondary peer-checked:text-pure-white">
                                                     Upcoming
+                                                </label>
+                                            </div>
+                                            <div className="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="options"
+                                                    id="sold"
+                                                    className="hidden peer"
+                                                    checked={activeTab === 'sold'}
+                                                    onChange={() => handleTabChange('sold')}
+                                                />
+                                                <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-text-secondary-dark dark:text-text-secondary transition-colors duration-200 peer-checked:bg-secondary peer-checked:text-pure-white">
+                                                    Previous
                                                 </label>
                                             </div>
                                         </div>
@@ -314,19 +314,6 @@ function Home() {
                                                     Live
                                                 </label>
                                             </div>
-                                            {/* <div className="flex items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="options"
-                                                    id="sold"
-                                                    className="hidden peer"
-                                                    checked={activeTab === 'sold'}
-                                                    onChange={() => handleTabChange('sold')}
-                                                />
-                                                <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-text-secondary-dark dark:text-text-secondary transition-colors duration-200 peer-checked:bg-secondary peer-checked:text-pure-white">
-                                                    Closed
-                                                </label>
-                                            </div> */}
                                             <div className="flex items-center">
                                                 <input
                                                     type="radio"
@@ -340,6 +327,19 @@ function Home() {
                                                     Upcoming
                                                 </label>
                                             </div>
+                                            {/* <div className="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="options"
+                                                    id="sold"
+                                                    className="hidden peer"
+                                                    checked={activeTab === 'sold'}
+                                                    onChange={() => handleTabChange('sold')}
+                                                />
+                                                <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-text-secondary-dark dark:text-text-secondary transition-colors duration-200 peer-checked:bg-secondary peer-checked:text-pure-white">
+                                                    Previous
+                                                </label>
+                                            </div> */}
                                         </div>
                                     </div>
                                 </div>

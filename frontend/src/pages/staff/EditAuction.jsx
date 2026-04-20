@@ -1903,7 +1903,7 @@ const EditAuction = () => {
                                             </div>
                                         </div>
 
-                                        <div className="mb-6">
+                                        {/* <div className="mb-6">
                                             <label htmlFor="termsAgreed" className="flex items-start">
                                                 <input
                                                     type="checkbox"
@@ -1916,7 +1916,7 @@ const EditAuction = () => {
                                                 </span>
                                             </label>
                                             {errors.termsAgreed && <p className="text-red-500 text-sm mt-1">{errors.termsAgreed.message}</p>}
-                                        </div>
+                                        </div> */}
                                     </div>
                                 )}
 

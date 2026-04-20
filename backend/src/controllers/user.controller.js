@@ -347,11 +347,21 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    createdUser.emailVerificationToken = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+
+    createdUser.emailVerificationExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
     // ============ STEP 5: Generate Tokens and Respond ============
     await generateTokensAndRespond(createdUser, req, res, "Registration successful");
 
     // Send emails in background (don't await)
-    welcomeEmail(createdUser, null).catch(error => console.error("Welcome email error:", error));
+    welcomeEmail(createdUser, verificationToken).catch(error => console.error("Welcome email error:", error));
 
     try {
       const adminUsers = await User.find({ userType: "admin" });

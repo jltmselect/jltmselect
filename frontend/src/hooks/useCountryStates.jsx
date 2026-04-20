@@ -1,16 +1,21 @@
 function useCountryStates() {
     const useCountries = async () => {
         try {
-            const countriesResponse = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2');
-            const countriesData = await countriesResponse.json();
+            // const countriesResponse = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2');
+            // const countriesData = await countriesResponse.json();
 
-            const countries = countriesData.map(country => ({
-                name: country.name.common,
-                code: country.cca2,
+            // const countries = countriesData.map(country => ({
+            //     name: country.name.common,
+            //     code: country.cca2,
+            //     states: []
+            // })).sort((a, b) => a.name.localeCompare(b.name));
+
+            // return countries;
+            return [{
+                name: 'United States',
+                code: 'US',
                 states: []
-            })).sort((a, b) => a.name.localeCompare(b.name));
-
-            return countries;
+            }]
         } catch (error) {
             console.error('Error fetching countries:', error);
             return [];

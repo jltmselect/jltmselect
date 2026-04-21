@@ -201,7 +201,7 @@ function Contact() {
                                 </div>
 
                                 {/* User Type */}
-                                <div>
+                                {/* <div>
                                     <label className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-3 block">
                                         I am a
                                     </label>
@@ -222,7 +222,7 @@ function Contact() {
                                             </label>
                                         ))}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Message */}
                                 <div>

@@ -12,21 +12,21 @@ const steps = [
     },
     {
         icon: Percent,
-        title: "20% In-Store Discount",
+        title: "15% In-Store Discount",
         description:
-            "One-time 20% discount on any in-store purchase. Valid for 30 days from membership activation.",
+            "One-time 15% discount on any in-store purchase. Valid on everything except clearance items.",
     },
     {
         icon: Video,
-        title: "In The Store Access",
+        title: "See What's In Store",
         description:
             "Members-only video gallery with behind-the-scenes looks at our finest luxury furniture collections.",
     },
     {
         icon: Shield,
-        title: "Member ID",
+        title: "5 Days Storage",
         description:
-            `Your unique ${otherData?.brandName} member ID unlocks exclusive in-store experiences and VIP treatment.`,
+            `Get 5 days of free storage for items purchased in store or via the auction.`,
     },
 ];
 

@@ -49,7 +49,7 @@ function Home() {
     };
 
     const tabDescriptions = {
-        'active': 'Curated collections. Clear offers. Verified listings. — Discover furniture that stands out.',
+        'active': 'Auctions start at 85% or more below MSRP.',
         'sold': 'Informed bidding begins here — Browse sold items and past listings to understand value, and make your next move wisely.',
         'approved': 'Preview before you bid. — Browse upcoming furniture auctions and plan your bidding strategy around the pieces you can\'t miss.'
     };
@@ -265,8 +265,7 @@ function Home() {
                                     ) : (
                                         <div className="text-center py-16 text-text-secondary dark:text-text-secondary-dark">
                                             <Filter size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                                            <p className="text-lg font-medium">No auctions found</p>
-                                            <p className="text-sm">Try adjusting your filters or search terms</p>
+                                            <p className="text-lg font-medium">Join to reveal today's auction</p>
                                         </div>
                                     )}
 

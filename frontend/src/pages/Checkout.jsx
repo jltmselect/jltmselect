@@ -502,16 +502,14 @@ const CheckoutContent = () => {
                                         {auction.commissionAmount > 0 && (
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Sales Tax</span>
-                                                {/* <span className="font-medium">{formatCurrency(auction.commissionAmount)}</span> */}
-                                                <span className="font-medium">{auction.commissionAmount}</span>
+                                                <span className="font-medium">{formatCurrency(auction.commissionAmount)}</span>
                                             </div>
                                         )}
 
                                         <div className="border-t border-gray-200 pt-2 mt-2">
                                             <div className="flex justify-between font-bold text-lg">
                                                 <span>Total</span>
-                                                {/* <span className="text-primary">{formatCurrency(calculateTotal())}</span> */}
-                                                <span className="text-primary">{calculateTotal()}</span>
+                                                <span className="text-primary">{formatCurrency(calculateTotal())}</span>
                                             </div>
                                         </div>
                                     </div>

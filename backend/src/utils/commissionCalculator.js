@@ -32,8 +32,7 @@ export const calculateCommission = async (finalPrice) => {
     return {
       commissionType: commission.commissionType,
       commissionValue: commission.commissionValue,
-      // commissionAmount: Math.round(commissionAmount * 100) / 100, // Round to 2 decimals
-      commissionAmount: commissionAmount,
+      commissionAmount: Math.round(commissionAmount * 100) / 100, // Round to 2 decimals
     };
   } catch (error) {
     console.error("Error calculating commission:", error);

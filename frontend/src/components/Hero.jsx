@@ -38,7 +38,7 @@ function Hero() {
 
         {/* Description */}
         <p className="text-lg text-pure-white font-light max-w-2xl leading-relaxed mb-6">
-          Your gateway to elegant furniture at extraordinary value. Enjoy exclusive auctions, 15% off unlimited in-store purchase, shorroom inventory videos and more.
+          Your gateway to elegant furniture at extraordinary value. Enjoy exclusive auctions, 15% off unlimited in-store purchase, showroom inventory videos and more.
         </p>
 
         <div className="flex items-center justify-start gap-5">

@@ -323,7 +323,7 @@ function Dashboard() {
                                 {/* Quick Actions */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                         <Link to="/staff/users" className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center hover:bg-blue-100 transition-colors group">
                                             <Users size={24} className="mx-auto mb-2 text-blue-600 group-hover:scale-110 transition-transform" />
                                             <p className="text-sm font-medium text-blue-800">User Management</p>
@@ -336,10 +336,10 @@ function Dashboard() {
                                             <Hand size={24} className="mx-auto mb-2 text-purple-600 group-hover:scale-110 transition-transform" />
                                             <p className="text-sm font-medium text-purple-800">Offers</p>
                                         </Link>
-                                        <Link to="/staff/comments" className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-100 transition-colors group">
+                                        {/* <Link to="/staff/comments" className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-100 transition-colors group">
                                             <MessageCircle size={24} className="mx-auto mb-2 text-gray-600 group-hover:scale-110 transition-transform" />
                                             <p className="text-sm font-medium text-gray-800">Comments</p>
-                                        </Link>
+                                        </Link> */}
                                     </div>
                                 </div>
                             </div>

@@ -904,7 +904,8 @@ function SingleAuction() {
                                             <button
                                                 type="button"
                                                 disabled={bidding}
-                                                onClick={() => handleOpenBidModal(bidAmount)}
+                                                // onClick={() => handleOpenBidModal(bidAmount)}
+                                                onClick={(e) => handleConfirmBid(e)}
                                                 className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-3 px-6 cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
                                             >
                                                 {bidding ? (

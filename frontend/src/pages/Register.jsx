@@ -461,7 +461,7 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
 
 // Main Register component
 const Register = () => {
-    const [currentStep, setCurrentStep] = useState(2);
+    const [currentStep, setCurrentStep] = useState(1);
     const [verifiedPhone, setVerifiedPhone] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);

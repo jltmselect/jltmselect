@@ -257,7 +257,7 @@ function SubscriptionSection() {
                                         </h3>
 
                                         {/* Duration */}
-                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-4">
+                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark font-bold mb-4">
                                             {plan.duration}
                                         </p>
 

@@ -166,7 +166,7 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
                                                 <span className="text-3xl font-bold text-black dark:text-pure-white">
                                                     ${plan.price.amount}
                                                 </span>
-                                                <span className="text-text-secondary">
+                                                <span className="text-text-secondary font-bold">
                                                     /{plan.duration.value} {plan.duration.unit}
                                                     {plan.duration.value > 1 ? 's' : ''}
                                                 </span>

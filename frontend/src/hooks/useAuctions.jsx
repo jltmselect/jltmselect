@@ -19,13 +19,13 @@ export const useAuctions = () => {
         sortBy: 'createdAt',
         sortOrder: 'desc',
         // Add all the new car filters
-        make: '',
-        model: '',
-        yearMin: '',
-        yearMax: '',
-        transmission: '',
-        fuelType: '',
-        condition: '',
+        // make: '',
+        // model: '',
+        // yearMin: '',
+        // yearMax: '',
+        // transmission: '',
+        // fuelType: '',
+        // condition: '',
         auctionType: '',
         allowOffers: ''
     });

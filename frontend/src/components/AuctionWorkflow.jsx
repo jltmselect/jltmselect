@@ -8,25 +8,25 @@ const steps = [
         icon: Gavel,
         title: "Daily Auctions",
         description:
-            "Exclusive members-only auction every day on luxury furniture pieces at incredible starting prices.",
+            "Exclusive members-only auction every day on curated furniture pieces at incredible starting prices.",
     },
     {
         icon: Percent,
         title: "15% In-Store Discount",
         description:
-            "One-time 15% discount on any in-store purchase. Valid on everything except clearance items.",
+            "Enjoy 15% off storewide every day (clearance items not included).",
     },
-    {
-        icon: Video,
-        title: "See What's In Store",
-        description:
-            "Members-only video gallery with behind-the-scenes looks at our finest luxury furniture collections.",
-    },
+    // {
+    //     icon: Video,
+    //     title: "See What's In Store",
+    //     description:
+    //         "Members-only video gallery with behind-the-scenes looks at our finest luxury furniture collections.",
+    // },
     {
         icon: Shield,
-        title: "5 Days Storage",
+        title: "7 Days Storage",
         description:
-            `Get 5 days of free storage for items purchased in store or via the auction.`,
+            `Get 7 days of free storage for items purchased in store or via the auction.`,
     },
 ];
 
@@ -65,7 +65,7 @@ function AuctionWorkflow() {
                     {/* Workflow */}
                     <div className="relative">
 
-                        <div className="grid gap-12 lg:grid-cols-4">
+                        <div className="grid gap-12 lg:grid-cols-3">
 
                             {steps.map((step, index) => {
                                 const Icon = step.icon;

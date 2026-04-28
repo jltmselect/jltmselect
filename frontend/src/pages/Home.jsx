@@ -54,7 +54,7 @@ function Home() {
         'approved': 'Preview before you bid. — Browse upcoming furniture auctions and plan your bidding strategy around the pieces you can\'t miss.'
     };
 
-    const fetchAuctions = async (tab = activeTab, category = null, limit = 4, sortBy = 'highestBid') => {
+    const fetchAuctions = async (tab = activeTab, category = null, limit = 20, sortBy = 'highestBid') => {
         setLoading(true);
         try {
             const status = tabStatusMap[tab];

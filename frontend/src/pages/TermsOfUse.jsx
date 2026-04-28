@@ -86,14 +86,18 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-3">3. Account Responsibility</h2>
                             <p className="text-text-primary dark:text-text-primary-dark mb-2">You are responsible for:</p>
                             <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5 mb-3">
-                                <li>Maintaining the confidentiality of your account credentials</li>
-                                <li>All activity conducted under your account</li>
-                                <li>Ensuring your payment method is valid and up to date</li>
+                                <li>Maintaining the confidentiality of your account credentials.</li>
+                                <li>All activity conducted under your account.</li>
+                                <li>Ensuring you have your government-issued photo ID present at the time of in-store purchase to be eligible for your discount and verify your pickup for any and all auction winnings. Photo ID must match the user's name on the account.</li>
+                                <li>Showing up in person to utilize your discount. Only one subscriber may use this account and must be present.</li>
+                                <li>Ensuring your payment method is valid and up to date.</li>
+                                <li>Collecting your winnings from our showroom.</li>
                             </ul>
                             <p className="text-text-primary dark:text-text-primary-dark mb-2">We may suspend or terminate accounts for:</p>
                             <ul className="text-text-secondary dark:text-text-secondary-dark space-y-2 list-disc pl-5">
                                 <li>Fraudulent activity</li>
                                 <li>Non-payment</li>
+                                <li>Sharing of the account</li>
                                 <li>Violation of these Terms</li>
                             </ul>
                         </div>

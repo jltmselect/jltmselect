@@ -332,7 +332,7 @@ function Profile() {
         { id: "personal", label: "Personal Info", icon: <User size={18} /> },
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "verification", label: "ID Verification", icon: <FileText size={18} /> },
-        { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
+        { id: "preferences", label: "Alert Options", icon: <Bell size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 

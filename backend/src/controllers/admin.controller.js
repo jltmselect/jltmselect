@@ -342,6 +342,7 @@ export const getAllUsers = async (req, res) => {
         { lastName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { username: { $regex: search, $options: "i" } },
+        { referredBy: { $regex: search, $options: "i" } },
       ],
     };
 

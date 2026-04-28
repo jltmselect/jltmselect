@@ -340,7 +340,7 @@ function AllUsers() {
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder="Search users by name, email, or username..."
+                                        placeholder="Search users by name, email, username, or referrer..."
                                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -389,7 +389,7 @@ function AllUsers() {
                                             {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Status</th> */}
                                             {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th> */}
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred By</th>
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">

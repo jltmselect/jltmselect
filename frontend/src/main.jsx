@@ -64,6 +64,7 @@ const BidderLayout = lazy(() => import('./pages/bidder/Layout'));
 const BidderDashboard = lazy(() => import('./pages/bidder/Dashboard'));
 const Watchlist = lazy(() => import('./pages/bidder/Watchlist'));
 const ActiveAuctions = lazy(() => import('./pages/bidder/ActiveAuctions'));
+const UpcomingAuctions = lazy(() => import('./pages/bidder/UpcomingAuctions'));
 const MyBids = lazy(() => import('./pages/bidder/MyBids'));
 const MyOffers = lazy(() => import('./pages/bidder/MyOffers'));
 const WonAuctions = lazy(() => import('./pages/bidder/WonAuctions'));
@@ -406,12 +407,22 @@ createRoot(document.getElementById('root')).render(
                                 }
                             />
 
-                            {/* Bidder Watchlist */}
+                            {/* Bidder Active Auctions */}
                             <Route
                                 path='/bidder/auctions/active'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <ActiveAuctions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Bidder Upcoming Auctions */}
+                            <Route
+                                path='/bidder/auctions/upcoming'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <UpcomingAuctions />
                                     </Suspense>
                                 }
                             />
@@ -496,14 +507,14 @@ createRoot(document.getElementById('root')).render(
                             />
 
                             {/* Bidder Videos */}
-                            <Route
+                            {/* <Route
                                 path='/bidder/videos'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <BidderVideos />
                                     </Suspense>
                                 }
-                            />
+                            /> */}
                         </Route>
 
                         {/* Cashier Layout */}

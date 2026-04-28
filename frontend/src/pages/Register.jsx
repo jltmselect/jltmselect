@@ -115,7 +115,7 @@ const PlanSelectionStep = ({ selectedPlan, onPlanSelect, isLoading }) => {
             if (data.success) {
                 setPlans(data.data);
                 scrollTo({ top: 0, behavior: 'smooth' });
-                if(data.data.length > 0) {
+                if (data.data.length > 0) {
                     onPlanSelect(data.data[1]);
                 }
             }
@@ -461,7 +461,7 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
 
 // Main Register component
 const Register = () => {
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState(2);
     const [verifiedPhone, setVerifiedPhone] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -514,6 +514,7 @@ const Register = () => {
     });
 
     const password = watch('password');
+    const selectedState = watch('state');
 
     const handleUserTypeChange = (type) => {
         setUserType(type);
@@ -984,6 +985,11 @@ const Register = () => {
                                             {errors.state && (
                                                 <p className="text-red-500 text-sm mt-1 absolute">{errors.state.message}</p>
                                             )}
+                                            {(selectedState !== 'California' && selectedState !== '') && (
+                                                <p className='text-orange-500 text-sm mt-1'>
+                                                    Note: All items must be picked up in person at our Costa Mesa, California Showroom
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1050,20 +1056,20 @@ const Register = () => {
                                 <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">Referred By</h3>
 
                                 <div className="grid grid-cols-1">
-                                        <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
-                                            Full name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            {...register('referredBy', {
-                                                minLength: { value: 2, message: 'Referred by name must be at least 2 characters' }
-                                            })}
-                                            className="w-full p-3 border border-gray-300 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-secondary-darktext-bg-secondary-dark dark:focus:ring-gray-500 focus:border-transparent"
-                                            placeholder="Full name"
-                                        />
-                                        {errors.referredBy && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.referredBy.message}</p>
-                                        )}
+                                    <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
+                                        Full name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('referredBy', {
+                                            minLength: { value: 2, message: 'Referred by name must be at least 2 characters' }
+                                        })}
+                                        className="w-full p-3 border border-gray-300 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark rounded-lg focus:ring-2 focus:ring-secondary-darktext-bg-secondary-dark dark:focus:ring-gray-500 focus:border-transparent"
+                                        placeholder="Full name"
+                                    />
+                                    {errors.referredBy && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.referredBy.message}</p>
+                                    )}
                                 </div>
                             </div>
 

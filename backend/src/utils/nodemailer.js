@@ -918,7 +918,7 @@ const sendOutbidNotifications = async (
     const User = (await import("../models/user.model.js")).default;
     const users = await User.find({
       _id: { $in: biddersToNotify },
-      "preferences.outbidNotifications": true,
+      "preferences.emailUpdates": true,
     });
 
     if (users.length === 0) {
@@ -1110,7 +1110,7 @@ const sendAuctionWonEmail = async (auction) => {
                         <!-- Winner Announcement -->
                         <div class="winner-section">
                             <div class="winner-title">🎉 CONGRATULATIONS! YOU WON THE AUCTION</div>
-                            <p>You are the winning bidder for this item. Pay within 8 hours to secure your deal. If not paid, you may lose the deal and be subject to account suspension.</p>
+                            <p>You are the winning bidder for this item. Payment is expected at this time. Please be aware that if payment is not received within 24 hours, you will lose your item.</p>
                             <div class="winning-price">
                                 ${formatCurrency(totalAmount)}
                             </div>
@@ -1933,7 +1933,7 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
                         <div class="content">
                             <div class="confirmation-box">
                                 <div class="confirmation-title">✅ PAYMENT CONFIRMED</div>
-                                <p style="font-size: 18px; color: #155724;">Thank you for your payment, ${user?.firstName || user?.username}!</p>
+                                <p style="font-size: 18px; color: #155724;">Your item is now ready for pickup at Just Like The Model Showroom at 1585 Sunland Lane, Costa Mesa, CA 92626</p>
                             </div>
                             
                             <p>Dear <span class="highlight">${user?.firstName || user?.username}</span>,</p>

@@ -235,7 +235,17 @@ function SingleAuction() {
             return;
         }
 
-        if (!bidAmount || (parseFloat(bidAmount) <= auction.currentPrice && auction.bidCount > 0)) {
+        if (!bidAmount) {
+            toast.error(`Please enter an amount to bid`);
+            return;
+        }
+
+        if ((parseFloat(bidAmount) <= auction.currentPrice && auction.bidCount == 0)) {
+            toast.error(`Bid must be equal to or higher than current price: ${formatCurrency(auction.currentPrice)}`);
+            return;
+        }
+
+        if ((parseFloat(bidAmount) <= auction.currentPrice && auction.bidCount > 0)) {
             toast.error(`Bid must be higher than current price: ${formatCurrency(auction.currentPrice)}`);
             return;
         }
@@ -896,6 +906,11 @@ function SingleAuction() {
                                             <input
                                                 type="number"
                                                 value={bidAmount}
+                                                required
+                                                onInvalid={(e) => {
+                                                    e.preventDefault();
+                                                    toast.error("Please enter a bid amount");
+                                                }}
                                                 onChange={(e) => setBidAmount(e.target.value)}
                                                 className="py-3 px-5 w-full rounded-lg focus:outline-2 focus:outline-gray-400 dark:focus:outline-gray-500 border border-gray-200 dark:border-bg-primary-light bg-bg-secondary dark:bg-bg-primary text-text-primary dark:text-text-primary-dark"
                                                 placeholder={`Bid ${auction.bidCount > 0 ? formatCurrency(minBidAmount) : formatCurrency(auction.startPrice)} or higher`}
@@ -905,7 +920,7 @@ function SingleAuction() {
                                                 type="button"
                                                 disabled={bidding}
                                                 // onClick={() => handleOpenBidModal(bidAmount)}
-                                                onClick={(e) => handleConfirmBid(e)}
+                                                onClick={(e) => handleBid(e)}
                                                 className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-3 px-6 cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
                                             >
                                                 {bidding ? (

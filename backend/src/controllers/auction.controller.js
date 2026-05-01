@@ -1625,8 +1625,16 @@ export const placeBid = async (req, res) => {
 
     // Store previous highest bidder before placing new bid
     const previousHighestBidder = auction.currentBidder;
+    // const previousBidders = [
+    //   ...new Set(auction.bids.map((bid) => bid.bidder.toString())),
+    // ];
+
     const previousBidders = [
-      ...new Set(auction.bids.map((bid) => bid.bidder.toString())),
+      ...new Set(auction.bids
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by most recent
+        .slice(0, 5) // Take top 5 most recent bids
+        .map((bid) => bid.bidder.toString())
+      ),
     ];
 
     // Place bid using the model method

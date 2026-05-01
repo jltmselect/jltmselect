@@ -17,30 +17,30 @@ const features = [
         title: "Auctions",
         desc: "Experience the thrill of real-time bidding. Each item bidding starts at 85% off MSRP or more. The highest bidder wins. Winning bid pays as soon as the auction is over. Preview and pick up winning bid items at our Costa Mesa showroom.",
     },
+    // {
+    //     number: "03",
+    //     icon: Video,
+    //     title: "Exclusive Showroom Videos",
+    //     desc: "Exclusive online weekly video updates. See exactly what is on the floor in our showroom each week with exclusive access to our showroom floor inventory video.",
+    // },
     {
         number: "03",
-        icon: Video,
-        title: "Exclusive Showroom Videos",
-        desc: "Exclusive online weekly video updates. See exactly what is on the floor in our showroom each week with exclusive access to our showroom floor inventory video.",
-    },
-    {
-        number: "04",
         icon: Warehouse,
         title: "7 Days Free Storage",
         desc: "Get 7 days of free storage on items purchased or won during an auction.",
     },
-    {
-        number: "05",
-        icon: DollarSign,
-        title: "$5 Storage Fees",
-        desc: "After your 7 days of free storage get $5 storage fee per item per day.",
-    },
-    {
-        number: "06",
-        icon: Mail,
-        title: "Special Delivery",
-        desc: "Get special, exclusive insight into some of JLTM's deliveries sent to your email.",
-    },
+    // {
+    //     number: "05",
+    //     icon: DollarSign,
+    //     title: "$5 Storage Fees",
+    //     desc: "After your 7 days of free storage get $5 storage fee per item per day.",
+    // },
+    // {
+    //     number: "06",
+    //     icon: Mail,
+    //     title: "Special Delivery",
+    //     desc: "Get special, exclusive insight into some of JLTM's deliveries sent to your email.",
+    // },
 ];
 
 function About() {

@@ -38,7 +38,7 @@ function Hero() {
 
         {/* Description */}
         <p className="text-lg text-pure-white font-light max-w-2xl leading-relaxed mb-6">
-          Your gateway to the best of the Just Like the Model furniture collection, exclusive discounts, and more.
+          Your gateway to the best of the Just Like The Model furniture collection, exclusive discounts, and more.
         </p>
 
         <div className="flex items-center justify-start gap-5">

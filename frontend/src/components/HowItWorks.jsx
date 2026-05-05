@@ -29,7 +29,7 @@ function HowItWorks() {
         {
             icon: Truck,
             title: "Pickup Winning Bids",
-            desc: "Pay Online, Free 5-day storage, Pickup items at the JLTM Costa Mesa showroom."
+            desc: "Pay Online, Free 7-day storage, Pickup items at the JLTM Costa Mesa showroom."
         }
     ];
 

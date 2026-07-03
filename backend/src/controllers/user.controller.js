@@ -433,6 +433,49 @@ export const loginUser = async (req, res) => {
   }
 };
 
+export const validateEmailAndUsername = async (req, res) => {
+  try {
+    const { email, username } = req.body;
+
+    if (!email || !username) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and username are required",
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const userExistsWithEmail = await User.findOne({ email: normalizedEmail });
+    const userExistsWithUsername = await User.findOne({ username: username.trim() });
+
+    if (userExistsWithEmail ) {
+      return res.status(409).json({
+        success: false,
+        message: "User with this email already exists",
+      });
+    }
+
+    if (userExistsWithUsername) {
+      return res.status(409).json({
+        success: false,
+        message: "Username is already taken",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Email and username are available",
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during login",
+    });
+  }
+};
+
 // Logout Controller
 export const logoutUser = async (req, res) => {
   try {

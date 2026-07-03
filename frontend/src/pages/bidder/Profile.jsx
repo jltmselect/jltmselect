@@ -504,7 +504,7 @@ function Profile() {
                                                         type="text"
                                                         value={userData.firstName || ''}
                                                         onChange={(e) => handleInputChange('firstName', e.target.value)}
-                                                        disabled={!isEditing}
+                                                        disabled
                                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                     />
                                                 </div>
@@ -514,7 +514,7 @@ function Profile() {
                                                         type="text"
                                                         value={userData.lastName || ''}
                                                         onChange={(e) => handleInputChange('lastName', e.target.value)}
-                                                        disabled={!isEditing}
+                                                        disabled
                                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                                     />
                                                 </div>

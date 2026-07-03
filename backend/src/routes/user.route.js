@@ -12,6 +12,7 @@ import {
     resetPassword,
     updatePaymentMethod,
     uploadIdentification,
+    validateEmailAndUsername,
     verifyEmail,
 } from "../controllers/user.controller.js";
 
@@ -28,6 +29,7 @@ import { auth } from "../middlewares/auth.middleware.js";
 const userRouter = Router();
 
 // Public routes
+userRouter.post('/validate-email-username', validateEmailAndUsername);
 userRouter.post('/register', upload.single('identificationDocument'), registerUser);
 userRouter.post('/login', loginUser);
 userRouter.post('/refresh-token', refreshAccessToken);

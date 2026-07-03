@@ -11,6 +11,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from '../contexts/AuthContext';
 import useCountryStates from '../hooks/useCountryStates';
 import { OTP } from '../components';
+import axiosInstance from '../utils/axiosInstance';
 
 // countryCodes.js
 const countryCodes = [
@@ -461,7 +462,7 @@ const PhoneVerificationStep = ({ onVerified, initialPhone }) => {
 
 // Main Register component
 const Register = () => {
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState(2);
     const [verifiedPhone, setVerifiedPhone] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -584,6 +585,7 @@ const Register = () => {
     };
 
     const validateStep2 = async () => {
+        // First validate the form
         const isValid = await trigger([
             'email',
             'password',
@@ -600,10 +602,35 @@ const Register = () => {
             'preferences'
         ]);
 
-        if (isValid) {
-            setCurrentStep(3);
-        } else {
+        // If form validation fails, show error and return
+        if (!isValid) {
             toast.error('Please fill all required fields correctly');
+            return;
+        }
+
+        try {
+            const { data } = await axiosInstance.post(`${import.meta.env.VITE_DOMAIN_URL}/api/v1/users/validate-email-username`, {
+                email: watch('email'),
+                username: watch('username')
+            });
+
+            // Check if API returned success
+            if (!data.success) {
+                console.error('Validation error:', data.message);
+                toast.error(data.message || 'Validation failed');
+                setCurrentStep(2);
+                return;
+            }
+
+            // If everything is valid, proceed to next step
+            setCurrentStep(3);
+
+        } catch (error) {
+            console.error('Validation error:', error?.response?.data?.message || error.message);
+            // Show the error message from the backend
+            const errorMessage = error?.response?.data?.message || 'An error occurred during validation';
+            toast.error(errorMessage);
+            setCurrentStep(2);
         }
     };
 
@@ -1217,15 +1244,15 @@ const Register = () => {
                             </div>
 
                             <div>
-                                <label className='flex items-center gap-2'>
+                                <label className='flex items-center gap-2 mb-5'>
                                     <input
                                         type="checkbox"
                                         {...register('termsConditions', { required: 'Accepting terms of use is required for registration.' })}
                                         className="accent-primary dark:accent-primary-dark"
                                     />
                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                                        By registering, I agree to {otherData?.brandName}'s <Link className='text-blue-600 dark:text-blue-400 underline' to='/terms-of-use'>Terms of Use</Link>.
-                                        My information will be used as described in the <Link to='/privacy-policy' className='text-blue-600 dark:text-blue-400 underline'>Privacy Policy</Link>.
+                                        By registering, I agree to {otherData?.brandName}'s <Link className='text-blue-600 dark:text-blue-400 underline' to='/terms-of-use' target='_blank'>Terms of Use</Link>.
+                                        My information will be used as described in the <Link to='/privacy-policy' className='text-blue-600 dark:text-blue-400 underline' target='_blank'>Privacy Policy</Link>.
                                     </p>
                                 </label>
                                 {errors.termsConditions && (

@@ -1068,7 +1068,7 @@ function AllAuctions() {
                                                         <span className="text-gray-500">
                                                             {selectedAuction.status === 'sold_buy_now' ? 'Buyer' : 'Winner'}
                                                         </span>
-                                                        <span className="font-medium text-green-600">{selectedAuction.winner?.username}</span>
+                                                        <span className="font-medium text-green-600">{selectedAuction.winner?.firstName} {selectedAuction.winner?.lastName}</span>
                                                     </div>
                                                 )}
 

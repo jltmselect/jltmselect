@@ -343,7 +343,7 @@ const AllMembers = () => {
                             )}
                         </div>
                         <p className="text-gray-600 mt-3 text-[15px]">
-                            View and manage members. Additional members only qualify for in-store discounts and may pick up items in-store on your behalf. Added members do not gain access to your “Auction Account” and may not place auctions on your behalf. To participate in auctions and place bids, please have additional members create a new account.
+                            View and manage members. Additional members only qualify for in-store discounts and may pick up items in-store on your behalf. Added members do not gain access to your “Auction Account” and may not place bids on your behalf. To participate in auctions and place bids, please have additional members create a new account.
                         </p>
                     </div>
 

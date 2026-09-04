@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import Commission from "../models/commission.model.js";
 import { sendAuctionWonSMS, sendBulkAuctionSMS } from "../services/smsService.js";
+import User from "../models/user.model.js";
+import { userHasActiveSubscription } from "./subscriptionHelpers.js";
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -203,6 +205,34 @@ const renderSpecificationsRows = (specifications) => {
     return html;
 };
 
+// Generate unsubscribe link for a user
+const getUnsubscribeLink = async (user) => {
+    // Check if user already has a valid token
+    const now = Date.now();
+    if (
+        user.unsubscribeToken &&
+        user.unsubscribeTokenExpiry &&
+        user.unsubscribeTokenExpiry > now
+    ) {
+        // Token is still valid – reuse it
+        return `${process.env.FRONTEND_URL}/unsubscribe/${user.unsubscribeToken}`;
+    }
+
+    // No valid token – generate a new one
+    const token = user.generateUnsubscribeToken();
+    await user.save({ validateBeforeSave: false });
+    return `${process.env.FRONTEND_URL}/unsubscribe/${token}`;
+};
+
+// Reusable footer HTML
+const unsubscribeFooter = (unsubscribeLink) => `
+<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; text-align: center; font-size: 12px; color: #999;">
+    You are receiving this email because you are a registered user on JLTM Select.<br>
+    If you no longer wish to receive these notifications, <a href="${unsubscribeLink}" style="color: #edcd1f; text-decoration: underline;">unsubscribe here</a>.
+</div>
+`;
+
+// =================================== EMAILS START HERE ===========================================
 const contactEmail = async (
     name,
     email,
@@ -318,6 +348,16 @@ const contactEmail = async (
 
 const contactConfirmationEmail = async (name, email) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -403,6 +443,8 @@ const contactConfirmationEmail = async (name, email) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Your next great find is just a bid away!</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -424,6 +466,16 @@ const bidConfirmationEmail = async (
     currentBid,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: userEmail,
@@ -595,6 +647,8 @@ const bidConfirmationEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Happy Bidding! Your next great find awaits.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -617,6 +671,16 @@ const offerConfirmationEmail = async (
     offerId,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: userEmail,
@@ -721,6 +785,8 @@ const offerConfirmationEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Your next great find is just an offer away!</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -743,6 +809,16 @@ const outbidNotificationEmail = async (
     yourPreviousBid,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: userEmail,
@@ -903,6 +979,8 @@ const outbidNotificationEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -968,7 +1046,7 @@ const sendOutbidNotifications = async (
         // Send notifications to each outbid user
         const notificationPromises = users.map(async (user) => {
             try {
-                await outbidNotificationEmail(
+                await userHasActiveSubscription(user._id) && await outbidNotificationEmail(
                     user.email,
                     user.username || `${user.firstName} ${user.lastName}`,
                     auction,
@@ -1027,6 +1105,16 @@ const sendAuctionWonEmail = async (auction) => {
             commissionDisplay = `Sales Tax: ${formatCurrency(commissionAmount)}`;
         } else if (auction.commissionType === "percentage") {
             commissionDisplay = `${auction.commissionValue}% Sales Tax: ${formatCurrency(commissionAmount)}`;
+        }
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: auction?.winner?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
         }
 
         const info = await transporter.sendMail({
@@ -1219,6 +1307,8 @@ const sendAuctionWonEmail = async (auction) => {
                                 JLTM Select © ${new Date().getFullYear()}
                             </div>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -1257,6 +1347,16 @@ const sendAuctionEndedSellerEmail = async (auction) => {
             auction?.status === "sold" || auction?.status === "sold_buy_now"
                 ? `Sold for ${formatCurrency(auction?.finalPrice || 0)}`
                 : "Listing ended without sale";
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: auction?.seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
 
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
@@ -1410,6 +1510,8 @@ const sendAuctionEndedSellerEmail = async (auction) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need help? Contact support at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -1427,6 +1529,16 @@ const sendAuctionEndedSellerEmail = async (auction) => {
 
 const auctionListedEmail = async (auction, seller) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -1572,6 +1684,8 @@ const auctionListedEmail = async (auction, seller) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact our seller support team.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -1593,6 +1707,16 @@ const auctionEndingSoonEmail = async (
     timeRemaining,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: userEmail,
@@ -1779,6 +1903,8 @@ const auctionEndingSoonEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Don't miss out - act before time runs out!</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -1794,6 +1920,16 @@ const auctionEndingSoonEmail = async (
 
 const paymentSuccessEmail = async (user, auction, paymentAmount) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: user?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: user.email,
@@ -1846,6 +1982,8 @@ const paymentSuccessEmail = async (user, auction, paymentAmount) => {
                         <p>You can check your order and contact the seller from your dashboard.</p>
                         
                         <p>Thank you for your purchase!</p>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -1871,6 +2009,16 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
             commissionDisplay = `Sales Tax (${formatCurrency(commissionAmount)})`;
         } else if (auction.commissionType === "percentage") {
             commissionDisplay = `${auction.commissionValue}% Sales Tax (${formatCurrency(commissionAmount)})`;
+        }
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: user?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
         }
 
         const info = await transporter.sendMail({
@@ -1993,6 +2141,8 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -2010,6 +2160,16 @@ const paymentCompletedEmail = async (user, auction, paymentAmount) => {
 const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
     try {
         const finalPrice = auction?.finalPrice || auction?.currentPrice || 0;
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
 
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
@@ -2143,6 +2303,8 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact us at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -2163,6 +2325,16 @@ const paymentCompletedSellerEmail = async (seller, auction, buyer) => {
 const welcomeEmail = async (user, verificationToken) => {
     try {
         const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: user?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
 
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
@@ -2277,6 +2449,8 @@ const welcomeEmail = async (user, verificationToken) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Questions? Contact us at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -2293,6 +2467,16 @@ const welcomeEmail = async (user, verificationToken) => {
 
 const resetPasswordEmail = async (email, url) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -2408,6 +2592,8 @@ const resetPasswordEmail = async (email, url) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you need further assistance, contact our support team.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -3252,6 +3438,16 @@ const newCommentSellerEmail = async (
     commentAuthor,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller?.email,
@@ -3412,6 +3608,8 @@ const newCommentSellerEmail = async (
                             <p class="footer-text">You're receiving this email because you're the seller of this auction listing.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -3433,6 +3631,16 @@ const newCommentBidderEmail = async (
     commentAuthor,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: buyer?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: buyer?.email,
@@ -3612,6 +3820,8 @@ const newCommentBidderEmail = async (
                             <p class="footer-text">You're receiving this email because you've shown interest in this auction.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -3842,6 +4052,16 @@ const auctionSubmittedForApprovalEmail = async (
 
 const auctionApprovedEmail = async (seller, auction) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -4001,6 +4221,8 @@ const auctionApprovedEmail = async (seller, auction) => {
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact our seller support team.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -4040,9 +4262,19 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
         }
 
         const timeInfo = auction?.endDate
-            ? `Ends: ${formatToPacificTime(auction.endDate, 'full') 
-} (Pacific Time)`
+            ? `Ends: ${formatToPacificTime(auction.endDate, 'full')
+            } (Pacific Time)`
             : "No end date set";
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: buyer?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
 
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
@@ -4269,6 +4501,8 @@ const newAuctionNotificationEmail = async (buyer, auction, seller) => {
                             <p class="footer-text">You're receiving this email because you're a registered buyer on JLTM Select.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. Furniture Auctions.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -4294,7 +4528,7 @@ const sendBulkAuctionNotifications = async (buyers, auction, seller) => {
         const emailPromises = buyers?.map(async (buyer) => {
             try {
                 // Check if buyer has notifications enabled for new listings
-                if (buyer?.preferences?.emailUpdates) {
+                if (buyer?.preferences?.emailUpdates && await userHasActiveSubscription(buyer._id)) {
                     await newAuctionNotificationEmail(buyer, auction, seller);
                     return { success: true, email: buyer.email, type: 'email' };
                 }
@@ -4373,7 +4607,7 @@ const sendAuctionWonNotifications = async (auction) => {
 
         // Send email notification
         let emailResult = { success: false };
-        if (winner.preferences?.emailUpdates) {
+        if (winner.preferences?.emailUpdates && await userHasActiveSubscription(winner._id)) {
             try {
                 await sendAuctionWonEmail(auction);
                 emailResult = { success: true, type: "email" };
@@ -4410,6 +4644,16 @@ const sendAuctionWonNotifications = async (auction) => {
 
 const newBidNotificationEmail = async (seller, auction, bidAmount, bidder) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -4551,6 +4795,8 @@ const newBidNotificationEmail = async (seller, auction, bidAmount, bidder) => {
                             <p class="footer-text">You're receiving this email because you're the seller of this auction.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -4573,6 +4819,16 @@ const newOfferNotificationEmail = async (
     buyer,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller?.email,
@@ -4745,6 +5001,8 @@ const newOfferNotificationEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Respond quickly to maximize your chances of a successful sale!</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -4768,6 +5026,16 @@ const offerCanceledEmail = async (
     offerId,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: buyerEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: buyerEmail,
@@ -4937,6 +5205,8 @@ const offerCanceledEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you have questions about this cancellation, please contact our support team.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -4960,6 +5230,16 @@ const offerAcceptedEmail = async (
     offerId,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: buyerEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: buyerEmail,
@@ -5136,6 +5416,8 @@ const offerAcceptedEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">Need assistance? Contact support at ${process.env.EMAIL_USER || "help@jltmselect.com"}</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -5160,6 +5442,16 @@ const offerRejectedEmail = async (
     reason,
 ) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: buyerEmail });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: buyerEmail,
@@ -5342,6 +5634,8 @@ const offerRejectedEmail = async (
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                             <p class="footer-text">If you have questions about this decision, you can contact the seller directly.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -5366,6 +5660,16 @@ const sendOfferOutbidNotifications = async () => {
 
 const payoutInitiatedEmail = async (seller, auction, payout) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -5465,6 +5769,8 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
                             <p class="footer-text">This is an automated message from JLTM Select.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -5481,6 +5787,16 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
 
 const payoutCompletedEmail = async (seller, auction, payout) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -5597,6 +5913,8 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
                             <p class="footer-text">This payment confirmation was sent by JLTM Select.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -5613,6 +5931,16 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
 
 const payoutFailedEmail = async (seller, payout) => {
     try {
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: seller?.email });
+            if (user) {
+                unsubscribeLink = await getUnsubscribeLink(user);
+            }
+        } catch (err) {
+            console.error('Failed to generate unsubscribe link:', err);
+        }
+
         const info = await transporter.sendMail({
             from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
             to: seller.email,
@@ -5684,6 +6012,8 @@ const payoutFailedEmail = async (seller, payout) => {
                             <p class="footer-text">This is an automated message from JLTM Select.</p>
                             <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
                         </div>
+
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ''}
                     </div>
                 </body>
                 </html>
@@ -5699,38 +6029,38 @@ const payoutFailedEmail = async (seller, payout) => {
 };
 
 export {
-    contactEmail, //tested
-    contactConfirmationEmail, //tested
-    resetPasswordEmail, //tested
-    bidConfirmationEmail, // tested
-    offerConfirmationEmail, // tested
-    outbidNotificationEmail, // tested
-    sendOutbidNotifications, // tested
-    sendAuctionWonEmail, // tested
-    sendAuctionEndedSellerEmail, // tested
-    auctionListedEmail, // tested
-    auctionEndingSoonEmail, // tested
-    welcomeEmail, // tested
-    newUserRegistrationEmail, // tested
-    auctionWonAdminEmail, // tested
-    auctionEndedAdminEmail, // tested
-    flaggedCommentAdminEmail, // tested
-    newCommentSellerEmail, // tested
-    newCommentBidderEmail, // tested
-    auctionSubmittedForApprovalEmail, // tested
-    auctionApprovedEmail, // tested
-    sendBulkAuctionNotifications, // tested
+    contactEmail,
+    contactConfirmationEmail,
+    resetPasswordEmail,
+    bidConfirmationEmail,
+    offerConfirmationEmail,
+    outbidNotificationEmail,
+    sendOutbidNotifications,
+    sendAuctionWonEmail,
+    sendAuctionEndedSellerEmail,
+    auctionListedEmail,
+    auctionEndingSoonEmail,
+    welcomeEmail,
+    newUserRegistrationEmail,
+    auctionWonAdminEmail,
+    auctionEndedAdminEmail,
+    flaggedCommentAdminEmail,
+    newCommentSellerEmail,
+    newCommentBidderEmail,
+    auctionSubmittedForApprovalEmail,
+    auctionApprovedEmail,
+    sendBulkAuctionNotifications,
     sendAuctionWonNotifications,
-    newBidNotificationEmail, // tested
-    newOfferNotificationEmail, // tested
-    newAuctionNotificationEmail, // tested
+    newBidNotificationEmail,
+    newOfferNotificationEmail,
+    newAuctionNotificationEmail,
     sendOfferOutbidNotifications, // Not needed
-    paymentCompletedEmail, // tested
+    paymentCompletedEmail,
     paymentCompletedSellerEmail,
     paymentSuccessEmail, // No need to test now
-    offerCanceledEmail, // tested
-    offerAcceptedEmail, // tested
-    offerRejectedEmail, // tested
+    offerCanceledEmail,
+    offerAcceptedEmail,
+    offerRejectedEmail,
     payoutInitiatedEmail,
     payoutCompletedEmail,
     payoutFailedEmail,

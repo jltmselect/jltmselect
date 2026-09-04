@@ -29,6 +29,7 @@ import userSubscriptionRouter from "./routes/userSubscription.route.js";
 import videoRouter from "./routes/video.route.js";
 import cashierRouter from "./routes/cashier.route.js";
 import memberRouter from "./routes/member.route.js";
+import smsRouter from "./routes/smsCampaign.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -91,6 +92,7 @@ app.use("/api/v1/checkout", checkoutRouter);
 app.use("/api/v1/user-subscription", userSubscriptionRouter);
 app.use("/api/v1/videos", videoRouter);
 app.use("/api/v1/members", memberRouter);
+app.use("/api/v1/admin/sms", smsRouter);
 
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {

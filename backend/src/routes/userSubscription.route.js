@@ -10,6 +10,7 @@ import {
   getAllUserSubscriptions,
   upgradeSubscription,
   checkUpgradeEligibility,
+  renewSubscription,
 } from "../controllers/userSubscription.controller.js";
 import { requirePermission } from "../middlewares/permission.middleware.js";
 
@@ -34,6 +35,9 @@ userSubscriptionRouter.get("/active", getActiveSubscription);
 userSubscriptionRouter.get("/check-active", checkActiveSubscription);
 
 userSubscriptionRouter.get("/upgrade/:planId/check", checkUpgradeEligibility);
+
+// Renew current subscription
+userSubscriptionRouter.post("/renew", renewSubscription);
 
 // Cancel a specific subscription
 userSubscriptionRouter.patch("/:subscriptionId/cancel", cancelSubscription);

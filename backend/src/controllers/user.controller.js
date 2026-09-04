@@ -14,6 +14,7 @@ import {
 } from "../utils/cloudinary.js";
 import Subscription from "../models/subscription.model.js";
 import UserSubscription from "../models/userSubscription.model.js";
+import agendaService from "../services/agendaService.js";
 
 // Helper function to generate tokens and set cookies
 const generateTokensAndRespond = async (user, req, res, message) => {
@@ -321,6 +322,8 @@ export const registerUser = async (req, res) => {
         isCurrent: true,
       });
 
+      await agendaService.scheduleSubscriptionExpiry(userSubscription._id, userSubscription.expiresAt);
+
       // Update subscription subscriber count
       await Subscription.findByIdAndUpdate(subscriptionPlanId, {
         $inc: { subscriberCount: 1 },
@@ -449,7 +452,7 @@ export const validateEmailAndUsername = async (req, res) => {
     const userExistsWithEmail = await User.findOne({ email: normalizedEmail });
     const userExistsWithUsername = await User.findOne({ username: username.trim() });
 
-    if (userExistsWithEmail ) {
+    if (userExistsWithEmail) {
       return res.status(409).json({
         success: false,
         message: "User with this email already exists",
@@ -1085,6 +1088,49 @@ export const deleteIdentification = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete identification document",
+    });
+  }
+};
+
+export const unsubscribeUser = async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Unsubscribe token is required"
+      });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      unsubscribeToken: hashedToken,
+      unsubscribeTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired unsubscribe token"
+      });
+    }
+
+    // Disable both email and SMS updates
+    user.preferences.emailUpdates = false;
+    user.preferences.smsUpdates = false;
+    user.unsubscribeToken = undefined;
+    user.unsubscribeTokenExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "You have been unsubscribed from all update notifications."
+    });
+  } catch (error) {
+    console.error("Unsubscribe error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to unsubscribe"
     });
   }
 };

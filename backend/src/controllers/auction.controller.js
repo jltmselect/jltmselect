@@ -7,19 +7,18 @@ import {
 } from "../utils/cloudinary.js";
 import agendaService from "../services/agendaService.js";
 import {
-  auctionSubmittedForApprovalEmail,
-  auctionWonAdminEmail,
+  auctionSubmittedForApprovalEmail, // no sellers on website
+  auctionWonAdminEmail, // admin always receives email
   bidConfirmationEmail,
   newBidNotificationEmail,
-  outbidNotificationEmail,
   sendAuctionEndedSellerEmail,
-  sendAuctionWonEmail,
   sendAuctionWonNotifications,
   sendBulkAuctionNotifications,
   sendOutbidNotifications,
 } from "../utils/nodemailer.js";
 import Category from "../models/category.model.js";
 import Commission from "../models/commission.model.js";
+import { userHasActiveSubscription } from "../utils/subscriptionHelpers.js";
 
 // Create New Auction
 export const createAuction = async (req, res) => {
@@ -338,7 +337,7 @@ export const createAuction = async (req, res) => {
     }
 
     // Populate seller info for response
-    await auction.populate("seller", "username firstName lastName");
+    await auction.populate("seller", "username firstName lastName preferences");
 
     // Send bulk notifications for immediately active auctions (buy_now/giveaway)
     if (auction.status === "active") {
@@ -1641,8 +1640,8 @@ export const placeBid = async (req, res) => {
     await auction.placeBid(bidder._id, bidder.username, parseFloat(amount));
 
     // Populate the updated auction
-    await auction.populate("currentBidder", "username firstName email");
-    await auction.populate("seller", "username firstName email");
+    await auction.populate("currentBidder", "username firstName email preferences");
+    await auction.populate("seller", "username firstName email preferences");
 
     res.status(200).json({
       success: true,
@@ -1651,7 +1650,7 @@ export const placeBid = async (req, res) => {
     });
 
     // Send bid confirmation to the current bidder
-    if (bidder?.preferences && bidder?.preferences?.emailUpdates) {
+    if (bidder?.preferences && bidder?.preferences?.emailUpdates && await userHasActiveSubscription(bidder._id)) {
       await bidConfirmationEmail(
         bidder.email,
         bidder.username,
@@ -1661,12 +1660,17 @@ export const placeBid = async (req, res) => {
       );
     }
 
-    await newBidNotificationEmail(
-      auction.seller,
-      auction,
-      parseFloat(amount),
-      bidder,
-    );
+    const seller = auction.seller;
+
+    // Send bid notification to the seller
+    if (seller?.preferences && seller?.preferences?.emailUpdates) {
+      await newBidNotificationEmail(
+        auction.seller,
+        auction,
+        parseFloat(amount),
+        bidder,
+      );
+    }
 
     // Send outbid notifications to previous bidders (except current bidder)
     if (
@@ -1674,7 +1678,7 @@ export const placeBid = async (req, res) => {
       previousHighestBidder.toString() !== bidder._id.toString()
     ) {
       const previousHighestBidderUser = await User.findById(previousHighestBidder).select("email username preferences");
-      if (previousHighestBidderUser?.preferences?.emailUpdates) {
+      if (previousHighestBidderUser?.preferences?.emailUpdates && await userHasActiveSubscription(previousHighestBidderUser._id)) {
         await sendOutbidNotifications(
           auction,
           previousHighestBidder,
@@ -2526,9 +2530,9 @@ export const buyNow = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email")
+      .populate("seller", "username firstName lastName email phone address preferences")
       .populate("winner", "username firstName lastName email phone address preferences")
-      .populate("bids.bidder", "username firstName lastName");
+      .populate("bids.bidder", "username firstName lastName email phone address preferences");
 
     // Custom message for giveaway
     const successMessage =
@@ -2544,10 +2548,14 @@ export const buyNow = async (req, res) => {
       },
     });
 
-    // Send emails (in background)
-    sendAuctionEndedSellerEmail(updatedAuction).catch((error) =>
-      console.error("Failed to send seller ended auction email:", error),
-    );
+    const seller = updatedAuction.seller;
+
+    if (seller?.preferences && seller?.preferences?.emailUpdates) {
+      // Send emails (in background)
+      sendAuctionEndedSellerEmail(updatedAuction).catch((error) =>
+        console.error("Failed to send seller ended auction email:", error),
+      );
+    }
 
     sendAuctionWonNotifications(updatedAuction).catch((error) =>
       console.error("Failed to send auction won notifications:", error),

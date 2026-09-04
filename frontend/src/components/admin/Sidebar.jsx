@@ -29,7 +29,9 @@ import {
     BanknoteArrowUp,
     Video,
     UserPlus,
-    UserStar
+    UserStar,
+    SquareMousePointer,
+    LayoutTemplate
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
@@ -121,6 +123,18 @@ const allNavigation = [
         path: '/admin/commissions',
         icon: <Settings size={20} />,
         permission: 'manage_commissions'
+    },
+    {
+        name: 'SMS Campaigns',
+        path: '/admin/sms/campaigns',
+        icon: <SquareMousePointer size={20} />,
+        permission: 'manage_sms'
+    },
+    {
+        name: 'SMS Templates',
+        path: '/admin/sms/templates',
+        icon: <LayoutTemplate size={20} />,
+        permission: 'manage_sms'
     },
     {
         name: 'Profile',

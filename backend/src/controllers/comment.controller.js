@@ -2,6 +2,7 @@ import Comment from '../models/comment.model.js';
 import Auction from '../models/auction.model.js';
 import { flaggedCommentAdminEmail, newCommentBidderEmail, newCommentSellerEmail } from '../utils/nodemailer.js';
 import User from '../models/user.model.js';
+import { userHasActiveSubscription } from '../utils/subscriptionHelpers.js';
 
 // Add a new comment
 export const addComment = async (req, res) => {
@@ -55,7 +56,7 @@ export const addComment = async (req, res) => {
         });
 
         // Populate user info for response
-        await comment.populate('user', 'username firstName lastName avatar');
+        await comment.populate('user', 'username firstName lastName avatar preferences');
 
         res.status(201).json({
             success: true,
@@ -66,13 +67,13 @@ export const addComment = async (req, res) => {
         // Populate the comment with necessary data
         const populatedComment = await Comment.findById(comment._id)
             .populate('auction')
-            .populate('user', 'firstName lastName username email userType');
+            .populate('user', 'firstName lastName username email userType preferences');
 
         // Populate the auction's seller
-        await populatedComment.auction.populate('seller', 'email username firstName');
+        await populatedComment.auction.populate('seller', 'email username firstName lastName preferences');
 
         // 1. Notify the seller (if comment author is not the seller)
-        if (populatedComment.auction.seller._id.toString() !== userId.toString()) {
+        if (populatedComment.auction.seller._id.toString() !== userId.toString() && populatedComment.auction.seller.preferences?.emailUpdates) {
             await newCommentSellerEmail(
                 populatedComment.auction.seller,
                 populatedComment.auction,
@@ -99,7 +100,7 @@ export const addComment = async (req, res) => {
             const isSeller = commenter._id.toString() === populatedComment.auction.seller._id.toString();
             const isCurrentUser = commenter._id.toString() === userId.toString();
 
-            if (!isSeller && !isCurrentUser) {
+            if (!isSeller && !isCurrentUser && await userHasActiveSubscription(commenter._id)) {
                 console.log(`Sending comment notification to: ${commenter.email}`);
                 await newCommentBidderEmail(
                     commenter,

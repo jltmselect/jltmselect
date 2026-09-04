@@ -28,8 +28,9 @@ const otherData = {
     brandName: 'JLTM',
     formatPhone,
     hours: [
-        {days: 'Mon–Sat', time: '10am – 7pm'},
-        {days: 'Sun', time: '12pm – 5pm'},
+        {days: 'Tue-Fri', time: '10am – 6pm'},
+        {days: 'Sat', time: '10am – 5pm'},
+        {days: 'Sun-Mon', time: 'closed'},
     ]
 }
 

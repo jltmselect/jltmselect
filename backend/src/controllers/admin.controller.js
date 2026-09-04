@@ -21,6 +21,7 @@ import {
 import BidPayment from "../models/bidPayment.model.js";
 import Payout from "../models/payout.model.js";
 import UserSubscription from "../models/userSubscription.model.js";
+import { userHasActiveSubscription } from "../utils/subscriptionHelpers.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -124,17 +125,17 @@ export const getAdminStats = async (req, res) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const todayRevenueStats = await Auction.aggregate([
-  {
-    $match: {
-      status: "sold",
-      endDate: {  // ← Use endDate
-        $gte: today,
-        $lt: tomorrow,
+      {
+        $match: {
+          status: "sold",
+          endDate: {  // ← Use endDate
+            $gte: today,
+            $lt: tomorrow,
+          },
+        },
       },
-    },
-  },
-  { $group: { _id: null, total: { $sum: "$finalPrice" } } },
-]);
+      { $group: { _id: null, total: { $sum: "$finalPrice" } } },
+    ]);
 
     const todayRevenue = todayRevenueStats[0]?.total || 0;
 
@@ -161,7 +162,7 @@ export const getAdminStats = async (req, res) => {
       {
         $count: "count",
       },
-    ]); 
+    ]);
 
     const totalWatchlists = watchlistItems[0]?.count || 0;
 
@@ -1048,14 +1049,21 @@ export const approveAuction = async (req, res) => {
         auction._id,
         auction.startDate,
       );
-      await auctionApprovedEmail(auction.seller, auction);
+      const seller = auction.seller;
+
+      if (seller.preferences?.emailUpdates !== false) {
+        await auctionApprovedEmail(seller, auction);
+      }
     } else {
       // Activate immediately
       auction.status = "active";
+      await auction.populate("seller", "email username firstName preferences");
 
-      await auction.populate("seller", "email username firstName");
+      const seller = auction.seller;
 
-      await auctionListedEmail(auction, auction.seller);
+      if (seller.preferences?.emailUpdates !== false) {
+        await auctionListedEmail(auction, seller);
+      }
 
       // If end date is in past, end the auction
       if (auction.endDate <= now) {
@@ -1895,7 +1903,7 @@ export const updateAuction = async (req, res) => {
       location: location || "",
       videoLink: videoLink || "",
       startPrice: parseFloat(startPrice),
-      currentPrice: newStatus === "approved" ?parseFloat(startPrice) : auction?.currentPrice, // Reset current price to start price on update
+      currentPrice: newStatus === "approved" ? parseFloat(startPrice) : auction?.currentPrice, // Reset current price to start price on update
       retailPrice: retailPrice ? parseFloat(retailPrice) : undefined,
       auctionType,
       allowOffers: allowOffers === "true" || allowOffers === true,
@@ -2198,7 +2206,7 @@ export const updatePaymentStatus = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email phone address")
+      .populate("seller", "username firstName lastName email phone address preferences")
       .populate("winner", "username firstName lastName email phone address preferences");
 
     res.status(200).json({
@@ -2210,27 +2218,23 @@ export const updatePaymentStatus = async (req, res) => {
       },
     });
 
-    if (paymentStatus === "completed" && updatedAuction.winner && updatedAuction?.preferences?.emailUpdates) {
-      // Send payment success email to winner
-      paymentCompletedEmail(
-        updatedAuction?.winner,
-        updatedAuction,
-        updatedAuction?.finalPrice,
-      ).catch((error) =>
-        console.error("Failed to send payment success email:", error),
-      );
+    if (paymentStatus === "completed" && updatedAuction.winner) {
+      const winner = updatedAuction.winner;
+      const seller = updatedAuction.seller;
 
-      // Send payment received email to seller
-      paymentCompletedSellerEmail(
-        updatedAuction?.seller,
-        updatedAuction,
-        updatedAuction?.winner,
-      ).catch((error) =>
-        console.error(
-          "Failed to send seller payment notification email:",
-          error,
-        ),
-      );
+      // Send to winner only if they allow email updates
+      if (winner.preferences?.emailUpdates !== false && await userHasActiveSubscription(winner._id)) {
+        paymentCompletedEmail(winner, updatedAuction, updatedAuction?.finalPrice).catch((error) =>
+          console.error("Failed to send payment success email:", error),
+        );
+      }
+
+      // Send to seller only if they allow email updates
+      if (seller.preferences?.emailUpdates !== false) {
+        paymentCompletedSellerEmail(seller, updatedAuction, winner).catch((error) =>
+          console.error("Failed to send seller payment notification email:", error),
+        );
+      }
     }
   } catch (error) {
     console.error("Update payment status error:", error);
@@ -3013,63 +3017,63 @@ export const updateStaffStatus = async (req, res) => {
  * @access  Private (Admin)
  */
 export const updateUserPassword = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const { newPassword } = req.body;
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
 
-        // Validate password
-        if (!newPassword || newPassword.length < 8) {
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 8 characters long",
-            });
-        }
-
-        // Check if user exists
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        // Prevent admin from changing their own password through this endpoint
-        if (user._id.toString() === req.user._id.toString()) {
-            return res.status(400).json({
-                success: false,
-                message: "Use the profile settings to change your own password",
-            });
-        }
-
-        // Prevent changing password for admin users (optional - you can remove this if you want)
-        if (user.userType === "admin") {
-            return res.status(403).json({
-                success: false,
-                message: "Admin passwords cannot be changed through this endpoint",
-            });
-        }
-
-        // Update password - the pre-save middleware will handle hashing
-        user.password = newPassword;
-        await user.save({ validateBeforeSave: false });
-
-        // Clear any existing reset tokens
-        user.resetPasswordToken = undefined;
-        user.resetPasswordTokenExpiry = undefined;
-        await user.save({ validateBeforeSave: false });
-
-        res.status(200).json({
-            success: true,
-            message: "Password updated successfully",
-        });
-    } catch (error) {
-        console.error("Update user password error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error while updating password",
-        });
+    // Validate password
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long",
+      });
     }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent admin from changing their own password through this endpoint
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Use the profile settings to change your own password",
+      });
+    }
+
+    // Prevent changing password for admin users (optional - you can remove this if you want)
+    if (user.userType === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin passwords cannot be changed through this endpoint",
+      });
+    }
+
+    // Update password - the pre-save middleware will handle hashing
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    // Clear any existing reset tokens
+    user.resetPasswordToken = undefined;
+    user.resetPasswordTokenExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error("Update user password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating password",
+    });
+  }
 };
 
 /**
@@ -3078,99 +3082,99 @@ export const updateUserPassword = async (req, res) => {
  * @access  Private (Admin)
  */
 export const updateUser = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const updateData = req.body;
+  try {
+    const { userId } = req.params;
+    const updateData = req.body;
 
-        // Check if user exists
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        // Prevent updating admin users
-        if (user.userType === "admin") {
-            return res.status(403).json({
-                success: false,
-                message: "Admin accounts cannot be modified through this endpoint",
-            });
-        }
-
-        // Check for unique email if being updated
-        if (updateData.email && updateData.email !== user.email) {
-            const existingEmail = await User.findOne({
-                email: updateData.email.toLowerCase().trim(),
-                _id: { $ne: userId }
-            });
-            if (existingEmail) {
-                return res.status(409).json({
-                    success: false,
-                    message: "Email already exists",
-                });
-            }
-            updateData.email = updateData.email.toLowerCase().trim();
-        }
-
-        // Check for unique username if being updated
-        if (updateData.username && updateData.username !== user.username) {
-            const existingUsername = await User.findOne({
-                username: updateData.username.toLowerCase().trim(),
-                _id: { $ne: userId }
-            });
-            if (existingUsername) {
-                return res.status(409).json({
-                    success: false,
-                    message: "Username already exists",
-                });
-            }
-            updateData.username = updateData.username.toLowerCase().trim();
-        }
-
-        // Remove sensitive fields that shouldn't be updated
-        delete updateData.password;
-        delete updateData._id;
-        delete updateData.__v;
-        delete updateData.createdAt;
-        delete updateData.updatedAt;
-        delete updateData.refreshToken;
-        delete updateData.resetPasswordToken;
-        delete updateData.resetPasswordTokenExpiry;
-        delete updateData.emailVerificationToken;
-        delete updateData.emailVerificationExpiry;
-
-        // Update user
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            updateData,
-            {
-                new: true,
-                runValidators: true,
-            }
-        ).select("-password -refreshToken -resetPasswordToken -emailVerificationToken");
-
-        res.status(200).json({
-            success: true,
-            message: "User updated successfully",
-            data: { user: updatedUser },
-        });
-
-    } catch (error) {
-        console.error("Update user error:", error);
-        
-        if (error.name === "ValidationError") {
-            const messages = Object.values(error.errors).map(err => err.message);
-            return res.status(400).json({
-                success: false,
-                message: messages.join(", "),
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: "Internal server error while updating user",
-        });
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
+
+    // Prevent updating admin users
+    if (user.userType === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin accounts cannot be modified through this endpoint",
+      });
+    }
+
+    // Check for unique email if being updated
+    if (updateData.email && updateData.email !== user.email) {
+      const existingEmail = await User.findOne({
+        email: updateData.email.toLowerCase().trim(),
+        _id: { $ne: userId }
+      });
+      if (existingEmail) {
+        return res.status(409).json({
+          success: false,
+          message: "Email already exists",
+        });
+      }
+      updateData.email = updateData.email.toLowerCase().trim();
+    }
+
+    // Check for unique username if being updated
+    if (updateData.username && updateData.username !== user.username) {
+      const existingUsername = await User.findOne({
+        username: updateData.username.toLowerCase().trim(),
+        _id: { $ne: userId }
+      });
+      if (existingUsername) {
+        return res.status(409).json({
+          success: false,
+          message: "Username already exists",
+        });
+      }
+      updateData.username = updateData.username.toLowerCase().trim();
+    }
+
+    // Remove sensitive fields that shouldn't be updated
+    delete updateData.password;
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.refreshToken;
+    delete updateData.resetPasswordToken;
+    delete updateData.resetPasswordTokenExpiry;
+    delete updateData.emailVerificationToken;
+    delete updateData.emailVerificationExpiry;
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select("-password -refreshToken -resetPasswordToken -emailVerificationToken");
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: { user: updatedUser },
+    });
+
+  } catch (error) {
+    console.error("Update user error:", error);
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(", "),
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating user",
+    });
+  }
 };

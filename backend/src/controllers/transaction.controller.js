@@ -1,4 +1,3 @@
-// controllers/transactionController.js
 import BidPayment from '../models/bidPayment.model.js';
 import Commission from '../models/commission.model.js';
 import Auction from '../models/auction.model.js';

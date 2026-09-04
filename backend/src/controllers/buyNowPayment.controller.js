@@ -4,10 +4,8 @@ import User from "../models/user.model.js";
 import BidPayment from "../models/bidPayment.model.js";
 import Commission from "../models/commission.model.js";
 import {
-  sendAuctionWonEmail,
   sendAuctionEndedSellerEmail,
   auctionWonAdminEmail,
-  paymentCompletedEmail,
   sendAuctionWonNotifications,
 } from "../utils/nodemailer.js";
 import { calculateCommission } from "../utils/commissionCalculator.js";
@@ -23,7 +21,7 @@ export const processBuyNowPayment = async (req, res) => {
     // Find auction
     const auction = await Auction.findById(auctionId).populate(
       "seller",
-      "email username firstName lastName",
+      "email username firstName lastName preferences",
     );
 
     if (!auction) {
@@ -139,12 +137,16 @@ export const processBuyNowPayment = async (req, res) => {
 
       // Send emails in background
       const populatedAuction = await Auction.findById(auctionId)
-        .populate("seller", "username firstName lastName email")
+        .populate("seller", "username firstName lastName email preferences")
         .populate("winner", "username firstName lastName email phone address preferences");
 
       sendAuctionWonNotifications(populatedAuction).catch(console.error);
 
-      sendAuctionEndedSellerEmail(populatedAuction).catch(console.error);
+      const seller = populatedAuction.seller;
+
+      if (seller?.preferences && seller?.preferences?.emailUpdates) {
+        sendAuctionEndedSellerEmail(populatedAuction).catch(console.error);
+      }
 
       // Notify admins
       const adminUsers = await User.find({ userType: "admin" });
@@ -242,7 +244,7 @@ export const claimBuyNowAuction = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("seller", "email username firstName lastName");
+      .populate("seller", "email username firstName lastName preferences");
 
     if (!auction) {
       return res.status(404).json({

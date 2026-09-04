@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     AccountInactiveBanner,
     BidderContainer,
@@ -44,6 +44,10 @@ function Subscriptions() {
     const [loadingUpgrade, setLoadingUpgrade] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [upgradeEligibility, setUpgradeEligibility] = useState(null);
+
+    const [showRenewModal, setShowRenewModal] = useState(false);
+    const [renewPlan, setRenewPlan] = useState(null);
+    const [renewing, setRenewing] = useState(false);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -175,6 +179,40 @@ function Subscriptions() {
         } catch (err) {
             console.error("Failed to load upgrade plans:", err);
             toast.error("Failed to load upgrade plans");
+        }
+    };
+
+    // Determine if there's a subscription to renew (active first, else last expired)
+    const renewableSubscription = useMemo(() => {
+        if (activeSubscription) return activeSubscription;
+        // Find most recent expired subscription
+        const expiredSubs = subscriptions
+            .filter(s => s.status === "expired")
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return expiredSubs[0] || null;
+    }, [activeSubscription, subscriptions]);
+
+    const handleRenewClick = () => {
+        if (!renewableSubscription) return;
+        setRenewPlan(renewableSubscription);
+        setShowRenewModal(true);
+    };
+
+    const handleRenew = async () => {
+        setRenewing(true);
+        try {
+            const { data } = await axiosInstance.post("/api/v1/user-subscription/renew");
+            if (data.success) {
+                toast.success(data.message || "Subscription renewed successfully!");
+                setShowRenewModal(false);
+                // Refresh data
+                await fetchSubscriptions();
+                await fetchActiveSubscription();
+            }
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Failed to renew subscription");
+        } finally {
+            setRenewing(false);
         }
     };
 
@@ -357,14 +395,16 @@ function Subscriptions() {
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="bg-white/10 rounded-xl p-4 text-center">
+                                            <div className="bg-white/10 rounded-xl p-4 text-center flex items-center gap-2">
                                                 <Wallet size={32} className="text-white mx-auto mb-2" />
-                                                <p className="text-white text-2xl font-bold">
-                                                    {formatCurrency(activeSubscription.amountPaid)}
-                                                </p>
-                                                <p className="text-emerald-100 text-sm">Subscription Paid</p>
+                                                <div>
+                                                    <p className="text-white text-2xl font-bold">
+                                                        {formatCurrency(activeSubscription.amountPaid)}
+                                                    </p>
+                                                    <p className="text-emerald-100 text-sm">Subscription Paid</p>
+                                                </div>
                                             </div>
-                                            {/* Add Upgrade Button */}
+                                            {/* existing upgrade button */}
                                             <button
                                                 onClick={handleUpgradeClick}
                                                 className="bg-white text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 w-full justify-center"
@@ -372,10 +412,36 @@ function Subscriptions() {
                                                 <Zap size={18} />
                                                 Upgrade Plan
                                             </button>
+                                            {/* NEW: Renew button */}
+                                            <button
+                                                onClick={handleRenewClick}
+                                                className="bg-white/20 text-white hover:bg-white/30 px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 w-full justify-center border border-white/30"
+                                            >
+                                                <Clock size={18} />
+                                                Renew Membership
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {!activeSubscription && renewableSubscription && (
+                        <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-yellow-800">Your subscription has expired</h3>
+                                <p className="text-yellow-700 text-sm">
+                                    Renew your <strong>{renewableSubscription.title}</strong> plan to regain access to all features.
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleRenewClick}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                            >
+                                <Clock size={18} />
+                                Renew Now
+                            </button>
                         </div>
                     )}
 
@@ -444,6 +510,24 @@ function Subscriptions() {
                         </div>
                     )}
 
+                    {!activeSubscription && subscriptions.length > 0 && (
+                        <div className="p-12 text-center">
+                            <CreditCard size={64} className="mx-auto text-gray-300 mb-4" />
+                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                No active subscriptions
+                            </h3>
+                            <p className="text-gray-500 mb-6">
+                                Purchase a subscription plan to start bidding on auctions
+                            </p>
+                            <button
+                                onClick={() => setShowSubscriptionModal(true)}
+                                className="inline-block bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-lg font-semibold transition-all"
+                            >
+                                View Plans
+                            </button>
+                        </div>
+                    )}
+
                     {/* Subscription History */}
                     <div className="bg-white mt-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="p-6 border-b border-gray-200">
@@ -455,7 +539,7 @@ function Subscriptions() {
                             </p>
                         </div>
 
-                        {subscriptions.length === 0 ? (
+                        {(subscriptions.length === 0) ? (
                             <div className="p-12 text-center">
                                 <CreditCard size={64} className="mx-auto text-gray-300 mb-4" />
                                 <h3 className="text-xl font-semibold text-gray-700 mb-2">
@@ -486,7 +570,8 @@ function Subscriptions() {
                                                         <h4 className="text-lg font-semibold text-gray-900">
                                                             {subscription.title}
                                                         </h4>
-                                                        {getStatusBadge(subscription.status)}
+                                                        {/* {getStatusBadge(subscription.status)} */}
+                                                        {daysRemaining > 0 ? getStatusBadge("active") : getStatusBadge("expired")}
                                                     </div>
                                                     <p className="text-gray-600 text-sm mb-2">
                                                         {subscription.description}
@@ -526,25 +611,25 @@ function Subscriptions() {
                                                     {subscription?.isCurrent && daysRemaining <= 7 && (
                                                         <div className="mb-2">
                                                             <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
-                                                                Expires in {daysRemaining} days
+                                                                {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Expired'}
                                                             </span>
                                                         </div>
                                                     )}
 
-                                                    {subscription?.isCurrent &&
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-100 text-green-700 inline-flex items-center gap-1">
-                                                            <CheckCircle size={12} />
-                                                            Currently Active
-                                                        </span>
-                                                        {/* <Link
+                                                    {subscription?.isCurrent && subscription?.isActive &&
+                                                        <div className="flex flex-col items-end gap-2">
+                                                            <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-100 text-green-700 inline-flex items-center gap-1">
+                                                                <CheckCircle size={12} />
+                                                                Currently Active
+                                                            </span>
+                                                            {/* <Link
                                                                 to="/pricing"
                                                                 className="text-primary hover:text-primary/80 text-sm font-semibold inline-flex items-center gap-1"
                                                             >
                                                                 Renew Plan
                                                                 <ChevronRight size={14} />
                                                             </Link> */}
-                                                    </div>}
+                                                        </div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -734,6 +819,121 @@ function Subscriptions() {
                                     <p className="text-xs my-2 text-gray-600">Note: This amount will be charged from your saved card.</p>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Renew Modal */}
+            {showRenewModal && renewableSubscription && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Renew Membership</h2>
+                                <p className="text-gray-500 text-sm mt-1">
+                                    Renew your current plan and keep your benefits active
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowRenewModal(false)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <XCircle size={24} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {/* Current Plan Info */}
+                            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                                <p className="text-sm text-gray-500">Plan to Renew</p>
+                                <div className="flex items-center justify-between mt-2">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 text-lg">{renewableSubscription.title}</h3>
+                                        <p className="text-sm text-gray-600">
+                                            {renewableSubscription.duration.value} {renewableSubscription.duration.unit}
+                                            {renewableSubscription.duration.value > 1 ? 's' : ''}
+                                        </p>
+                                        {renewableSubscription.description && (
+                                            <p className="text-sm text-gray-500 mt-1">{renewableSubscription.description}</p>
+                                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-500">Price</p>
+                                        <p className="font-bold text-primary text-xl">
+                                            {formatCurrency(renewableSubscription.amountPaid)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Remaining Days Info (if any) */}
+                            {activeSubscription && activeSubscription._id === renewableSubscription._id && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <Clock size={20} className="text-blue-600 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-medium text-blue-800">Remaining Days</p>
+                                            <p className="text-sm text-blue-700">
+                                                You have <strong>{statistics.daysRemaining}</strong> days remaining on your current plan.
+                                                These will be added to your new renewal period.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Features */}
+                            {renewableSubscription.features && renewableSubscription.features.length > 0 && (
+                                <div className="mt-6 bg-gray-50 rounded-xl p-4">
+                                    <h4 className="font-medium text-gray-900 mb-3">Features Included</h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {renewableSubscription.features.map((feature, idx) => (
+                                            feature.included !== false && (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <CheckCircle size={14} className="text-green-500" />
+                                                    <span className="text-sm text-gray-700">{feature.text}</span>
+                                                </div>
+                                            )
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Payment Summary */}
+                            <div className="mt-6 bg-primary/5 border border-primary/20 rounded-xl p-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-medium text-gray-700">Amount to Pay</span>
+                                    <span className="font-bold text-primary text-xl">
+                                        {formatCurrency(renewableSubscription.amountPaid)}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    This amount will be charged to your saved card.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={handleRenew}
+                                disabled={renewing}
+                                className="mt-6 w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {renewing ? (
+                                    <>
+                                        <Loader size={18} className="animate-spin-slow" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Clock size={18} />
+                                        Renew Now – {formatCurrency(renewableSubscription.amountPaid)}
+                                    </>
+                                )}
+                            </button>
+
+                            <p className="text-xs text-gray-500 text-center mt-3">
+                                By renewing, you agree to our Terms of Service.
+                            </p>
                         </div>
                     </div>
                 </div>

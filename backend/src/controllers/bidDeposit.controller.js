@@ -1,4 +1,3 @@
-// controllers/bidDeposit.controller.js
 import BidDeposit from "../models/bidDeposit.model.js";
 import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";

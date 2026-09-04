@@ -5,13 +5,13 @@ import {
   auctionEndingSoonEmail,
   auctionListedEmail,
   auctionWonAdminEmail,
-  paymentSuccessEmail,
   sendAuctionEndedSellerEmail,
-  sendAuctionWonEmail,
   sendAuctionWonNotifications,
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
+import UserSubscription from "../models/userSubscription.model.js";
+import { userHasActiveSubscription } from "../utils/subscriptionHelpers.js";
 
 class AgendaService {
   constructor() {
@@ -33,10 +33,12 @@ class AgendaService {
         if (auction && auction.status === "approved") {
           auction.status = "active";
           await auction.save();
-          await auction.populate("seller", "email username firstName");
+          await auction.populate("seller", "email username firstName preferences userType");
 
-          // Send email to seller
-          await auctionListedEmail(auction, auction.seller);
+          if (auction.seller.preferences?.emailUpdates) {
+            // Send email to seller
+            await auctionListedEmail(auction, auction.seller);
+          }
 
           // Get frontend URL from env
           const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -67,7 +69,7 @@ class AgendaService {
       try {
         let auction = await Auction.findById(auctionId).populate(
           "seller",
-          "email phone username firstName",
+          "email phone username firstName preferences userType",
         );
         // Don't populate winner initially since it might be null
 
@@ -130,7 +132,7 @@ class AgendaService {
           // Re-fetch the auction with populated winner if it was sold
           if (result.wasSold) {
             auction = await Auction.findById(auctionId)
-              .populate("seller", "email phone username firstName")
+              .populate("seller", "email phone username firstName preferences userType")
               .populate("winner", "email phone username firstName address preferences");
           }
 
@@ -157,7 +159,9 @@ class AgendaService {
             );
 
             // Send seller email (auction ended without sale)
-            await sendAuctionEndedSellerEmail(auction);
+            if (auction.seller.preferences?.emailUpdates) {
+              await sendAuctionEndedSellerEmail(auction);
+            }
 
             // Send admin email for ended auction
             const adminUsers = await User.find({ userType: "admin" });
@@ -187,123 +191,6 @@ class AgendaService {
         console.error("Agenda job error (end auction):", error);
       }
     });
-
-    // Job to send notifications for auctions ending soon
-    // this.agenda.define("send ending soon notifications", async (job) => {
-    //   try {
-    //     const now = new Date();
-
-    //     // Define multiple time thresholds
-    //     const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
-    //     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    //     const twentyFourHoursFromNow = new Date(
-    //       now.getTime() + 24 * 60 * 60 * 1000,
-    //     );
-
-    //     // Find auctions ending within our thresholds that haven't had notifications sent yet
-    //     const endingSoonAuctions = await Auction.find({
-    //       status: "active",
-    //       $or: [
-    //         {
-    //           // Ending in exactly 30 minutes (±15 minutes window)
-    //           endDate: {
-    //             $lte: thirtyMinutesFromNow,
-    //             $gte: new Date(now.getTime() + 15 * 60 * 1000), // 15 minutes from now
-    //           },
-    //           "notifications.ending30min": { $ne: true }, // Not sent yet
-    //         },
-    //         {
-    //           // Ending in exactly 2 hours (±15 minutes window)
-    //           endDate: {
-    //             $lte: twoHoursFromNow,
-    //             $gte: new Date(now.getTime() + 105 * 60 * 1000), // 1 hour 45 minutes from now
-    //           },
-    //           "notifications.ending2hour": { $ne: true }, // Not sent yet
-    //         },
-    //         {
-    //           // Ending in exactly 24 hours (±15 minutes window)
-    //           endDate: {
-    //             $lte: twentyFourHoursFromNow,
-    //             $gte: new Date(now.getTime() + 1425 * 60 * 1000), // 23 hours 45 minutes from now
-    //           },
-    //           "notifications.ending24hour": { $ne: true }, // Not sent yet
-    //         },
-    //       ],
-    //     }).populate("seller", "email username preferences userType"); // Populate seller to exclude them
-
-    //     for (const auction of endingSoonAuctions) {
-    //       // Calculate exact time remaining for this auction
-    //       const timeRemaining = auction.endDate - now;
-    //       const minutesRemaining = Math.ceil(timeRemaining / (60 * 1000));
-
-    //       // Determine which notification threshold this auction falls into
-    //       let notificationType, timeLabel;
-
-    //       if (minutesRemaining <= 45 && minutesRemaining >= 15) {
-    //         // 30-minute notification window (30 minutes ±15 minutes)
-    //         notificationType = "ending30min";
-    //         timeLabel = "30 minutes";
-    //       } else if (minutesRemaining <= 135 && minutesRemaining >= 105) {
-    //         // 2-hour notification window (2 hours ±15 minutes)
-    //         notificationType = "ending2hour";
-    //         timeLabel = "2 hours";
-    //       } else if (minutesRemaining <= 1455 && minutesRemaining >= 1425) {
-    //         // 24-hour notification window (24 hours ±15 minutes)
-    //         notificationType = "ending24hour";
-    //         timeLabel = "24 hours";
-    //       } else {
-    //         // Skip if not in any precise notification window
-    //         continue;
-    //       }
-
-    //       // Find ALL users who should receive notifications (excluding auction seller, admins, and opted-out users)
-    //       const allUsers = await User.find({
-    //         _id: { $ne: auction.seller._id }, // Exclude auction owner
-    //         userType: { $nin: ["admin", "seller", "broker"] }, // Exclude admin, seller, and broker users
-    //         "preferences.emailUpdates": { $ne: false }, // Exclude users who opted out
-    //         isActive: true, // Only active users
-    //       }).select("email username preferences userType");
-
-    //       // Send to each user
-    //       for (const user of allUsers) {
-    //         try {
-    //           await auctionEndingSoonEmail(
-    //             user.email,
-    //             user.username,
-    //             auction,
-    //             timeLabel,
-    //           );
-    //           console.log(
-    //             `✅ Sent ${timeLabel} notification to ${user.email} (${user.userType}) for auction ${auction.title}`,
-    //           );
-    //         } catch (error) {
-    //           console.error(
-    //             `Failed to send ending soon email to ${user.email}:`,
-    //             error,
-    //           );
-    //         }
-    //       }
-
-    //       // Mark this notification as sent in the auction document
-    //       await Auction.findByIdAndUpdate(auction._id, {
-    //         $set: {
-    //           [`notifications.${notificationType}`]: true,
-    //           [`notifications.${notificationType}SentAt`]: new Date(),
-    //         },
-    //       });
-
-    //       console.log(
-    //         `📧 Sent ${timeLabel} notifications for auction "${auction.title}" to ${allUsers.length} users`,
-    //       );
-    //     }
-
-    //     console.log(
-    //       `📧 Completed ending soon notifications for ${endingSoonAuctions.length} auctions`,
-    //     );
-    //   } catch (error) {
-    //     console.error("Agenda job error (ending soon notifications):", error);
-    //   }
-    // });
 
     this.agenda.define("send ending soon notifications", async (job) => {
       try {
@@ -388,15 +275,16 @@ class AgendaService {
           // Send to each previous bidder
           for (const bidder of previousBidders) {
             try {
-              await auctionEndingSoonEmail(
-                bidder.email,
-                bidder.username,
-                auction,
-                timeLabel,
-              );
-              console.log(
-                `✅ Sent ${timeLabel} notification to previous bidder ${bidder.email} for auction ${auction.title}`,
-              );
+              if (await userHasActiveSubscription(bidder._id)) {
+                await auctionEndingSoonEmail(
+                  bidder.email,
+                  bidder.username,
+                  auction,
+                  timeLabel,
+                );
+              } else {
+                console.log(`⏭️ Skipped (no active subscription) ${bidder.email}`);
+              }
             } catch (error) {
               console.error(
                 `Failed to send ending soon email to previous bidder ${bidder.email}:`,
@@ -414,7 +302,7 @@ class AgendaService {
           });
 
           console.log(
-            `📧 Sent ${timeLabel} notifications for auction "${auction.title}" to ${allUsers.length} users`,
+            `📧 Sent ${timeLabel} notifications for auction "${auction.title}" to ${previousBidders.length} users`,
           );
         }
 
@@ -423,6 +311,35 @@ class AgendaService {
         );
       } catch (error) {
         console.error("Agenda job error (ending soon notifications):", error);
+      }
+    });
+
+    this.agenda.define("send sms campaign", async (job) => {
+      const { campaignId } = job.attrs.data;
+      const { processCampaign } = await import("../controllers/smsCampaign.controller.js");
+      await processCampaign(campaignId);
+    });
+
+    // Job to expire a subscription at its end date
+    this.agenda.define("expire subscription", async (job) => {
+      const { userSubscriptionId } = job.attrs.data;
+      try {
+        const userSubscription = await UserSubscription.findById(userSubscriptionId);
+        if (!userSubscription) {
+          console.log(`❌ Agenda: Subscription ${userSubscriptionId} not found`);
+          return;
+        }
+        // Only expire if it's still active and past expiry
+        if (userSubscription.status === "active" && new Date() >= userSubscription.expiresAt) {
+          userSubscription.status = "expired";
+          if (userSubscription.isCurrent) userSubscription.isCurrent = false;
+          await userSubscription.save();
+          console.log(`✅ Agenda: Expired subscription ${userSubscriptionId}`);
+        } else {
+          console.log(`ℹ️ Agenda: Subscription ${userSubscriptionId} already expired or not active (status: ${userSubscription.status})`);
+        }
+      } catch (error) {
+        console.error("Agenda job error (expire subscription):", error);
       }
     });
   }
@@ -445,6 +362,20 @@ class AgendaService {
       "data.auctionId": auctionId,
     });
     console.log(`🗑️ Cancelled jobs for auction ${auctionId}`);
+  }
+
+  // Schedule a subscription expiry job
+  async scheduleSubscriptionExpiry(userSubscriptionId, expiresAt) {
+    await this.agenda.schedule(expiresAt, "expire subscription", { userSubscriptionId });
+    console.log(`📅 Scheduled expiry for subscription ${userSubscriptionId} at ${expiresAt}`);
+  }
+
+  // Cancel a scheduled expiry job
+  async cancelSubscriptionExpiry(userSubscriptionId) {
+    await this.agenda.cancel({
+      "data.userSubscriptionId": userSubscriptionId,
+    });
+    console.log(`🗑️ Cancelled expiry job for subscription ${userSubscriptionId}`);
   }
 
   // Start Agenda

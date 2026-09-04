@@ -119,6 +119,7 @@ const userSchema = new Schema(
         "manage_inquiries",
         "manage_commissions",
         "manage_admins",
+        "manage_sms",
       ],
     },
 
@@ -300,6 +301,12 @@ const userSchema = new Schema(
     emailVerificationExpiry: {
       type: Date,
     },
+    unsubscribeToken: {
+      type: String,
+    },
+    unsubscribeTokenExpiry: {
+      type: Date,
+    },
   },
   { timestamps: true },
 );
@@ -365,6 +372,16 @@ userSchema.methods.toSafeObject = function () {
   delete userObject.emailVerificationToken;
   delete userObject.emailVerificationExpiry;
   return userObject;
+};
+
+userSchema.methods.generateUnsubscribeToken = function () {
+    const token = crypto.randomBytes(32).toString('hex');
+    this.unsubscribeToken = crypto
+        .createHash('sha256')
+        .update(token)
+        .digest('hex');
+    this.unsubscribeTokenExpiry = Date.now() + 365 * 24 * 60 * 60 * 1000; // 1 year
+    return token;
 };
 
 const User = model("User", userSchema);

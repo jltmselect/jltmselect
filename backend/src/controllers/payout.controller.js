@@ -623,7 +623,7 @@ export const initiatePayout = async (req, res) => {
     // Find auction
     const auction = await Auction.findById(auctionId).populate(
       "seller",
-      "firstName lastName email username phone payoutMethods",
+      "firstName lastName email username phone payoutMethods preferences",
     );
 
     if (!auction) {
@@ -694,7 +694,9 @@ export const initiatePayout = async (req, res) => {
     });
 
     // Send email notification to seller
-    await payoutInitiatedEmail(seller, auction, payout);
+    if (seller.preferences?.emailUpdates) {
+      await payoutInitiatedEmail(seller, auction, payout);
+    }
 
     res.status(201).json({
       success: true,
@@ -718,7 +720,7 @@ export const completePayout = async (req, res) => {
     const adminId = req.user.id;
 
     const payout = await Payout.findById(payoutId)
-      .populate("seller", "firstName lastName email username")
+      .populate("seller", "firstName lastName email username preferences payoutMethods")
       .populate("auction", "title");
 
     if (!payout) {
@@ -770,7 +772,9 @@ export const completePayout = async (req, res) => {
     await payout.save();
 
     // Send email notification to seller
-    await payoutCompletedEmail(payout.seller, payout.auction, payout);
+    if (payout.seller.preferences?.emailUpdates) {
+      await payoutCompletedEmail(payout.seller, payout.auction, payout);
+    }
 
     res.status(200).json({
       success: true,
@@ -794,7 +798,7 @@ export const failPayout = async (req, res) => {
 
     const payout = await Payout.findById(payoutId).populate(
       "seller",
-      "firstName lastName email username",
+      "firstName lastName email username preferences",
     );
 
     if (!payout) {
@@ -820,7 +824,9 @@ export const failPayout = async (req, res) => {
     await payout.save();
 
     // Send email notification to seller
-    await payoutFailedEmail(payout.seller, payout);
+    if (payout.seller.preferences?.emailUpdates) {
+      await payoutFailedEmail(payout.seller, payout);
+    }
 
     res.status(200).json({
       success: true,

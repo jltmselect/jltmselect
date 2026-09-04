@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import Subscription from "../models/subscription.model.js";
 import UserSubscription from "../models/userSubscription.model.js";
 import { StripeService } from "../services/stripeService.js";
+import agendaService from "../services/agendaService.js";
 
 /**
  * @desc    Purchase a subscription
@@ -128,6 +129,8 @@ export const purchaseSubscription = async (req, res) => {
             currency: subscription.price.currency,
             status: "active",
         });
+
+        await agendaService.scheduleSubscriptionExpiry(userSubscription._id, userSubscription.expiresAt);
 
         // If this is the first active subscription or user had none, set isCurrent to true
         const activeSubscriptions = await UserSubscription.find({
@@ -334,6 +337,8 @@ export const cancelSubscription = async (req, res) => {
 
         subscription.status = "cancelled";
         await subscription.save();
+
+        await agendaService.cancelSubscriptionExpiry(subscriptionId);
 
         res.status(200).json({
             success: true,
@@ -577,6 +582,8 @@ export const upgradeSubscription = async (req, res) => {
             upgradedFrom: currentSubscription._id // Track that this is an upgrade
         });
 
+        await agendaService.scheduleSubscriptionExpiry(newUserSubscription._id, newUserSubscription.expiresAt);
+
         // Set all other subscriptions as not current
         await UserSubscription.updateMany(
             { user: userId, _id: { $ne: newUserSubscription._id } },
@@ -588,6 +595,8 @@ export const upgradeSubscription = async (req, res) => {
             status: "expired",
             isCurrent: false
         });
+
+        await agendaService.cancelSubscriptionExpiry(currentSubscription._id);
 
         // Update new plan's subscriber count
         await Subscription.findByIdAndUpdate(subscriptionId, {
@@ -707,6 +716,198 @@ export const checkUpgradeEligibility = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Failed to check upgrade eligibility",
+        });
+    }
+};
+
+/**
+ * @desc    Renew current subscription (same plan, add remaining days)
+ * @route   POST /api/v1/user-subscription/renew
+ * @access  Private
+ */
+export const renewSubscription = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // 1. Find the subscription to renew (active first, else most recent expired)
+        const now = new Date();
+        let oldSubscription = await UserSubscription.findOne({
+            user: userId,
+            status: "active",
+            expiresAt: { $gt: now },
+            isCurrent: true
+        }).populate("subscription");
+
+        if (!oldSubscription) {
+            // Fallback to most recent expired subscription
+            oldSubscription = await UserSubscription.findOne({
+                user: userId,
+                status: "expired"
+            })
+                .populate("subscription")
+                .sort({ createdAt: -1 });
+        }
+
+        if (!oldSubscription) {
+            return res.status(404).json({
+                success: false,
+                message: "No subscription found to renew. Please purchase a new plan."
+            });
+        }
+
+        // 2. Get the plan details (the actual Subscription document)
+        const plan = oldSubscription.subscription;
+        if (!plan || !plan.isActive) {
+            return res.status(400).json({
+                success: false,
+                message: "The subscription plan is no longer available."
+            });
+        }
+
+        // 3. Get user & payment method
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        let paymentMethodToUse = user.paymentMethodId;
+        if (!paymentMethodToUse) {
+            return res.status(400).json({
+                success: false,
+                message: "No saved payment method. Please add a card in your billing settings."
+            });
+        }
+
+        // 4. Calculate remaining days from the old subscription (if still active)
+        let remainingDays = 0;
+        if (oldSubscription.status === "active" && new Date(oldSubscription.expiresAt) > now) {
+            const diffTime = new Date(oldSubscription.expiresAt) - now;
+            remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // 5. Calculate new end date = now + plan duration + remainingDays
+        const startDate = new Date();
+        let endDate = new Date(startDate);
+        const durationValue = plan.duration.value;
+        const durationUnit = plan.duration.unit;
+
+        switch (durationUnit) {
+            case "day":
+                endDate.setDate(endDate.getDate() + durationValue);
+                break;
+            case "week":
+                endDate.setDate(endDate.getDate() + durationValue * 7);
+                break;
+            case "month":
+                endDate.setMonth(endDate.getMonth() + durationValue);
+                break;
+            case "year":
+                endDate.setFullYear(endDate.getFullYear() + durationValue);
+                break;
+            default:
+                endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        if (remainingDays > 0) {
+            endDate.setDate(endDate.getDate() + remainingDays);
+        }
+
+        // 6. Ensure Stripe customer exists
+        if (!user.stripeCustomerId) {
+            const customer = await StripeService.createCustomer(
+                user.email,
+                `${user.firstName} ${user.lastName}`
+            );
+            user.stripeCustomerId = customer.id;
+            await StripeService.attachPaymentMethod(user.stripeCustomerId, paymentMethodToUse);
+            await user.save();
+        }
+
+        // 7. Process payment
+        let paymentIntent;
+        try {
+            paymentIntent = await StripeService.createImmediateCharge(
+                user.stripeCustomerId,
+                paymentMethodToUse,
+                plan.price.amount,
+                `Renewal: ${plan.title} (${durationValue} ${durationUnit}${durationValue > 1 ? 's' : ''})${remainingDays > 0 ? ` + ${remainingDays} days bonus` : ''}`
+            );
+
+            if (paymentIntent.status !== "succeeded") {
+                throw new Error("Payment failed");
+            }
+        } catch (paymentError) {
+            console.error("Renewal payment error:", paymentError);
+            return res.status(400).json({
+                success: false,
+                message: `Payment failed: ${paymentError.message}`
+            });
+        }
+
+        // 8. Create new user subscription record
+        const newUserSubscription = await UserSubscription.create({
+            user: userId,
+            subscription: plan._id,
+            title: plan.title,
+            description: plan.description,
+            features: plan.features,
+            duration: plan.duration,
+            price: plan.price,
+            startDate,
+            endDate,
+            expiresAt: endDate,
+            paymentIntentId: paymentIntent.id,
+            paymentStatus: "succeeded",
+            amountPaid: plan.price.amount,
+            currency: plan.price.currency,
+            status: "active",
+            isCurrent: true,
+            upgradedFrom: oldSubscription._id // track renewal source
+        });
+
+        await agendaService.scheduleSubscriptionExpiry(newUserSubscription._id, newUserSubscription.expiresAt);
+
+        // 9. Update old subscription: set not current, status to "expired" (or "renewed")
+        await UserSubscription.findByIdAndUpdate(oldSubscription._id, {
+            isCurrent: false,
+            status: "expired" // or we could keep as "renewed" but keep status for history
+        });
+
+        await agendaService.cancelSubscriptionExpiry(oldSubscription._id);
+
+        // 10. Update plan subscriber count
+        await Subscription.findByIdAndUpdate(plan._id, {
+            $inc: { subscriberCount: 1 }
+        });
+
+        // 11. Make sure no other subscription is current (just in case)
+        await UserSubscription.updateMany(
+            { user: userId, _id: { $ne: newUserSubscription._id } },
+            { isCurrent: false }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Subscription renewed successfully!",
+            data: {
+                subscription: newUserSubscription,
+                remainingDaysAdded: remainingDays,
+                paymentIntent: {
+                    id: paymentIntent.id,
+                    status: paymentIntent.status,
+                    amount: paymentIntent.amount
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Renew subscription error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to renew subscription"
         });
     }
 };

@@ -158,25 +158,41 @@ const CampaignFormModal = ({ isOpen, onClose, onSuccess, campaign }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!formData.title.trim() || !formData.templateId) {
             toast.error("Title and template are required");
             return;
         }
+
         setIsSubmitting(true);
         try {
+            // Convert scheduleDate to UTC ISO string
+            let scheduleISO = null;
+            if (formData.scheduleDate) {
+                const date = new Date(formData.scheduleDate);
+                if (!isNaN(date.getTime())) {
+                    scheduleISO = date.toISOString(); // "2026-09-05T04:30:00.000Z"
+                }
+            }
+
             const payload = {
                 title: formData.title,
                 templateId: formData.templateId,
                 recipients: formData.recipients,
                 filters: formData.filters,
-                scheduleDate: formData.scheduleDate || null,
+                scheduleDate: scheduleISO, // send UTC time
             };
+
             let response;
             if (campaign) {
-                response = await axiosInstance.put(`/api/v1/admin/sms/campaigns/${campaign._id}`, payload);
+                response = await axiosInstance.put(
+                    `/api/v1/admin/sms/campaigns/${campaign._id}`,
+                    payload
+                );
             } else {
                 response = await axiosInstance.post("/api/v1/admin/sms/campaigns", payload);
             }
+
             if (response.data.success) {
                 toast.success(response.data.message);
                 onSuccess();

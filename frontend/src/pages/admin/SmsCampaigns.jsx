@@ -18,7 +18,7 @@ function SmsCampaigns() {
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [sendConfirm, setSendConfirm] = useState(null);
     const [cancelConfirm, setCancelConfirm] = useState(null);
-    // NEW: for details modal
+    // for details modal
     const [detailsCampaign, setDetailsCampaign] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [detailsLoading, setDetailsLoading] = useState(false);
@@ -188,7 +188,7 @@ function SmsCampaigns() {
                                             <td className="py-4 px-6 text-sm text-gray-600">{campaign.templateId?.name || "N/A"}</td>
                                             <td className="py-4 px-6">{getStatusBadge(campaign.status)}</td>
                                             <td className="py-4 px-6 text-sm">
-                                                {campaign.scheduleDate ? formatDate(campaign.scheduleDate) : "Immediate"}
+                                                {campaign.scheduleDate ? new Date(campaign.scheduleDate).toLocaleString() : "Immediate"}
                                             </td>
                                             <td className="py-4 px-6 text-sm">
                                                 <span className="text-green-600">{campaign.stats.sent}</span> / <span className="text-gray-600">{campaign.stats.total}</span>
@@ -365,16 +365,10 @@ function SmsCampaigns() {
                                                 <h5 className="font-medium text-gray-700 flex items-center gap-2 mb-2">
                                                     <Calendar size={18} /> Schedule
                                                 </h5>
-                                                {detailsCampaign.scheduleDate ? (
-                                                    <p>{formatDate(detailsCampaign.scheduleDate)}</p>
-                                                ) : (
-                                                    <p className="text-gray-500">Immediate (sent manually)</p>
-                                                )}
-                                                {detailsCampaign.sentAt && (
-                                                    <p className="text-sm text-gray-500 mt-1">
-                                                        Sent at: {formatDate(detailsCampaign.sentAt)}
-                                                    </p>
-                                                )}
+                                                <p>{detailsCampaign.scheduleDate ? new Date(detailsCampaign.scheduleDate).toLocaleString() : "Immediate (sent manually)"}</p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Sent at: {detailsCampaign.sentAt ? new Date(detailsCampaign.sentAt).toLocaleString() : "N/A"}
+                                                </p>
                                             </div>
                                             <div>
                                                 <h5 className="font-medium text-gray-700 flex items-center gap-2 mb-2">

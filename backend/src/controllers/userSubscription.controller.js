@@ -11,7 +11,7 @@ import agendaService from "../services/agendaService.js";
  */
 export const purchaseSubscription = async (req, res) => {
     try {
-        const { subscriptionId, paymentMethodId } = req.body;
+        const { subscriptionId, paymentMethodId, autoRenew = true } = req.body;
         const userId = req.user._id;
 
         // Validate subscription exists
@@ -128,9 +128,11 @@ export const purchaseSubscription = async (req, res) => {
             amountPaid: subscription.price.amount,
             currency: subscription.price.currency,
             status: "active",
+            autoRenew: autoRenew !== false,
         });
 
         await agendaService.scheduleSubscriptionExpiry(userSubscription._id, userSubscription.expiresAt);
+        await agendaService.scheduleAutoRenewReminder(userSubscription._id, userSubscription.expiresAt);
 
         // If this is the first active subscription or user had none, set isCurrent to true
         const activeSubscriptions = await UserSubscription.find({
@@ -336,9 +338,11 @@ export const cancelSubscription = async (req, res) => {
         }
 
         subscription.status = "cancelled";
+        subscription.autoRenew = false;
         await subscription.save();
 
         await agendaService.cancelSubscriptionExpiry(subscriptionId);
+        await agendaService.cancelAutoRenewReminder(subscriptionId);
 
         res.status(200).json({
             success: true,
@@ -579,10 +583,12 @@ export const upgradeSubscription = async (req, res) => {
             currency: newPlan.price.currency,
             status: "active",
             isCurrent: true,
+            autoRenew: true,
             upgradedFrom: currentSubscription._id // Track that this is an upgrade
         });
 
         await agendaService.scheduleSubscriptionExpiry(newUserSubscription._id, newUserSubscription.expiresAt);
+        await agendaService.scheduleAutoRenewReminder(newUserSubscription._id, newUserSubscription.expiresAt);
 
         // Set all other subscriptions as not current
         await UserSubscription.updateMany(
@@ -597,6 +603,7 @@ export const upgradeSubscription = async (req, res) => {
         });
 
         await agendaService.cancelSubscriptionExpiry(currentSubscription._id);
+        await agendaService.cancelAutoRenewReminder(currentSubscription._id);
 
         // Update new plan's subscriber count
         await Subscription.findByIdAndUpdate(subscriptionId, {
@@ -865,10 +872,12 @@ export const renewSubscription = async (req, res) => {
             currency: plan.price.currency,
             status: "active",
             isCurrent: true,
+            autoRenew: true,
             upgradedFrom: oldSubscription._id // track renewal source
         });
 
         await agendaService.scheduleSubscriptionExpiry(newUserSubscription._id, newUserSubscription.expiresAt);
+        await agendaService.scheduleAutoRenewReminder(newUserSubscription._id, newUserSubscription.expiresAt);
 
         // 9. Update old subscription: set not current, status to "expired" (or "renewed")
         await UserSubscription.findByIdAndUpdate(oldSubscription._id, {
@@ -877,6 +886,7 @@ export const renewSubscription = async (req, res) => {
         });
 
         await agendaService.cancelSubscriptionExpiry(oldSubscription._id);
+        await agendaService.cancelAutoRenewReminder(oldSubscription._id);
 
         // 10. Update plan subscriber count
         await Subscription.findByIdAndUpdate(plan._id, {
@@ -910,4 +920,62 @@ export const renewSubscription = async (req, res) => {
             message: error.message || "Failed to renew subscription"
         });
     }
+};
+
+/**
+ * @desc    Toggle auto-renew for a subscription
+ * @route   PATCH /api/v1/user-subscription/:subscriptionId/toggle-auto-renew
+ * @access  Private
+ */
+export const toggleAutoRenew = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const userId = req.user._id;
+
+    const subscription = await UserSubscription.findOne({
+      _id: subscriptionId,
+      user: userId,
+    });
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found",
+      });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message: "Only active subscriptions can toggle auto-renewal",
+      });
+    }
+
+    subscription.autoRenew = !subscription.autoRenew;
+    await subscription.save();
+
+    if (subscription.autoRenew) {
+      await agendaService.scheduleAutoRenewReminder(
+        subscription._id,
+        subscription.expiresAt
+      );
+    } else {
+      await agendaService.cancelAutoRenewReminder(subscription._id);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Auto-renewal ${subscription.autoRenew ? "enabled" : "disabled"} successfully`,
+      data: {
+        autoRenew: subscription.autoRenew,
+        subscription,
+      },
+    });
+  } catch (error) {
+    console.error("Toggle auto-renew error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to toggle auto-renewal",
+    });
+  }
 };

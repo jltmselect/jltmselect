@@ -93,6 +93,10 @@ const userSubscriptionSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    autoRenew: {
+      type: Boolean,
+      default: true,
+    },
     expiresAt: {
       type: Date,
       required: true,
@@ -113,6 +117,7 @@ userSubscriptionSchema.index({ user: 1, status: 1 });
 userSubscriptionSchema.index({ user: 1, isCurrent: 1 });
 userSubscriptionSchema.index({ expiresAt: 1 });
 userSubscriptionSchema.index({ paymentIntentId: 1 });
+userSubscriptionSchema.index({ expiresAt: 1, autoRenew: 1, status: 1 });
 
 // Compound index for finding active subscriptions
 userSubscriptionSchema.index({ user: 1, status: 1, expiresAt: 1 });

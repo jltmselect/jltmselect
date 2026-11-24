@@ -19,7 +19,8 @@ import {
     ChevronRight,
     Star,
     Award,
-    Loader
+    Loader,
+    RefreshCw
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link } from "react-router-dom";
@@ -48,6 +49,7 @@ function Subscriptions() {
     const [showRenewModal, setShowRenewModal] = useState(false);
     const [renewPlan, setRenewPlan] = useState(null);
     const [renewing, setRenewing] = useState(false);
+    const [togglingAutoRenew, setTogglingAutoRenew] = useState(false);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -179,6 +181,25 @@ function Subscriptions() {
         } catch (err) {
             console.error("Failed to load upgrade plans:", err);
             toast.error("Failed to load upgrade plans");
+        }
+    };
+
+    const handleToggleAutoRenew = async () => {
+        if (!activeSubscription) return;
+        try {
+            setTogglingAutoRenew(true);
+            const { data } = await axiosInstance.patch(
+                `/api/v1/user-subscription/${activeSubscription._id}/toggle-auto-renew`
+            );
+            if (data.success) {
+                toast.success(data.message);
+                await fetchActiveSubscription();
+                await fetchSubscriptions();
+            }
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Failed to toggle auto-renewal");
+        } finally {
+            setTogglingAutoRenew(false);
         }
     };
 
@@ -373,7 +394,7 @@ function Subscriptions() {
                                             <p className="text-emerald-100 mb-4">
                                                 {activeSubscription.description}
                                             </p>
-                                            <div className="flex flex-wrap gap-4">
+                                            <div className="flex flex-col flex-wrap gap-4">
                                                 <div>
                                                     <p className="text-emerald-100 text-sm">Valid Until</p>
                                                     <p className="text-white font-semibold">
@@ -420,6 +441,31 @@ function Subscriptions() {
                                                 <Clock size={18} />
                                                 Renew Membership
                                             </button>
+
+                                            {/* Auto-renew control */}
+                                            <div className="bg-white/10 rounded-lg p-3 w-full">
+                                                <div className="flex items-center justify-between text-white text-xs font-semibold">
+                                                    <span className="flex items-center gap-1">
+                                                        <RefreshCw
+                                                            size={14}
+                                                            className={activeSubscription.autoRenew ? "text-green-300" : "text-gray-300"}
+                                                        />
+                                                        Auto-renew: {activeSubscription.autoRenew ? "ON" : "OFF"}
+                                                    </span>
+                                                    <button
+                                                        onClick={handleToggleAutoRenew}
+                                                        disabled={togglingAutoRenew}
+                                                        className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-xs disabled:opacity-50"
+                                                    >
+                                                        {togglingAutoRenew ? "..." : activeSubscription.autoRenew ? "Turn Off" : "Turn On"}
+                                                    </button>
+                                                </div>
+                                                {activeSubscription.autoRenew && (
+                                                    <p className="text-emerald-100 text-xs mt-1 text-left">
+                                                        Next renewal: {formatDate(activeSubscription.expiresAt)}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

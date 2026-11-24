@@ -11,6 +11,7 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [autoRenew, setAutoRenew] = useState(true);
     const [billingInfo, setBillingInfo] = useState(null);
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -21,6 +22,8 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
             if (isAuthenticated) {
                 fetchBillingInfo();
             }
+            setSelectedPlan(null);
+            setAutoRenew(true);
         }
     }, [isOpen, isAuthenticated]);
 
@@ -70,7 +73,8 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
         setProcessing(true);
         try {
             const { data } = await axiosInstance.post("/api/v1/user-subscription/purchase", {
-                subscriptionId: selectedPlan._id
+                subscriptionId: selectedPlan._id,
+                autoRenew,
             });
 
             if (data.success) {
@@ -143,11 +147,10 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
                                 {plans.map((plan) => (
                                     <div
                                         key={plan._id}
-                                        className={`relative border rounded-lg p-6 cursor-pointer transition-all ${
-                                            selectedPlan?._id === plan._id
-                                                ? "border-primary bg-primary/5 ring-2 ring-primary"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
-                                        }`}
+                                        className={`relative border rounded-lg p-6 cursor-pointer transition-all ${selectedPlan?._id === plan._id
+                                            ? "border-primary bg-primary/5 ring-2 ring-primary"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
+                                            }`}
                                         onClick={() => setSelectedPlan(plan)}
                                     >
                                         {plan.isPopular && (
@@ -157,7 +160,7 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
                                                 </span>
                                             </div>
                                         )}
-                                        
+
                                         <div className="text-center">
                                             <h4 className="text-xl font-bold text-black dark:text-pure-white">
                                                 {plan.title}
@@ -221,6 +224,26 @@ const SubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {selectedPlan && (
+                        <label className="mb-4 flex items-start gap-3 p-3 bg-gray-50 dark:bg-bg-primary rounded-lg cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={autoRenew}
+                                onChange={(e) => setAutoRenew(e.target.checked)}
+                                className="mt-0.5 h-4 w-4 text-primary rounded focus:ring-primary"
+                            />
+                            <div>
+                                <p className="text-sm font-medium text-black dark:text-pure-white">
+                                    Auto-renew this plan
+                                </p>
+                                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                    Your saved card will be charged automatically when the plan expires.
+                                    You can turn this off anytime from your subscription page.
+                                </p>
+                            </div>
+                        </label>
                     )}
 
                     <button

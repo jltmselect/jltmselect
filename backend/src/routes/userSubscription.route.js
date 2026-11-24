@@ -11,6 +11,7 @@ import {
   upgradeSubscription,
   checkUpgradeEligibility,
   renewSubscription,
+  toggleAutoRenew,
 } from "../controllers/userSubscription.controller.js";
 import { requirePermission } from "../middlewares/permission.middleware.js";
 
@@ -44,6 +45,9 @@ userSubscriptionRouter.patch("/:subscriptionId/cancel", cancelSubscription);
 
 // Set the subscription as currently active
 userSubscriptionRouter.patch('/:subscriptionId/set-current', setCurrentSubscription);
+
+// Toggle auto-renew for a subscription
+userSubscriptionRouter.patch("/:subscriptionId/toggle-auto-renew", toggleAutoRenew);
 
 // Get all subscription purchased for admin
 userSubscriptionRouter.get('/admin/all-user-subscriptions', authAdmin, requirePermission("manage_subscriptions"), getAllUserSubscriptions);

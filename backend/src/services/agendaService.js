@@ -8,10 +8,14 @@ import {
   sendAuctionEndedSellerEmail,
   sendAuctionWonNotifications,
   sendBulkAuctionNotifications,
+  subscriptionAutoRenewalReminderEmail,
+  subscriptionRenewalSuccessEmail,
+  subscriptionRenewalFailedEmail,
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
 import UserSubscription from "../models/userSubscription.model.js";
 import { userHasActiveSubscription } from "../utils/subscriptionHelpers.js";
+import { StripeService } from "./stripeService.js";
 
 class AgendaService {
   constructor() {
@@ -320,26 +324,236 @@ class AgendaService {
       await processCampaign(campaignId);
     });
 
-    // Job to expire a subscription at its end date
+    // Job to send a 2-day-before auto-renewal reminder
+    this.agenda.define("send auto-renewal reminder", async (job) => {
+      const { userSubscriptionId } = job.attrs.data;
+
+      try {
+        const userSubscription = await UserSubscription.findById(userSubscriptionId)
+          .populate("user", "email username firstName preferences")
+          .populate("subscription", "title price duration isActive");
+
+        if (!userSubscription) {
+          console.log(`❌ Agenda: Subscription ${userSubscriptionId} not found for reminder`);
+          return;
+        }
+
+        if (userSubscription.status !== "active") {
+          console.log(`ℹ️ Agenda: Skipping reminder for ${userSubscriptionId} (status: ${userSubscription.status})`);
+          return;
+        }
+
+        if (userSubscription.autoRenew === false) {
+          console.log(`ℹ️ Agenda: Skipping reminder for ${userSubscriptionId} (autoRenew disabled)`);
+          return;
+        }
+
+        if (new Date() >= userSubscription.expiresAt) {
+          console.log(`ℹ️ Agenda: Subscription ${userSubscriptionId} already expired, skipping reminder`);
+          return;
+        }
+
+        const user = userSubscription.user;
+        if (!user?.email) {
+          console.log(`❌ Agenda: User missing email for subscription ${userSubscriptionId}`);
+          return;
+        }
+
+        await subscriptionAutoRenewalReminderEmail(
+          user.email,
+          user.firstName || user.username || "Member",
+          userSubscription
+        );
+
+        console.log(`📧 Agenda: Sent auto-renewal reminder for ${userSubscriptionId}`);
+      } catch (error) {
+        console.error("Agenda job error (send auto-renewal reminder):", error);
+      }
+    });
+
+    // Job to expire OR auto-renew a subscription at its end date
     this.agenda.define("expire subscription", async (job) => {
       const { userSubscriptionId } = job.attrs.data;
       try {
-        const userSubscription = await UserSubscription.findById(userSubscriptionId);
+        const userSubscription = await UserSubscription.findById(userSubscriptionId)
+          .populate("user", "email username firstName lastName preferences stripeCustomerId paymentMethodId")
+          .populate("subscription", "title description features duration price isActive");
+
         if (!userSubscription) {
           console.log(`❌ Agenda: Subscription ${userSubscriptionId} not found`);
           return;
         }
-        // Only expire if it's still active and past expiry
-        if (userSubscription.status === "active" && new Date() >= userSubscription.expiresAt) {
+
+        // Only process if still active and past expiry
+        if (
+          userSubscription.status !== "active" ||
+          new Date() < userSubscription.expiresAt
+        ) {
+          console.log(
+            `ℹ️ Agenda: Subscription ${userSubscriptionId} not ready (status: ${userSubscription.status}, expiresAt: ${userSubscription.expiresAt})`
+          );
+          return;
+        }
+
+        const user = userSubscription.user;
+        const plan = userSubscription.subscription;
+
+        const expireNow = async (reason) => {
           userSubscription.status = "expired";
           if (userSubscription.isCurrent) userSubscription.isCurrent = false;
           await userSubscription.save();
-          console.log(`✅ Agenda: Expired subscription ${userSubscriptionId}`);
-        } else {
-          console.log(`ℹ️ Agenda: Subscription ${userSubscriptionId} already expired or not active (status: ${userSubscription.status})`);
+          console.log(`✅ Agenda: Expired subscription ${userSubscriptionId} — ${reason}`);
+        };
+
+        // 1. Auto-renew disabled or cancelled — just expire
+        if (userSubscription.autoRenew === false) {
+          return await expireNow("auto-renew disabled");
         }
+
+        // 2. Plan no longer exists or is inactive — expire + notify
+        if (!plan || plan.isActive === false) {
+          await expireNow("plan unavailable");
+          if (user?.email) {
+            try {
+              await subscriptionRenewalFailedEmail(
+                user.email,
+                user.firstName || user.username || "Member",
+                userSubscription,
+                "The subscription plan is no longer available. Please purchase a new plan."
+              );
+            } catch (e) {
+              console.error("Renewal failed email error:", e);
+            }
+          }
+          return;
+        }
+
+        // 3. No payment method — expire + notify
+        if (!user || (!user.paymentMethodId && !user.stripeCustomerId)) {
+          await expireNow("no payment method");
+          if (user?.email) {
+            try {
+              await subscriptionRenewalFailedEmail(
+                user.email,
+                user.firstName || user.username || "Member",
+                userSubscription,
+                "No saved payment method was found. Please add a card and purchase a new plan."
+              );
+            } catch (e) {
+              console.error("Renewal failed email error:", e);
+            }
+          }
+          return;
+        }
+
+        // 4. Attempt charge via Stripe (idempotent per subscription cycle)
+        let paymentIntent;
+        try {
+          let customerId = user.stripeCustomerId;
+          if (!customerId) {
+            const customer = await StripeService.createCustomer(
+              user.email,
+              `${user.firstName} ${user.lastName}`
+            );
+            customerId = customer.id;
+            await User.findByIdAndUpdate(user._id, { stripeCustomerId: customerId });
+            await StripeService.attachPaymentMethod(customerId, user.paymentMethodId);
+          }
+
+          const durationValue = plan.duration.value;
+          const durationUnit = plan.duration.unit;
+
+          paymentIntent = await StripeService.createImmediateCharge(
+            customerId,
+            user.paymentMethodId,
+            plan.price.amount,
+            `Auto-renewal: ${plan.title} (${durationValue} ${durationUnit}${durationValue > 1 ? "s" : ""})`,
+            `autorenew-${userSubscription._id}`
+          );
+
+          if (paymentIntent.status !== "succeeded") {
+            throw new Error("Payment failed");
+          }
+        } catch (paymentError) {
+          console.error(`❌ Agenda: Auto-renew payment failed for ${userSubscriptionId}:`, paymentError.message);
+          await expireNow("payment failed");
+          if (user?.email) {
+            try {
+              await subscriptionRenewalFailedEmail(
+                user.email,
+                user.firstName || user.username || "Member",
+                userSubscription,
+                `Payment failed: ${paymentError.message}. Please update your payment method and purchase a new plan.`
+              );
+            } catch (e) {
+              console.error("Renewal failed email error:", e);
+            }
+          }
+          return;
+        }
+
+        // 5. Create new subscription record (same plan, same price/duration)
+        const startDate = new Date();
+        let endDate = new Date(startDate);
+        const dv = plan.duration.value;
+        const du = plan.duration.unit;
+        switch (du) {
+          case "day": endDate.setDate(endDate.getDate() + dv); break;
+          case "week": endDate.setDate(endDate.getDate() + dv * 7); break;
+          case "month": endDate.setMonth(endDate.getMonth() + dv); break;
+          case "year": endDate.setFullYear(endDate.getFullYear() + dv); break;
+          default: endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        const wasCurrent = userSubscription.isCurrent === true;
+
+        const newUserSubscription = await UserSubscription.create({
+          user: user._id,
+          subscription: plan._id,
+          title: plan.title,
+          description: plan.description,
+          features: plan.features,
+          duration: plan.duration,
+          price: plan.price,
+          startDate,
+          endDate,
+          expiresAt: endDate,
+          paymentIntentId: paymentIntent.id,
+          paymentStatus: "succeeded",
+          amountPaid: plan.price.amount,
+          currency: plan.price.currency,
+          status: "active",
+          isCurrent: wasCurrent,
+          upgradedFrom: userSubscription._id,
+          autoRenew: true,
+        });
+
+        // Expire the old record
+        userSubscription.status = "expired";
+        userSubscription.isCurrent = false;
+        await userSubscription.save();
+
+        // Schedule next cycle (expiry + reminder)
+        await this.scheduleSubscriptionExpiry(newUserSubscription._id, newUserSubscription.expiresAt);
+        await this.scheduleAutoRenewReminder(newUserSubscription._id, newUserSubscription.expiresAt);
+
+        // Notify user
+        if (user?.email) {
+          try {
+            await subscriptionRenewalSuccessEmail(
+              user.email,
+              user.firstName || user.username || "Member",
+              newUserSubscription,
+              paymentIntent.id
+            );
+          } catch (e) {
+            console.error("Renewal success email error:", e);
+          }
+        }
+
+        console.log(`✅ Agenda: Auto-renewed ${userSubscriptionId} → ${newUserSubscription._id}`);
       } catch (error) {
-        console.error("Agenda job error (expire subscription):", error);
+        console.error("Agenda job error (expire subscription / auto-renew):", error);
       }
     });
   }
@@ -376,6 +590,42 @@ class AgendaService {
       "data.userSubscriptionId": userSubscriptionId,
     });
     console.log(`🗑️ Cancelled expiry job for subscription ${userSubscriptionId}`);
+  }
+
+  // Schedule auto-renewal reminder 2 days before expiry (or 1h before if too close)
+  async scheduleAutoRenewReminder(userSubscriptionId, expiresAt) {
+    const now = new Date();
+    const reminderDate = new Date(
+      new Date(expiresAt).getTime() - 2 * 24 * 60 * 60 * 1000
+    );
+
+    if (reminderDate <= now) {
+      const fallback = new Date(new Date(expiresAt).getTime() - 60 * 60 * 1000);
+      if (fallback > now) {
+        await this.agenda.schedule(fallback, "send auto-renewal reminder", {
+          userSubscriptionId: userSubscriptionId.toString(),
+        });
+        console.log(`📅 Scheduled (late) auto-renewal reminder for ${userSubscriptionId} at ${fallback}`);
+        return true;
+      }
+      console.log(`ℹ️ Skipping reminder for ${userSubscriptionId} — too close to expiry`);
+      return false;
+    }
+
+    await this.agenda.schedule(reminderDate, "send auto-renewal reminder", {
+      userSubscriptionId: userSubscriptionId.toString(),
+    });
+    console.log(`📅 Scheduled auto-renewal reminder for ${userSubscriptionId} at ${reminderDate}`);
+    return true;
+  }
+
+  // Cancel a scheduled auto-renewal reminder
+  async cancelAutoRenewReminder(userSubscriptionId) {
+    await this.agenda.cancel({
+      name: "send auto-renewal reminder",
+      "data.userSubscriptionId": userSubscriptionId.toString(),
+    });
+    console.log(`🗑️ Cancelled auto-renewal reminder for ${userSubscriptionId}`);
   }
 
   // Start Agenda

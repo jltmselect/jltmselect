@@ -6028,6 +6028,349 @@ const payoutFailedEmail = async (seller, payout) => {
     }
 };
 
+// =================================== AUTO-RENEWAL EMAILS ===========================================
+
+const subscriptionAutoRenewalReminderEmail = async (
+    userEmail,
+    userName,
+    subscription,
+) => {
+    try {
+        const title = subscription?.title || "Your subscription";
+        const amount = subscription?.price?.amount ?? 0;
+        const currency = subscription?.price?.currency ?? "USD";
+        const renewalDate = subscription?.expiresAt;
+        const durationValue = subscription?.duration?.value;
+        const durationUnit = subscription?.duration?.unit;
+        const durationLabel = durationValue
+            ? `${durationValue} ${durationUnit}${durationValue > 1 ? "s" : ""}`
+            : "";
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) unsubscribeLink = await getUnsubscribeLink(user);
+        } catch (err) {
+            console.error("Failed to generate unsubscribe link:", err);
+        }
+
+        const info = await transporter.sendMail({
+            from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
+            to: userEmail,
+            subject: `⏰ Your subscription will auto-renew in 2 days — ${title}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
+                        .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
+                        .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
+                        .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
+                        .content { padding: 25px; }
+                        .alert-box { background: #fff3e0; padding: 22px; border-radius: 8px; margin: 20px 0; border: 2px solid #edcd1f; text-align: center; }
+                        .alert-title { font-size: 22px; font-weight: bold; color: #1e2d3b; margin: 0 0 8px 0; }
+                        .alert-sub { font-size: 15px; color: #555; margin: 0; }
+                        .item-info { background: #f8f9fa; padding: 22px; border-radius: 8px; margin: 22px 0; border-left: 4px solid #edcd1f; }
+                        .item-title { font-size: 22px; color: #1e2d3b; margin: 0 0 12px 0; text-align: center; }
+                        .price-tag { font-size: 30px; font-weight: bold; color: #1e2d3b; margin: 12px 0; text-align: center; }
+                        .price-tag span { color: #edcd1f; }
+                        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+                        .detail-item { background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center; }
+                        .detail-label { color: #666; font-size: 13px; margin-bottom: 5px; }
+                        .detail-value { font-weight: bold; color: #1e2d3b; font-size: 15px; }
+                        .cta-button { background: #1e2d3b; color: #ffffff !important; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 15px; margin: 10px 8px; }
+                        .cta-secondary { background: #edcd1f; color: #1e2d3b !important; padding: 12px 25px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 14px; margin: 10px 8px; }
+                        .tip-box { background: #e3f2fd; padding: 18px; border-radius: 6px; margin: 20px 0; border: 1px solid #bbdefb; }
+                        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
+                        .footer-text { margin: 5px 0; }
+                        .highlight { color: #edcd1f; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="brand-name">JLTM Select</div>
+                            <div class="tagline">Furniture Auctions</div>
+                        </div>
+                        <div class="content">
+                            <div class="alert-box">
+                                <div class="alert-title">⏰ Auto-Renewal Reminder</div>
+                                <div class="alert-sub">Your subscription will renew automatically in 2 days.</div>
+                            </div>
+
+                            <p>Dear <span class="highlight">${userName || "Member"}</span>,</p>
+                            <p>This is a friendly heads-up that your <strong>${title}</strong> subscription is set to <strong>auto-renew in 2 days</strong>. Your saved payment method will be charged automatically to keep your benefits active.</p>
+
+                            <div class="item-info">
+                                <div class="item-title">${title}</div>
+                                <div class="price-tag"><span>${formatCurrency(amount)}</span></div>
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Renewal Date</div>
+                                        <div class="detail-value">${renewalDate ? formatToPacificTime(renewalDate, "date") : "—"}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Plan Duration</div>
+                                        <div class="detail-value">${durationLabel || "—"}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Amount</div>
+                                        <div class="detail-value">${formatCurrency(amount)} ${currency}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Payment Method</div>
+                                        <div class="detail-value">Saved Card</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p style="text-align: center; margin: 25px 0;">
+                                <a href="${process.env.FRONTEND_URL}/bidder/subscriptions" class="cta-button">Manage Subscription</a>
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p class="footer-text">This is an automated reminder from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                        </div>
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ""}
+                    </div>
+                </body>
+                </html>
+            `,
+        });
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send auto-renewal reminder email:", error);
+        throw new Error(`Failed to send auto-renewal reminder email: ${error.message}`);
+    }
+};
+
+const subscriptionRenewalSuccessEmail = async (
+    userEmail,
+    userName,
+    subscription,
+    paymentIntentId,
+) => {
+    try {
+        const title = subscription?.title || "Your subscription";
+        const amount = subscription?.amountPaid ?? subscription?.price?.amount ?? 0;
+        const currency = subscription?.currency ?? subscription?.price?.currency ?? "USD";
+        const startDate = subscription?.startDate;
+        const expiresAt = subscription?.expiresAt;
+        const durationValue = subscription?.duration?.value;
+        const durationUnit = subscription?.duration?.unit;
+        const durationLabel = durationValue
+            ? `${durationValue} ${durationUnit}${durationValue > 1 ? "s" : ""}`
+            : "";
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) unsubscribeLink = await getUnsubscribeLink(user);
+        } catch (err) {
+            console.error("Failed to generate unsubscribe link:", err);
+        }
+
+        const info = await transporter.sendMail({
+            from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
+            to: userEmail,
+            subject: `✅ Subscription auto-renewed — ${title}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
+                        .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
+                        .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
+                        .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
+                        .content { padding: 25px; }
+                        .success-box { background: #d4edda; padding: 22px; border-radius: 8px; margin: 20px 0; border: 2px solid #c3e6cb; text-align: center; }
+                        .success-title { font-size: 22px; font-weight: bold; color: #155724; margin: 0 0 8px 0; }
+                        .item-info { background: #f8f9fa; padding: 22px; border-radius: 8px; margin: 22px 0; border-left: 4px solid #28a745; }
+                        .item-title { font-size: 22px; color: #1e2d3b; margin: 0 0 12px 0; text-align: center; }
+                        .price-tag { font-size: 30px; font-weight: bold; color: #1e2d3b; margin: 12px 0; text-align: center; }
+                        .price-tag span { color: #28a745; }
+                        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+                        .detail-item { background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center; }
+                        .detail-label { color: #666; font-size: 13px; margin-bottom: 5px; }
+                        .detail-value { font-weight: bold; color: #1e2d3b; font-size: 15px; }
+                        .receipt { background: #f0f4f8; padding: 12px 15px; border-radius: 6px; margin: 15px 0; font-family: monospace; font-size: 12px; color: #555; word-break: break-all; }
+                        .cta-button { background: #1e2d3b; color: #ffffff !important; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 15px; margin: 10px; }
+                        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
+                        .footer-text { margin: 5px 0; }
+                        .highlight { color: #28a745; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="brand-name">JLTM Select</div>
+                            <div class="tagline">Furniture Auctions</div>
+                        </div>
+                        <div class="content">
+                            <div class="success-box">
+                                <div class="success-title">✅ Subscription Renewed Successfully</div>
+                                <div style="color: #155724;">Your benefits continue without interruption.</div>
+                            </div>
+
+                            <p>Dear <span class="highlight">${userName || "Member"}</span>,</p>
+                            <p>Great news! Your <strong>${title}</strong> subscription has been auto-renewed and your access has been extended. Your saved card was charged successfully.</p>
+
+                            <div class="item-info">
+                                <div class="item-title">${title}</div>
+                                <div class="price-tag"><span>${formatCurrency(amount)}</span></div>
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-label">New Start Date</div>
+                                        <div class="detail-value">${startDate ? formatToPacificTime(startDate, "date") : "—"}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">New Expiry Date</div>
+                                        <div class="detail-value">${expiresAt ? formatToPacificTime(expiresAt, "date") : "—"}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Duration</div>
+                                        <div class="detail-value">${durationLabel || "—"}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Amount Charged</div>
+                                        <div class="detail-value">${formatCurrency(amount)} ${currency}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p style="text-align: center; margin: 25px 0;">
+                                <a href="${process.env.FRONTEND_URL}/bidder/subscriptions" class="cta-button">View My Membership</a>
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p class="footer-text">This is an automated receipt from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                        </div>
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ""}
+                    </div>
+                </body>
+                </html>
+            `,
+        });
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send renewal success email:", error);
+        throw new Error(`Failed to send renewal success email: ${error.message}`);
+    }
+};
+
+const subscriptionRenewalFailedEmail = async (
+    userEmail,
+    userName,
+    subscription,
+    reason,
+) => {
+    try {
+        const title = subscription?.title || "Your subscription";
+        const amount = subscription?.price?.amount ?? 0;
+        const currency = subscription?.price?.currency ?? "USD";
+
+        let unsubscribeLink = null;
+        try {
+            const user = await User.findOne({ email: userEmail });
+            if (user) unsubscribeLink = await getUnsubscribeLink(user);
+        } catch (err) {
+            console.error("Failed to generate unsubscribe link:", err);
+        }
+
+        const info = await transporter.sendMail({
+            from: `"JLTM Select" <${process.env.EMAIL_USER}>`,
+            to: userEmail,
+            subject: `⚠️ Your subscription could not be renewed — ${title}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
+                        .header { background: #1e2d3b; padding: 25px 20px; text-align: center; }
+                        .brand-name { color: #edcd1f; font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 10px 0; }
+                        .tagline { color: #ffffff; font-size: 16px; margin: 5px 0 0 0; opacity: 0.9; }
+                        .content { padding: 25px; }
+                        .warning-box { background: #fff3cd; padding: 22px; border-radius: 8px; margin: 20px 0; border: 2px solid #ffc107; text-align: center; }
+                        .warning-title { font-size: 22px; font-weight: bold; color: #856404; margin: 0 0 8px 0; }
+                        .item-info { background: #f8f9fa; padding: 22px; border-radius: 8px; margin: 22px 0; border-left: 4px solid #dc3545; }
+                        .item-title { font-size: 22px; color: #1e2d3b; margin: 0 0 12px 0; text-align: center; }
+                        .reason-box { background: #f8d7da; padding: 16px; border-radius: 6px; margin: 15px 0; border: 1px solid #f5c6cb; }
+                        .reason-label { color: #721c24; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+                        .reason-text { color: #721c24; font-size: 14px; }
+                        .price-tag { font-size: 26px; font-weight: bold; color: #1e2d3b; margin: 12px 0; text-align: center; }
+                        .price-tag span { color: #dc3545; }
+                        .cta-button { background: #dc3545; color: #ffffff !important; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 15px; margin: 10px 8px; }
+                        .cta-secondary { background: #1e2d3b; color: #ffffff !important; padding: 12px 25px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 14px; margin: 10px 8px; }
+                        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 13px; border-top: 1px solid #e9ecef; margin-top: 25px; }
+                        .footer-text { margin: 5px 0; }
+                        .highlight { color: #dc3545; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div class="brand-name">JLTM Select</div>
+                            <div class="tagline">Furniture Auctions</div>
+                        </div>
+                        <div class="content">
+                            <div class="warning-box">
+                                <div class="warning-title">⚠️ Subscription Renewal Failed</div>
+                                <div style="color: #856404;">We couldn't renew your subscription automatically.</div>
+                            </div>
+
+                            <p>Dear <span class="highlight">${userName || "Member"}</span>,</p>
+                            <p>We attempted to auto-renew your <strong>${title}</strong> subscription but were unable to complete the renewal. Your subscription has now expired and access to subscriber benefits has been paused.</p>
+
+                            <div class="item-info">
+                                <div class="item-title">${title}</div>
+                                <div class="price-tag"><span>${formatCurrency(amount)} ${currency}</span></div>
+                                <div class="reason-box">
+                                    <div class="reason-label">REASON</div>
+                                    <div class="reason-text">${reason || "Renewal could not be processed."}</div>
+                                </div>
+                            </div>
+
+                            <p><strong>What you can do:</strong></p>
+                            <ul style="color: #333; font-size: 14px;">
+                                <li>Update your saved payment method in your account settings</li>
+                                <li>Purchase a new subscription plan from our plans page</li>
+                                <li>Contact support if you believe this is an error</li>
+                            </ul>
+
+                            <p style="text-align: center; margin: 25px 0;">
+                                <a href="${process.env.FRONTEND_URL}/bidder/billing" class="cta-button">Update Payment Method</a>
+                                <a href="${process.env.FRONTEND_URL}/pricing" class="cta-secondary">View Plans</a>
+                            </p>
+
+                            <p style="font-size: 13px; color: #666;">
+                                If you have any questions, contact our support team at ${process.env.EMAIL_USER || "help@jltmselect.com"}.
+                            </p>
+                        </div>
+                        <div class="footer">
+                            <p class="footer-text">This is an automated notification from JLTM Select.</p>
+                            <p class="footer-text">© ${new Date().getFullYear()} JLTM Select. All rights reserved.</p>
+                        </div>
+                        ${unsubscribeLink ? unsubscribeFooter(unsubscribeLink) : ""}
+                    </div>
+                </body>
+                </html>
+            `,
+        });
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send renewal failed email:", error);
+        throw new Error(`Failed to send renewal failed email: ${error.message}`);
+    }
+};
+
 export {
     contactEmail,
     contactConfirmationEmail,
@@ -6064,4 +6407,7 @@ export {
     payoutInitiatedEmail,
     payoutCompletedEmail,
     payoutFailedEmail,
+    subscriptionAutoRenewalReminderEmail,
+    subscriptionRenewalSuccessEmail,
+    subscriptionRenewalFailedEmail,
 };

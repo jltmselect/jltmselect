@@ -169,6 +169,9 @@ const UserSubscriptionsTracker = () => {
                                 <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                 <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
                                 <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Auto-Renew
+                                </th>
                                 <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -211,6 +214,16 @@ const UserSubscriptionsTracker = () => {
                                     </td>
                                     <td className="py-4 px-6">
                                         {getStatusBadge(sub.status, sub.expiresAt)}
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-medium ${sub.status === "active" && sub.autoRenew !== false
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-gray-100 text-gray-600"
+                                                }`}
+                                        >
+                                            {sub.status === "active" && sub.autoRenew !== false ? "On" : "Off"}
+                                        </span>
                                     </td>
                                     <td className="py-4 px-6">
                                         <button

@@ -249,23 +249,26 @@ export class StripeService {
     paymentMethodId,
     amount,
     description,
+    idempotencyKey = null,
   ) {
     try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
+      const params = {
+        amount: Math.round(amount * 100),
         currency: "usd",
         customer: customerId,
         payment_method: paymentMethodId,
-        description: description,
-        confirm: true, // Confirm immediately to charge
+        description,
+        confirm: true,
         off_session: true,
         payment_method_types: ["card"],
         metadata: {
           type: "bid_deposit",
           timestamp: new Date().toISOString(),
         },
-      });
+      };
 
+      const options = idempotencyKey ? { idempotencyKey } : undefined;
+      const paymentIntent = await stripe.paymentIntents.create(params, options);
       return paymentIntent;
     } catch (error) {
       throw new Error(`Immediate charge failed: ${error.message}`);
